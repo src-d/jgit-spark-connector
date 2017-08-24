@@ -43,7 +43,11 @@ case class MockRelation(sqlContext: SQLContext, data: DataFrame) extends BaseRel
       case 0 => data
     }
 
+    println("==== COLUMNS ===")
+    println(requiredColumns.mkString(","))
+
     // TODO not necessary for the demo, because spark also filter after the datasource filtering
+    println("==== FILTERS ===")
     println(filters.mkString(","))
 
     projectResult.rdd
