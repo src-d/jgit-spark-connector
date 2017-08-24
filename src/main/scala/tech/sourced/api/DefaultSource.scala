@@ -39,8 +39,8 @@ case class MockRelation(sqlContext: SQLContext, data: DataFrame) extends BaseRel
 
     val projectResult = requiredColumns.length match {
       case l if l >= 2 => data.select(requiredColumns.head, requiredColumns.tail: _*)
-      case l if l == 1 => data.select(requiredColumns.head)
-      case l if l == 0 => data
+      case 1 => data.select(requiredColumns.head)
+      case 0 => data
     }
 
     // TODO not necessary for the demo, because spark also filter after the datasource filtering
