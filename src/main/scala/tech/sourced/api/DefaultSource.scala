@@ -1,10 +1,11 @@
 package tech.sourced.api
 
-import org.apache.spark.SparkException
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.{SCWrapper, SparkContext, SparkException}
 
 class DefaultSource extends RelationProvider with DataSourceRegister {
 
@@ -12,18 +13,41 @@ class DefaultSource extends RelationProvider with DataSourceRegister {
 
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(DefaultSource.tableNameKey, throw new SparkException("parameter 'table' must be provided"))
+    val baseFolder = parameters.getOrElse(DefaultSource.pathKey, throw new SparkException("parameter 'path' must be provided"))
+
+    val localPath = "/tmp/processing-repositories"
+    val sc = sqlContext.sparkContext
+
+    //val folders = this.getRepositoryFolders(sc, baseFolder)
+    val folders =
+      "file:/home/antonio/work/src/github.com/src-d/enry" ::
+        "file:/home/antonio/work/src/github.com/src-d/fetcher" ::
+        "file:/home/antonio/work/src/github.com/src-d/proteus" ::
+        Nil
+sqlContext.sparkContext.binaryFiles("/path")
+    val broadcastedHadoopConf = sqlContext.sparkContext.broadcast(new SCWrapper(sc.hadoopConfiguration))
 
     table match {
       case "repositories" =>
-        MockRelation(sqlContext, sqlContext.createDataFrame(MockedData.repositories, Schema.repositories))
+        MetadataRelation(sqlContext, Schema.repositories, new RepositoryRDD(sc, broadcastedHadoopConf, folders, localPath))
       case "references" =>
-        MockRelation(sqlContext, sqlContext.createDataFrame(MockedData.references, Schema.references))
+        MetadataRelation(sqlContext, Schema.references, new ReferenceRDD(sc, broadcastedHadoopConf, folders, localPath))
       case "commits" =>
-        MockRelation(sqlContext, sqlContext.createDataFrame(MockedData.commits, Schema.commits))
+        MetadataRelation(sqlContext, Schema.commits, new CommitRDD(sc, broadcastedHadoopConf, folders, localPath))
       case "files" =>
-        MockRelation(sqlContext, sqlContext.createDataFrame(MockedData.files, Schema.files))
+        MetadataRelation(sqlContext, Schema.files, new BlobRDD(sc, broadcastedHadoopConf, folders, localPath))
       case other => throw new SparkException(s"table '$other' not supported")
     }
+  }
+
+  private def getRepositoryFolders(sc: SparkContext, path: String): Seq[String] = {
+    val folderIterator = FileSystem.get(sc.hadoopConfiguration).listFiles(new Path(path), false)
+
+    Stream.continually(folderIterator)
+      .takeWhile(_.hasNext)
+      .map(_.next())
+      .filter(_.isDirectory)
+      .map(_.getPath.toString)
   }
 }
 
@@ -32,24 +56,7 @@ object DefaultSource {
   val pathKey = "path"
 }
 
-case class MockRelation(sqlContext: SQLContext, data: DataFrame) extends BaseRelation with PrunedFilteredScan {
-  override def schema: StructType = data.schema
+case class MetadataRelation(sqlContext: SQLContext, schema: StructType, rdd: RDD[Row]) extends BaseRelation with TableScan {
 
-  override def buildScan(requiredColumns: Array[String], filters: Array[Filter]): RDD[Row] = {
-
-    val projectResult = requiredColumns.length match {
-      case l if l >= 2 => data.select(requiredColumns.head, requiredColumns.tail: _*)
-      case 1 => data.select(requiredColumns.head)
-      case 0 => data
-    }
-
-    println("==== COLUMNS ===")
-    println(requiredColumns.mkString(","))
-
-    // TODO not necessary for the demo, because spark also filter after the datasource filtering
-    println("==== FILTERS ===")
-    println(filters.mkString(","))
-
-    projectResult.rdd
-  }
+  override def buildScan() = rdd
 }

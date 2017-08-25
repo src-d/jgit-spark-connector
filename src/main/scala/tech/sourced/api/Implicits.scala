@@ -15,7 +15,7 @@ object Implicits {
 
     def getReferences(): DataFrame = {
       Implicits.checkCols(df, "id")
-      val reposIdsDf = df.select($"id").distinct()
+      val reposIdsDf = df.select("id").distinct()
       Implicits.getDataSource("references", df.sparkSession).join(reposIdsDf, $"repository_id" === $"id").drop($"id")
     }
 
@@ -32,12 +32,12 @@ object Implicits {
       Implicits.checkCols(df, "tree")
       val blobsIdsDf = df.select($"blobs").distinct()
       val filesDf = Implicits.getDataSource("files", df.sparkSession)
-      filesDf.join(blobsIdsDf, array_contains(blobsIdsDf("blobs"), filesDf("file_hash"))).drop($"blobs")
+      filesDf.join(blobsIdsDf, blobsIdsDf("blobs").contains(filesDf("file_hash"))).drop($"blobs")
     }
   }
 
   def getDataSource(table: String, session: SparkSession): DataFrame =
-    session.read.format("tech.sourced.api.DefaultSource").option("table", table).load()
+    session.read.format("tech.sourced.api.DefaultSource").option("table", table).load("file:/home/antonio/work/src/github.com/src-d/")
 
   def checkCols(df: DataFrame, cols: String*): Unit = {
     if (!df.schema.fieldNames.containsSlice(cols)) {
