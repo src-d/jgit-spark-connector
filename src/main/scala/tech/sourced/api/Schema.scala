@@ -46,6 +46,7 @@ object Schema {
   val files = StructType(
     StructField("file_hash", StringType) ::
       StructField("content", BinaryType) ::
+      StructField("is_binary", BooleanType, nullable = false) ::
       StructField("path", StringType) ::
       StructField("lang", StringType) ::
       StructField("uast", BinaryType) ::
@@ -88,6 +89,6 @@ object MockedData {
   ).asJava
 
   val files = List(
-    Row("FH1", "test".getBytes, "/test.txt", "TEXT", null),
-    Row("FH2", "test2".getBytes, "/test2.txt", "TEXT", null)).asJava
+    Row("FH1", "test".getBytes, false, "/test.txt", "TEXT", null),
+    Row("FH2", "test2".getBytes, false, "/test2.txt", "TEXT", null)).asJava
 }

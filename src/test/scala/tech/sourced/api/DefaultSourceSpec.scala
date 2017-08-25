@@ -22,7 +22,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers {
       .option("table", "references")
       .load("/path/to/repositories/folder")
 
-    referencesDf.filter("repository_uuid = 'ID1'").show()
+    referencesDf.filter("repository_id = 'ID1'").show()
 
     val commitsDf = spark.read.format("tech.sourced.api")
       .option("table", "commits")
