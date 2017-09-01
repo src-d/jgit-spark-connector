@@ -1,5 +1,5 @@
 import Dependencies.{scalaTest, _}
-import sbt.Keys.libraryDependencies
+import sbt.Keys.{libraryDependencies, resolvers}
 import de.johoop.jacoco4sbt.XMLReport
 
 lazy val root = (project in file(".")).
@@ -11,7 +11,12 @@ lazy val root = (project in file(".")).
     )),
     name := "spark-api",
     libraryDependencies += scalaTest % Test,
-    libraryDependencies += sparkSql % Compile
+    libraryDependencies += sparkSql % Compile,
+    libraryDependencies += jgit % Compile,
+    libraryDependencies += siva % Compile,
+    libraryDependencies += commonsIO % Compile,
+
+    resolvers += "jitpack" at "https://jitpack.io"
   )
 
 jacoco.settings
