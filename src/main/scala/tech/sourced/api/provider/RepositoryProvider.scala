@@ -14,7 +14,7 @@ import tech.sourced.siva.SivaReader
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-class RepositoryProvider(localPath: String) {
+class RepositoryProvider(val localPath: String) {
   val repositories: mutable.Map[String, Repository] = mutable.Map()
 
   def get(conf: Configuration, path: String): Repository = {
@@ -48,6 +48,11 @@ object RepositoryProvider {
       provider = new RepositoryProvider(localPath)
     }
 
+    if (provider.localPath != localPath) {
+      throw new RuntimeException(s"actual provider instance is not intended " +
+        s"to be used with the localPath provided: $localPath")
+    }
+    
     provider
   }
 

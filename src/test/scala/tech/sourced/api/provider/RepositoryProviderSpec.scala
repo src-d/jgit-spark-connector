@@ -2,9 +2,9 @@ package tech.sourced.api.provider
 
 import org.apache.spark.sql.SparkSession
 import org.eclipse.jgit.lib.ObjectId
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 class RepositoryProviderSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
 
@@ -45,6 +45,17 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BeforeAndAfterA
     }).collect()
 
     refs.length should be(56)
+  }
+
+  "RepositoryProvider" should "fail with different local paths" in {
+    val _ = RepositoryProvider("/tmp")
+
+    val ex: RuntimeException = intercept[RuntimeException] {
+      RepositoryProvider("/tmp/two")
+    }
+
+    ex.getMessage should be("actual provider instance is not intended to be used " +
+      "with the localPath provided: /tmp/two")
   }
 
   override protected def afterAll(): Unit = {
