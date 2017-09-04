@@ -38,16 +38,21 @@ class DefaultSourceSpec extends FlatSpec with Matchers {
 
   }
 
-  "Adittional methods" should "work correctly" in {
+  "Additional methods" should "work correctly" in {
     val spark = SparkSession.builder().appName("test").master("local[2]").getOrCreate()
+    spark.sparkContext.setLogLevel("ERROR")
 
     import Implicits._
     import spark.implicits._
 
-    val reposDf = spark.getRepositories().filter($"id" === "urlA" || $"id" === "urlB")
-    val refsDf = reposDf.getReferences().filter($"name".equalTo("HEAD"))
-    val commitsDf = refsDf.getCommits()
+    val reposDf = spark.getRepositories().filter($"id" === "/tmp/processing-repositories/enry/.git")
 
-    commitsDf.show()
+    val refsDf = reposDf.getReferences().filter($"name".equalTo("HEAD"))
+
+    val commitsDf = refsDf.getCommits().filter($"index" === 0)
+
+    val filesDf = commitsDf.getFiles()
+
+    filesDf.show()
   }
 }

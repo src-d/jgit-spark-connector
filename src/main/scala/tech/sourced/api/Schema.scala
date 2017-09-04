@@ -29,16 +29,15 @@ object Schema {
       StructField("parents", ArrayType(StringType, containsNull = false)) ::
       StructField("tree", MapType(StringType, StringType, valueContainsNull = false)) ::
       StructField("blobs", ArrayType(StringType, containsNull = false)) ::
-      StructField("time", TimestampType) ::
       StructField("parents_count", IntegerType) ::
 
       StructField("author_email", StringType) ::
       StructField("author_name", StringType) ::
       StructField("author_date", TimestampType) ::
 
-      StructField("commiter_email", StringType) ::
-      StructField("commiter_name", StringType) ::
-      StructField("commiter_date", TimestampType) ::
+      StructField("committer_email", StringType) ::
+      StructField("committer_name", StringType) ::
+      StructField("committer_date", TimestampType) ::
 
       Nil
   )
@@ -77,7 +76,6 @@ object MockedData {
       Array[String]("CH2"),
       Map("/test.txt" -> "FH1", "/test2.txt" -> "FH2"),
       Array("FH1", "FH2"),
-      null,
       1,
       "author@email.com",
       "author name",
