@@ -22,7 +22,7 @@ object Schema {
 
   val commits = StructType(
     StructField("repository_id", StringType) ::
-      StructField("reference_hash", StringType) ::
+      StructField("reference_name", StringType) ::
       StructField("index", LongType) ::
       StructField("hash", StringType) ::
       StructField("message", StringType) ::

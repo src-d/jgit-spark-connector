@@ -21,11 +21,11 @@ object Implicits {
 
     def getCommits(): DataFrame = {
       Implicits.checkCols(df, "repository_id")
-      val refsIdsDf = df.select($"hash", $"repository_id").distinct()
+      val refsIdsDf = df.select($"name", $"repository_id").distinct()
       val commitsDf = Implicits.getDataSource("commits", df.sparkSession)
       commitsDf.join(refsIdsDf, refsIdsDf("repository_id") === commitsDf("repository_id") &&
-        commitsDf("reference_hash") === refsIdsDf("hash"))
-        .drop(refsIdsDf("hash")).drop(refsIdsDf("repository_id"))
+        commitsDf("reference_name") === refsIdsDf("name"))
+        .drop(refsIdsDf("name")).drop(refsIdsDf("repository_id"))
     }
 
     def getFiles(): DataFrame = {
