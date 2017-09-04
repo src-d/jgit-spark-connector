@@ -1,5 +1,6 @@
 import Dependencies.{scalaTest, _}
 import sbt.Keys.libraryDependencies
+import de.johoop.jacoco4sbt.XMLReport
 
 lazy val root = (project in file(".")).
   settings(
@@ -12,3 +13,8 @@ lazy val root = (project in file(".")).
     libraryDependencies += scalaTest % Test,
     libraryDependencies += sparkSql % Compile
   )
+
+jacoco.settings
+
+jacoco.reportFormats in jacoco.Config := Seq(
+  XMLReport(encoding = "utf-8"))

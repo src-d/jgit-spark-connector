@@ -1,0 +1,12 @@
+language: scala
+scala:
+   - 2.11.11
+jdk:
+  - openjdk8
+  - jdk8
+matrix:
+  fast_finish: true
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION jacoco:cover
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
