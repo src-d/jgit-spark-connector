@@ -28,11 +28,10 @@ object SivaRDDProvider {
   var provider: SivaRDDProvider = _
 
   def apply(sc: SparkContext): SivaRDDProvider = {
-    if (provider == null) {
+    Option(provider).getOrElse({
       provider = new SivaRDDProvider(sc)
-    }
-
-    provider
+      provider
+    })
   }
 
   private def generateRDD(sc: SparkContext, path: String): RDD[PortableDataStream] =

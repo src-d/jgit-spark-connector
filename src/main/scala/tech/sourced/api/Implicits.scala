@@ -13,13 +13,13 @@ object Implicits {
 
     import df.sparkSession.implicits._
 
-    def getReferences(): DataFrame = {
+    def getReferences: DataFrame = {
       Implicits.checkCols(df, "id")
       val reposIdsDf = df.select($"id").distinct()
       Implicits.getDataSource("references", df.sparkSession).join(reposIdsDf, $"repository_id" === $"id").drop($"id")
     }
 
-    def getCommits(): DataFrame = {
+    def getCommits: DataFrame = {
       Implicits.checkCols(df, "repository_id")
       val refsIdsDf = df.select($"name", $"repository_id").distinct()
       val commitsDf = Implicits.getDataSource("commits", df.sparkSession)
@@ -28,7 +28,7 @@ object Implicits {
         .drop(refsIdsDf("name")).drop(refsIdsDf("repository_id"))
     }
 
-    def getFiles(): DataFrame = {
+    def getFiles: DataFrame = {
       Implicits.checkCols(df, "tree")
       val blobsIdsDf = df.select($"blobs").distinct()
       val filesDf = Implicits.getDataSource("files", df.sparkSession)
@@ -37,7 +37,9 @@ object Implicits {
   }
 
   def getDataSource(table: String, session: SparkSession): DataFrame =
-    session.read.format("tech.sourced.api.DefaultSource").option("table", table).load()
+    session.read.format("tech.sourced.api.DefaultSource")
+      .option("table", table)
+      .load(session.sqlContext.getConf("tech.sourced.api.repositories.path"))
 
   def checkCols(df: DataFrame, cols: String*): Unit = {
     if (!df.schema.fieldNames.containsSlice(cols)) {
@@ -47,5 +49,5 @@ object Implicits {
 }
 
 class SessionFunctions(session: SparkSession) {
-  def getRepositories(): DataFrame = Implicits.getDataSource("repositories", session)
+  def getRepositories: DataFrame = Implicits.getDataSource("repositories", session)
 }

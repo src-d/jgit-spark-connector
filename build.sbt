@@ -1,6 +1,6 @@
 import Dependencies.{scalaTest, _}
-import sbt.Keys.{libraryDependencies, resolvers}
 import de.johoop.jacoco4sbt.XMLReport
+import sbt.Keys.{libraryDependencies, resolvers}
 
 lazy val root = (project in file(".")).
   settings(
@@ -23,3 +23,6 @@ jacoco.settings
 
 jacoco.reportFormats in jacoco.Config := Seq(
   XMLReport(encoding = "utf-8"))
+
+parallelExecution in Test := false
+logBuffered in Test := false

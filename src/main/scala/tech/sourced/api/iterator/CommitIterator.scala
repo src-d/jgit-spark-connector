@@ -3,6 +3,7 @@ package tech.sourced.api.iterator
 import java.sql.Timestamp
 
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.errors.IncorrectObjectTypeException
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.treewalk.TreeWalk
@@ -25,15 +26,22 @@ class CommitIterator(requiredColumns: Array[String], repo: Repository)
           refs = repo.getAllRefs.values().asScala.toIterator
         }
 
-        if ((commits == null || !commits.hasNext) && refs.hasNext) {
+        while ((commits == null || !commits.hasNext) && refs.hasNext) {
           actualRef = refs.next()
           index = 0
-          commits = Git.wrap(repo).log()
-            .add(Option(actualRef.getPeeledObjectId).getOrElse(actualRef.getObjectId))
-            .call().asScala.toIterator
+          commits =
+            try {
+              Git.wrap(repo).log()
+                .add(Option(actualRef.getPeeledObjectId).getOrElse(actualRef.getObjectId))
+                .call().asScala.toIterator
+            } catch {
+              case _: IncorrectObjectTypeException => null
+              // TODO log this
+              // This reference is pointing to a non commit object
+            }
         }
 
-        refs.hasNext || commits.hasNext
+        refs.hasNext || (commits != null && commits.hasNext)
       }
 
       override def next(): ReferenceWithCommit = {
