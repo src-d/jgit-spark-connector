@@ -1,13 +1,17 @@
 package tech.sourced.api.provider
 
+import java.util.concurrent.ConcurrentHashMap
+
 import org.apache.spark.SparkContext
 import org.apache.spark.input.PortableDataStream
 import org.apache.spark.rdd.RDD
 
-import scala.collection.mutable
+import scala.collection.convert.decorateAsScala._
+import scala.collection.concurrent
 
 class SivaRDDProvider(sc: SparkContext) {
-  private val sivaFilesRDD: mutable.Map[String, RDD[PortableDataStream]] = mutable.Map()
+  private val sivaFilesRDD: concurrent.Map[String, RDD[PortableDataStream]] =
+    new ConcurrentHashMap[String, RDD[PortableDataStream]]().asScala
 
   def get(path: String): RDD[PortableDataStream] = {
     sivaFilesRDD.get(path) match {

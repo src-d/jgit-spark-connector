@@ -2,6 +2,7 @@ package tech.sourced.api.provider
 
 import java.io.File
 import java.nio.file.Paths
+import java.util.concurrent.ConcurrentHashMap
 
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
@@ -12,17 +13,21 @@ import tech.sourced.api.util.MD5Gen
 import tech.sourced.siva.SivaReader
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
+import scala.collection.concurrent
 
 class RepositoryProvider(val localPath: String) {
-  val repositories: mutable.Map[String, Repository] = mutable.Map()
+  private val repositories: concurrent.Map[String, Repository] =
+    new ConcurrentHashMap[String, Repository]().asScala
 
   def get(conf: Configuration, path: String): Repository = {
     repositories.get(path) match {
       case Some(r) =>
         r.incrementOpen()
         r
-      case None => RepositoryProvider.genRepository(conf, path, localPath)
+      case None =>
+        val repo = RepositoryProvider.genRepository(conf, path, localPath)
+        repositories.put(path, repo)
+        repo
     }
   }
 
@@ -52,7 +57,7 @@ object RepositoryProvider {
       throw new RuntimeException(s"actual provider instance is not intended " +
         s"to be used with the localPath provided: $localPath")
     }
-    
+
     provider
   }
 
