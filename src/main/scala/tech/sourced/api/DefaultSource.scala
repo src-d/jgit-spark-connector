@@ -4,7 +4,9 @@ import org.apache.spark.SparkException
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.sql.{Row, SQLContext}
+import tech.sourced.api.iterator.{CommitIterator, ReferenceIterator, RepositoryIterator}
+import tech.sourced.api.provider.{RepositoryProvider, SivaRDDProvider}
 
 class DefaultSource extends RelationProvider with DataSourceRegister {
 
@@ -12,18 +14,10 @@ class DefaultSource extends RelationProvider with DataSourceRegister {
 
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(DefaultSource.tableNameKey, throw new SparkException("parameter 'table' must be provided"))
+    val path = parameters.getOrElse(DefaultSource.pathKey, throw new SparkException("parameter 'path' must be provided"))
+    val localPath = sqlContext.getConf("spark.local.dir", "/tmp")
 
-    table match {
-      case "repositories" =>
-        MockRelation(sqlContext, sqlContext.createDataFrame(MockedData.repositories, Schema.repositories))
-      case "references" =>
-        MockRelation(sqlContext, sqlContext.createDataFrame(MockedData.references, Schema.references))
-      case "commits" =>
-        MockRelation(sqlContext, sqlContext.createDataFrame(MockedData.commits, Schema.commits))
-      case "files" =>
-        MockRelation(sqlContext, sqlContext.createDataFrame(MockedData.files, Schema.files))
-      case other => throw new SparkException(s"table '$other' not supported")
-    }
+    GitRelation(sqlContext, table, path, localPath)
   }
 }
 
@@ -32,24 +26,34 @@ object DefaultSource {
   val pathKey = "path"
 }
 
-case class MockRelation(sqlContext: SQLContext, data: DataFrame) extends BaseRelation with PrunedFilteredScan {
-  override def schema: StructType = data.schema
+case class GitRelation(sqlContext: SQLContext, tableName: String, path: String, localPath: String) extends BaseRelation with PrunedFilteredScan {
+
+  override def schema: StructType = tableName match {
+    case "repositories" => Schema.repositories
+    case "references" => Schema.references
+    case "commits" => Schema.commits
+    case other => throw new SparkException(s"table '$other' not supported")
+  }
 
   override def buildScan(requiredColumns: Array[String], filters: Array[Filter]): RDD[Row] = {
+    val sc = sqlContext.sparkContext
 
-    val projectResult = requiredColumns.length match {
-      case l if l >= 2 => data.select(requiredColumns.head, requiredColumns.tail: _*)
-      case 1 => data.select(requiredColumns.head)
-      case 0 => data
-    }
+    val tableB = sc.broadcast(tableName)
+    val requiredB = sc.broadcast(requiredColumns)
+    val localPathB = sc.broadcast(localPath)
+    // TODO broadcast filters
 
-    println("==== COLUMNS ===")
-    println(requiredColumns.mkString(","))
+    val sivaRDD = SivaRDDProvider(sc).get(path)
 
-    // TODO not necessary for the demo, because spark also filter after the datasource filtering
-    println("==== FILTERS ===")
-    println(filters.mkString(","))
+    sivaRDD.flatMap(pds => {
+      val repo = RepositoryProvider(localPathB.value).get(pds)
 
-    projectResult.rdd
+      tableB.value match {
+        case "repositories" => new RepositoryIterator(requiredB.value, repo)
+        case "references" => new ReferenceIterator(requiredB.value, repo)
+        case "commits" => new CommitIterator(requiredB.value, repo)
+        case other => throw new SparkException(s"table '$other' not supported")
+      }
+    })
   }
 }
