@@ -47,4 +47,13 @@ abstract class RootedRepoIterator[T](requiredColumns: Array[String], repo: Repos
       actualId == id
     })
   }
+
+  protected def parseRef(ref: String): (String, String) = {
+    val split: Array[String] = ref.split("/")
+    val uuid: String = split.last
+    val repoId: String = this.getRepositoryId(uuid).get
+    val refName: String = split.init.mkString("/")
+
+    (repoId, refName)
+  }
 }
