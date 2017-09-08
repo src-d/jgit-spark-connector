@@ -1,11 +1,16 @@
 package tech.sourced.api.iterator
 
 import org.apache.log4j.Logger
+import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.lib.{ObjectId, ObjectReader, Repository}
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.TreeWalk
+
 import tech.sourced.api.util.CompiledFilter
+
+import scala.collection.JavaConverters._
+
 
 /**
   * Blob iterator: returns all blobs from the filtered commits
@@ -15,41 +20,63 @@ import tech.sourced.api.util.CompiledFilter
   * @param filters
   */
 class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Array[CompiledFilter])
-  extends RootedRepoIterator[TreeWalk](requiredColumns, repo) {
+  extends RootedRepoIterator[CommitTree](requiredColumns, repo) {
 
   val log = Logger.getLogger(this.getClass.getSimpleName)
-  val readMaxBytes = 20 * 1024 * 1024
 
-  override protected def loadIterator(): Iterator[TreeWalk] = {
-    filters.flatMap { filter =>
+  override protected def loadIterator(): Iterator[CommitTree] = {
+    //println(s"\nBlobIterator filter:\n${filters.mkString("\n")}\n")
+    val filtered = filters.toIterator.flatMap { filter =>
+      //println(s"\nBlobIterator filter:\nfilter}\n")
       filter.matchingCases.getOrElse("hash", Seq()).flatMap { hash =>
         val commitId = ObjectId.fromString(hash.asInstanceOf[String])
         if (repo.hasObject(commitId)) {
-          val revWalk = new RevWalk(repo)
-          val revCommit = revWalk.parseCommit(commitId)
-          revWalk.close()
-
-          val treeWalk = new TreeWalk(repo)
-          treeWalk.setRecursive(true)
-          treeWalk.addTree(revCommit.getTree)
-
-          JGitBlobIterator(treeWalk, log)
+          JGitBlobIterator(getTreeWalk(commitId), log)
         } else {
           Seq()
         }
       }
     }
-  }.toIterator
 
-  override protected def mapColumns(tree: TreeWalk): Map[String, () => Any] = {
-    val content = readFile(tree.getObjectId(0), tree.getObjectReader)
+    if (filtered.hasNext) {
+      filtered
+    } else {
+      val refs = new Git(repo).branchList().call().asScala.filter(!_.isSymbolic)
+      println(s"Iterating all ${refs.size} refs")
+      refs.toIterator.flatMap { ref =>
+        println(s" $ref")
+        JGitBlobIterator(getTreeWalk(ref.getObjectId), log)
+      }
+    }
+  }
+
+  override protected def mapColumns(commitTree: CommitTree): Map[String, () => Any] = {
+    val content = BlobIterator.readFile(commitTree.tree.getObjectId(0), commitTree.tree.getObjectReader)
     Map[String, () => Any](
-      "file_hash" -> (() => tree.getObjectId(0)),
+      "file_hash" -> (() => commitTree.tree.getObjectId(0).name),
       "content" -> (() => content),
+      "commit_hash" -> (() => commitTree.commit.name),
       "is_binary" -> (() => RawText.isBinary(content)),
-      "path" -> (() => tree.getPathString)
+      "path" -> (() => commitTree.tree.getPathString)
     )
   }
+
+  private def getTreeWalk(commitId: ObjectId) = {
+    val revWalk = new RevWalk(repo)
+    val revCommit = revWalk.parseCommit(commitId)
+    revWalk.close()
+
+    val treeWalk = new TreeWalk(repo)
+    treeWalk.setRecursive(true)
+    treeWalk.addTree(revCommit.getTree)
+    CommitTree(commitId, treeWalk)
+  }
+}
+
+case class CommitTree(commit: ObjectId, tree: TreeWalk)
+
+object BlobIterator {
+  val readMaxBytes = 20 * 1024 * 1024
 
   /**
     * Read max N bytes of the given blob
@@ -73,42 +100,40 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
     reader.close()
     data
   }
-
 }
 
 
-class JGitBlobIterator[T <: TreeWalk](treeWalk: T, log: Logger) extends Iterator[T] {
+class JGitBlobIterator[T <: CommitTree](commitTree: T, log: Logger) extends Iterator[T] {
   var wasAlreadyMoved = false
 
   override def hasNext: Boolean = {
     if (wasAlreadyMoved) {
       return true
     }
-
     val hasNext = try {
-      treeWalk.next()
+      commitTree.tree.next()
     } catch {
       case e: Exception => log.error(s"Failed to iterate tree - due to ${e.getClass.getSimpleName}", e)
         false
     }
     wasAlreadyMoved = true
     if (!hasNext) {
-      treeWalk.close()
+      commitTree.tree.close()
     }
     hasNext
   }
 
   override def next(): T = {
     if (!wasAlreadyMoved) {
-      treeWalk.next()
+      commitTree.tree.next()
     }
     wasAlreadyMoved = false
-    treeWalk
+    commitTree
   }
 }
 
 object JGitBlobIterator {
-  def apply(tree: TreeWalk, log: Logger) = new JGitBlobIterator(tree, log)
+  def apply(commitTree: CommitTree, log: Logger) = new JGitBlobIterator(commitTree, log)
 }
 
 

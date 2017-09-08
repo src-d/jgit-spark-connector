@@ -24,13 +24,15 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
     commitsDf.show()
 
-    println("Files/blobs:\n")
+    println("Files/blobs (without commit hash filtered) at HEAD or every ref:\n")
     val filesDf = ss.read.format("tech.sourced.api")
       .option("table", "files")
       .load(resourcePath)
 
     filesDf.explain(true)
     filesDf.show()
+
+    assert(filesDf.count() != 0)
   }
 
   "Additional methods" should "work correctly" in {
@@ -44,14 +46,18 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     val reposDf = spark.getRepositories
       .filter($"id" === "github.com/mawag/faq-xiyoulinux" || $"id" === "github.com/xiyou-linuxer/faq-xiyoulinux")
     val refsDf = reposDf.getReferences.filter($"name".equalTo("refs/heads/HEAD"))
-    val commitsDf = refsDf.getCommits.select("repository_id", "reference_name", "message")
 
-    commitsDf.show()
+    val commitsDf = refsDf.getCommits.select("repository_id", "reference_name", "message", "hash")
+    //commitsDf.show()
 
-    println("Files/blobs:\n")
-    val filesDf = refsDf.getCommits.getFiles
+    println("Files/blobs with commit hashes:\n")
+    val filesDf = refsDf.getCommits.getFiles.select("repository_id", "reference_name", "path", "commit_hash", "file_hash")
     filesDf.explain(true)
     filesDf.show()
+
+    val cnt = filesDf.count()
+    println(s"Total $cnt rows")
+    assert(cnt != 0)
   }
 
 
