@@ -14,6 +14,8 @@ trait BaseSparkSpec extends BeforeAndAfterAll {
       .appName("test").master("local[*]")
       .config("spark.driver.host", "localhost")
       .getOrCreate()
+
+    ss.sparkContext.setLogLevel("WARN")
   }
 
   override protected def afterAll(): Unit = {
