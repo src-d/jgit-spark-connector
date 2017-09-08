@@ -42,11 +42,14 @@ object Schema {
   val files = StructType(
     StructField("file_hash", StringType) ::
       StructField("content", BinaryType) ::
+      StructField("commit_hash", StringType) ::
       StructField("is_binary", BooleanType, nullable = false) ::
       StructField("path", StringType) ::
-      StructField("lang", StringType) ::
-      StructField("uast", BinaryType) ::
 
       Nil
   )
+
+  //  StructField("lang", StringType) ::
+  //  StructField("uast", BinaryType) ::
+
 }

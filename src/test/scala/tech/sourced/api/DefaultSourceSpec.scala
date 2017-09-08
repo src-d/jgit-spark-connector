@@ -24,13 +24,13 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
     commitsDf.show()
 
-    // TODO files not implemented yet
-    //    val filesDf = ss.read.format("tech.sourced.api")
-    //      .option("table", "files")
-    //      .load(resourcePath)
-    //
-    //    filesDf.withColumn("content string", filesDf("content").cast(StringType)).show()
+    println("Files/blobs:\n")
+    val filesDf = ss.read.format("tech.sourced.api")
+      .option("table", "files")
+      .load(resourcePath)
 
+    filesDf.explain(true)
+    filesDf.show()
   }
 
   "Additional methods" should "work correctly" in {
@@ -47,5 +47,12 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     val commitsDf = refsDf.getCommits.select("repository_id", "reference_name", "message")
 
     commitsDf.show()
+
+    println("Files/blobs:\n")
+    val filesDf = refsDf.getCommits.getFiles
+    filesDf.explain(true)
+    filesDf.show()
   }
+
+
 }

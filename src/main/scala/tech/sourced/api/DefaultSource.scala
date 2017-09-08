@@ -5,8 +5,9 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Row, SQLContext}
-import tech.sourced.api.iterator.{CommitIterator, ReferenceIterator, RepositoryIterator}
+import tech.sourced.api.iterator.{BlobIterator, CommitIterator, ReferenceIterator, RepositoryIterator}
 import tech.sourced.api.provider.{RepositoryProvider, SivaRDDProvider}
+import tech.sourced.api.util.ColumnFilter
 
 class DefaultSource extends RelationProvider with DataSourceRegister {
 
@@ -32,7 +33,8 @@ case class GitRelation(sqlContext: SQLContext, tableName: String, path: String, 
     case "repositories" => Schema.repositories
     case "references" => Schema.references
     case "commits" => Schema.commits
-    case other => throw new SparkException(s"table '$other' not supported")
+    case "files" => Schema.files
+    case other => throw new SparkException(s"table '$other' is not supported")
   }
 
   override def buildScan(requiredColumns: Array[String], filters: Array[Filter]): RDD[Row] = {
@@ -52,7 +54,8 @@ case class GitRelation(sqlContext: SQLContext, tableName: String, path: String, 
         case "repositories" => new RepositoryIterator(requiredB.value, repo)
         case "references" => new ReferenceIterator(requiredB.value, repo)
         case "commits" => new CommitIterator(requiredB.value, repo)
-        case other => throw new SparkException(s"table '$other' not supported")
+        case "files" => new BlobIterator(requiredB.value, repo, filters.map(ColumnFilter.compileFilter))
+        case other => throw new SparkException(s"table '$other' is not supported")
       }
     })
   }
