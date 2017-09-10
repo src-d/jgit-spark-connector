@@ -11,6 +11,7 @@ trait BaseSparkSpec extends BeforeAndAfterAll {
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     ss = SparkSession.builder().appName("test").master("local[*]").getOrCreate()
+    ss.sparkContext.setLogLevel("WARN")
   }
 
   override protected def afterAll(): Unit = {
