@@ -32,7 +32,8 @@ object Implicits {
       Implicits.checkCols(df, "hash")
       val blobsIdsDf = df.select($"hash").distinct()
       val filesDf = Implicits.getDataSource("files", df.sparkSession)
-      filesDf.join(blobsIdsDf, filesDf("commit_hash") === df("hash")).drop($"hash")
+      val filesDfJoined = filesDf.join(blobsIdsDf, filesDf("commit_hash") === blobsIdsDf("hash")).drop($"hash")
+      df.join(filesDfJoined, df("hash") === filesDfJoined("commit_hash"))
     }
   }
 
