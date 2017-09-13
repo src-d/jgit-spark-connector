@@ -1,11 +1,14 @@
 package tech.sourced.api.iterator
 
-import org.apache.log4j.Logger
+import java.util
+
+import org.apache.spark.internal.Logging
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.lib.{ObjectId, ObjectReader, Repository}
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.slf4j.Logger
 import tech.sourced.api.util.CompiledFilter
 
 import scala.collection.JavaConverters._
@@ -19,16 +22,14 @@ import scala.collection.JavaConverters._
   * @param filters
   */
 class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Array[CompiledFilter])
-  extends RootedRepoIterator[CommitTree](requiredColumns, repo) {
-
-  val log = Logger.getLogger(this.getClass.getSimpleName)
+  extends RootedRepoIterator[CommitTree](requiredColumns, repo) with Logging {
 
   override protected def loadIterator(): Iterator[CommitTree] = {
     val filtered = filters.toIterator.flatMap { filter =>
-      filter.matchingCases.getOrElse("hash", Seq()).flatMap { hash =>
+      filter.matchingCases.flatMap { hash =>
         val commitId = ObjectId.fromString(hash.asInstanceOf[String])
         if (repo.hasObject(commitId)) {
-          JGitBlobIterator(getTreeWalk(commitId), log)
+          JGitBlobIterator(getTreeWalk(commitId), this.log)
         } else {
           Seq()
         }
@@ -39,29 +40,29 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
       filtered
     } else {
       val refs = new Git(repo).branchList().call().asScala.filter(!_.isSymbolic)
-      log.warn(s"Iterating all ${refs.size} refs")
+      log.debug(s"Iterating all ${refs.size} refs")
       refs.toIterator.flatMap { ref =>
-        log.warn(s" $ref")
+        log.debug(s" $ref")
         JGitBlobIterator(getTreeWalk(ref.getObjectId), log)
       }
     }
   }
 
   override protected def mapColumns(commitTree: CommitTree): Map[String, () => Any] = {
+    log.debug(s"Reading blob: ${commitTree.tree.getObjectId(0)} of tree:${commitTree.tree.getPathString} from commit:${commitTree.commit}")
     val content = BlobIterator.readFile(commitTree.tree.getObjectId(0), commitTree.tree.getObjectReader)
+    val isBinary = RawText.isBinary(content)
     Map[String, () => Any](
       "file_hash" -> (() => commitTree.tree.getObjectId(0).name),
-      "content" -> (() => content),
+      "content" -> (() => if (isBinary) Array.emptyByteArray else content),
       "commit_hash" -> (() => commitTree.commit.name),
-      "is_binary" -> (() => RawText.isBinary(content)),
+      "is_binary" -> (() => isBinary),
       "path" -> (() => commitTree.tree.getPathString)
     )
   }
 
   private def getTreeWalk(commitId: ObjectId) = {
-    val revWalk = new RevWalk(repo)
-    val revCommit = revWalk.parseCommit(commitId)
-    revWalk.close()
+    val revCommit = repo.parseCommit(commitId)
 
     val treeWalk = new TreeWalk(repo)
     treeWalk.setRecursive(true)
@@ -142,6 +143,7 @@ class JGitBlobIterator[T <: CommitTree](commitTree: T, log: Logger) extends Iter
     if (commitTree.tree.getObjectReader().has(commitTree.tree.getObjectId(0))) {
       true
     } else { // tree hasNext, but blob obj is missing
+      log.debug(s"Skip non-existing ${commitTree.tree.getObjectId(0).name()} ")
       moveIteratorSkippingMissingObj
     }
   }

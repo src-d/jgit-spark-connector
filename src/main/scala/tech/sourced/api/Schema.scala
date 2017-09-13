@@ -49,7 +49,4 @@ object Schema {
       Nil
   )
 
-  //  StructField("lang", StringType) ::
-  //  StructField("uast", BinaryType) ::
-
 }

@@ -24,7 +24,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
     commitsDf.show()
 
-    println("Files/blobs (without commit hash filtered) at HEAD or every ref:\n")
+    info("Files/blobs (without commit hash filtered) at HEAD or every ref:\n")
     val filesDf = ss.read.format("tech.sourced.api")
       .option("table", "files")
       .load(resourcePath)
@@ -48,15 +48,15 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     val refsDf = reposDf.getReferences.filter($"name".equalTo("refs/heads/HEAD"))
 
     val commitsDf = refsDf.getCommits.select("repository_id", "reference_name", "message", "hash")
-    //commitsDf.show()
+    commitsDf.show()
 
-    println("Files/blobs with commit hashes:\n")
+    info("Files/blobs with commit hashes:\n")
     val filesDf = refsDf.getCommits.getFiles.select("repository_id", "reference_name", "path", "commit_hash", "file_hash")
     filesDf.explain(true)
     filesDf.show()
 
     val cnt = filesDf.count()
-    println(s"Total $cnt rows")
+    info(s"Total $cnt rows")
     assert(cnt != 0)
   }
 
