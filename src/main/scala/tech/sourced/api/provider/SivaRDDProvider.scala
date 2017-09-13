@@ -13,15 +13,8 @@ class SivaRDDProvider(sc: SparkContext) {
   private val sivaFilesRDD: concurrent.Map[String, RDD[PortableDataStream]] =
     new ConcurrentHashMap[String, RDD[PortableDataStream]]().asScala
 
-  def get(path: String): RDD[PortableDataStream] = {
-    sivaFilesRDD.get(path) match {
-      case None =>
-        val rdd = SivaRDDProvider.generateRDD(sc, path)
-        sivaFilesRDD.put(path, rdd)
-        rdd
-      case Some(rdd) => rdd
-    }
-  }
+  def get(path: String): RDD[PortableDataStream] =
+    sivaFilesRDD.getOrElse(path, SivaRDDProvider.generateRDD(sc, path))
 }
 
 object SivaRDDProvider {
