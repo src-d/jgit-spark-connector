@@ -6,7 +6,6 @@ import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.lib.{ObjectId, ObjectReader, Repository}
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.TreeWalk
-
 import tech.sourced.api.util.CompiledFilter
 
 import scala.collection.JavaConverters._
@@ -25,9 +24,7 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
   val log = Logger.getLogger(this.getClass.getSimpleName)
 
   override protected def loadIterator(): Iterator[CommitTree] = {
-    //println(s"\nBlobIterator filter:\n${filters.mkString("\n")}\n")
     val filtered = filters.toIterator.flatMap { filter =>
-      //println(s"\nBlobIterator filter:\nfilter}\n")
       filter.matchingCases.getOrElse("hash", Seq()).flatMap { hash =>
         val commitId = ObjectId.fromString(hash.asInstanceOf[String])
         if (repo.hasObject(commitId)) {
@@ -102,7 +99,12 @@ object BlobIterator {
   }
 }
 
-
+/**
+  * Iterates a Tree from a given commit, skipping missing blobs.
+  * Must not produce un-reachable objects, as client has no way of dealing with it.
+  *
+  * @see [[BlobIterator#mapColumns]]
+  */
 class JGitBlobIterator[T <: CommitTree](commitTree: T, log: Logger) extends Iterator[T] {
   var wasAlreadyMoved = false
 
@@ -111,7 +113,7 @@ class JGitBlobIterator[T <: CommitTree](commitTree: T, log: Logger) extends Iter
       return true
     }
     val hasNext = try {
-      commitTree.tree.next()
+      moveIteratorSkippingMissingObj
     } catch {
       case e: Exception => log.error(s"Failed to iterate tree - due to ${e.getClass.getSimpleName}", e)
         false
@@ -125,11 +127,25 @@ class JGitBlobIterator[T <: CommitTree](commitTree: T, log: Logger) extends Iter
 
   override def next(): T = {
     if (!wasAlreadyMoved) {
-      commitTree.tree.next()
+      moveIteratorSkippingMissingObj
     }
     wasAlreadyMoved = false
     commitTree
   }
+
+  private def moveIteratorSkippingMissingObj: Boolean = {
+    val hasNext = commitTree.tree.next()
+    if (!hasNext) {
+      return false
+    }
+
+    if (commitTree.tree.getObjectReader().has(commitTree.tree.getObjectId(0))) {
+      true
+    } else { // tree hasNext, but blob obj is missing
+      moveIteratorSkippingMissingObj
+    }
+  }
+
 }
 
 object JGitBlobIterator {
