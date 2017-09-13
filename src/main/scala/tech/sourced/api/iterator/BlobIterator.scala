@@ -39,9 +39,9 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
       filtered
     } else {
       val refs = new Git(repo).branchList().call().asScala.filter(!_.isSymbolic)
-      println(s"Iterating all ${refs.size} refs")
+      log.warn(s"Iterating all ${refs.size} refs")
       refs.toIterator.flatMap { ref =>
-        println(s" $ref")
+        log.warn(s" $ref")
         JGitBlobIterator(getTreeWalk(ref.getObjectId), log)
       }
     }
