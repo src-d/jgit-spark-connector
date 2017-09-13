@@ -11,12 +11,14 @@ lazy val root = (project in file(".")).
     )),
     name := "spark-api",
     libraryDependencies += scalaTest % Test,
-    libraryDependencies += sparkSql % Compile,
+    libraryDependencies += sparkSql % Provided,
     libraryDependencies += jgit % Compile,
     libraryDependencies += siva % Compile,
     libraryDependencies += commonsIO % Compile,
 
-    resolvers += "jitpack" at "https://jitpack.io"
+    resolvers += "jitpack" at "https://jitpack.io",
+
+    test in assembly := {}
   )
 
 jacoco.settings
