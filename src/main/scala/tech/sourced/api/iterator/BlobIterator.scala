@@ -49,7 +49,7 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
   }
 
   override protected def mapColumns(commitTree: CommitTree): Map[String, () => Any] = {
-    log.debug(s"Reading blob: ${commitTree.tree.getObjectId(0)} of tree:${commitTree.tree.getPathString} from commit:${commitTree.commit}")
+    log.debug(s"Reading blob:${commitTree.tree.getObjectId(0).name()} of tree:${commitTree.tree.getPathString} from commit:${commitTree.commit.name()}")
     val content = BlobIterator.readFile(commitTree.tree.getObjectId(0), commitTree.tree.getObjectReader)
     val isBinary = RawText.isBinary(content)
     Map[String, () => Any](
