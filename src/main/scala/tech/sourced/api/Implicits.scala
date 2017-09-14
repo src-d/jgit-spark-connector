@@ -1,12 +1,24 @@
 package tech.sourced.api
 
 import org.apache.spark.SparkException
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import tech.sourced.api.customudf.{CustomUDF, ClassifyLanguagesUDF}
 
 object Implicits {
-  implicit def addSessionFunctions(session: SparkSession) = {
-    new SessionFunctions(session)
+
+  implicit class SessionFunctions(session: SparkSession) {
+    def registerUDFs(): Unit = {
+      SessionFunctions.UDFtoRegister.foreach(customUDF => session.udf.register(customUDF.name, customUDF.function))
+    }
+
+    def getRepositories(): DataFrame = Implicits.getDataSource("repositories", session)
+  }
+
+  object SessionFunctions {
+    val UDFtoRegister = List[CustomUDF](
+      ClassifyLanguagesUDF
+    )
   }
 
   implicit class ApiDataFrame(df: DataFrame) {
@@ -39,6 +51,11 @@ object Implicits {
         filesDf
       }
     }
+
+    def classifyLanguages: DataFrame = {
+      Implicits.checkCols(df, "is_binary", "path", "content")
+      df.withColumn("lang", ClassifyLanguagesUDF.function('is_binary, 'path, 'content))
+    }
   }
 
   def getDataSource(table: String, session: SparkSession): DataFrame =
@@ -51,8 +68,6 @@ object Implicits {
       throw new SparkException("method cannot be applied into this DataFrame")
     }
   }
+
 }
 
-class SessionFunctions(session: SparkSession) {
-  def getRepositories: DataFrame = Implicits.getDataSource("repositories", session)
-}
