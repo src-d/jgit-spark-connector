@@ -1,5 +1,6 @@
 package tech.sourced.api
 
+import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
@@ -14,6 +15,9 @@ trait BaseSparkSpec extends BeforeAndAfterAll {
       .appName("test").master("local[*]")
       .config("spark.driver.host", "localhost")
       .getOrCreate()
+
+    import Implicits._
+    ss.registerUDFs()
   }
 
   override protected def afterAll(): Unit = {
