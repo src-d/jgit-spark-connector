@@ -19,30 +19,18 @@ class RepositoryProvider(val localPath: String) {
   private val repositories: concurrent.Map[String, Repository] =
     new ConcurrentHashMap[String, Repository]().asScala
 
-  def get(conf: Configuration, path: String): Repository = {
-    repositories.get(path) match {
-      case Some(r) =>
-        r.incrementOpen()
-        r
-      case None =>
-        val repo = RepositoryProvider.genRepository(conf, path, localPath)
-        repositories.put(path, repo)
-        repo
-    }
-  }
+  def get(conf: Configuration, path: String): Repository =
+    repositories.getOrElseUpdate(path, RepositoryProvider.genRepository(conf, path, localPath))
 
   def get(pds: PortableDataStream): Repository =
     this.get(pds.getConfiguration, pds.getPath())
 
-  def close(path: String): Unit = {
-    repositories.get(path) match {
-      case Some(r) =>
-        r.close()
+  def close(path: String): Unit =
+    repositories.get(path).foreach(r => {
+      r.close()
       // TODO maybe others are using this repository instance
       // FileUtils.deleteQuietly(r.getDirectory)
-      case None =>
-    }
-  }
+    })
 }
 
 object RepositoryProvider {
