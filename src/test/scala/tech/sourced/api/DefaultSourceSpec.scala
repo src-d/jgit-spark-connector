@@ -60,5 +60,24 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     assert(cnt != 0)
   }
 
+  "Convenience for getting files" should "work without commits" in {
+    val spark = ss
+    spark.sqlContext.setConf("tech.sourced.api.repositories.path", resourcePath)
+
+    import Implicits._
+    import spark.implicits._
+
+    val filesDf = ss
+      .getRepositories.filter($"id" === "github.com/mawag/faq-xiyoulinux")
+      .getReferences.filter($"name".equalTo("refs/heads/HEAD"))
+      .getFiles
+      .select("repository_id", "name", "path", "commit_hash", "file_hash", "content")
+
+    val cnt = filesDf.count()
+    info(s"Total $cnt rows")
+    assert(cnt != 0)
+
+    filesDf.show()
+  }
 
 }

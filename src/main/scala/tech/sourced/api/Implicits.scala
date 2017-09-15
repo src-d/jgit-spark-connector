@@ -29,10 +29,15 @@ object Implicits {
     }
 
     def getFiles: DataFrame = {
-      Implicits.checkCols(df, "hash")
-      val commitsDf = df.drop("tree").distinct()
       val filesDf = Implicits.getDataSource("files", df.sparkSession)
-      filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
+
+      if (df.schema.fieldNames.contains("hash")) {
+        val commitsDf = df.drop("tree").distinct()
+        filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
+      } else {
+        Implicits.checkCols(df, "reference_name")
+        filesDf
+      }
     }
   }
 
