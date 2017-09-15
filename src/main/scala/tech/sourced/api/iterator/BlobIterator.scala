@@ -25,8 +25,12 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
   extends RootedRepoIterator[CommitTree](requiredColumns, repo) with Logging {
 
   override protected def loadIterator(): Iterator[CommitTree] = {
+    var filteredRefs = Set[String]()
     val filtered = filters.toIterator.flatMap { filter =>
-      filter.matchingCases.flatMap { hash =>
+      filter.matchingCases.getOrElse("reference_name", Seq()).foreach { ref =>
+        filteredRefs += ref.asInstanceOf[String]
+      }
+      filter.matchingCases.getOrElse("hash", Seq()).flatMap { hash =>
         val commitId = ObjectId.fromString(hash.asInstanceOf[String])
         if (repo.hasObject(commitId)) {
           JGitBlobIterator(getTreeWalk(commitId), this.log)
@@ -39,7 +43,14 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
     if (filtered.hasNext) {
       filtered
     } else {
-      val refs = new Git(repo).branchList().call().asScala.filter(!_.isSymbolic)
+      var refs = new Git(repo).branchList().call().asScala.filter(!_.isSymbolic)
+      if (!filteredRefs.isEmpty) {
+        refs = refs.filter { ref =>
+          val (_, refName) = parseRef(ref.getName)
+          filteredRefs.contains(refName)
+        }
+      }
+
       log.debug(s"Iterating all ${refs.size} refs")
       refs.toIterator.flatMap { ref =>
         log.debug(s" $ref")
