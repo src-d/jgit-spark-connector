@@ -87,4 +87,21 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
       }, total = 4, columnsCount = 5
     )
   }
+
+    "BlobIterator" should "not fail with other, un-supported filters" in {
+    val filters = Array[CompiledFilter](new EqualFilter("path", "README"))
+
+    testIterator(
+      new BlobIterator(
+        Array(
+          "file_hash",
+          "content",
+          "commit_hash",
+          "is_binary",
+          "path"
+        ), _, filters), {
+        case _ =>
+      }, total = 433, columnsCount = 5)
+    }
+
 }

@@ -36,12 +36,12 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
             filteredRefs.contains(refName)
           }
           log.debug(s"Iterating all ${refs.size} refs")
-          refs.flatMap { ref =>
+          refs.toIterator.flatMap { ref =>
             log.debug(s" $ref")
             JGitBlobIterator(getTreeWalk(ref.getObjectId), log)
           }
         case ("hash", filteredHashes) =>
-          filteredHashes.flatMap { hash =>
+          filteredHashes.toIterator.flatMap { hash =>
             val commitId = ObjectId.fromString(hash.asInstanceOf[String])
             if (repo.hasObject(commitId)) {
               JGitBlobIterator(getTreeWalk(commitId), this.log)
@@ -49,6 +49,9 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
               Seq()
             }
           }
+        case anyOtherFilter =>
+          log.debug(s"BlobIterator does not support filter $anyOtherFilter")
+          Seq()
       }
 
     if (filtered.hasNext) {
