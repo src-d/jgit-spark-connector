@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets
 import org.scalatest.FlatSpec
 import tech.sourced.api.util.{CompiledFilter, EqualFilter}
 
-class BlogIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
+class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
 
   "BlobIterator" should "return all blobs for files at heads of all refs in repository" in {
     testIterator(

@@ -25,32 +25,35 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
   extends RootedRepoIterator[CommitTree](requiredColumns, repo) with Logging {
 
   override protected def loadIterator(): Iterator[CommitTree] = {
-    var filteredRefs = Set[String]()
-    val filtered = filters.toIterator.flatMap { filter =>
-      filter.matchingCases.getOrElse("reference_name", Seq()).foreach { ref =>
-        filteredRefs += ref.asInstanceOf[String]
+    var refs = new Git(repo).branchList().call().asScala.filter(!_.isSymbolic)
+
+    val filtered = filters.toIterator
+      .flatMap(_.matchingCases)
+      .flatMap {
+        case ("reference_name", filteredRefs) =>
+          refs = refs.filter { ref =>
+            val (_, refName) = parseRef(ref.getName)
+            filteredRefs.contains(refName)
+          }
+          log.debug(s"Iterating all ${refs.size} refs")
+          refs.flatMap { ref =>
+            log.debug(s" $ref")
+            JGitBlobIterator(getTreeWalk(ref.getObjectId), log)
+          }
+        case ("hash", filteredHashes) =>
+          filteredHashes.flatMap { hash =>
+            val commitId = ObjectId.fromString(hash.asInstanceOf[String])
+            if (repo.hasObject(commitId)) {
+              JGitBlobIterator(getTreeWalk(commitId), this.log)
+            } else {
+              Seq()
+            }
+          }
       }
-      filter.matchingCases.getOrElse("hash", Seq()).flatMap { hash =>
-        val commitId = ObjectId.fromString(hash.asInstanceOf[String])
-        if (repo.hasObject(commitId)) {
-          JGitBlobIterator(getTreeWalk(commitId), this.log)
-        } else {
-          Seq()
-        }
-      }
-    }
 
     if (filtered.hasNext) {
       filtered
     } else {
-      var refs = new Git(repo).branchList().call().asScala.filter(!_.isSymbolic)
-      if (!filteredRefs.isEmpty) {
-        refs = refs.filter { ref =>
-          val (_, refName) = parseRef(ref.getName)
-          filteredRefs.contains(refName)
-        }
-      }
-
       log.debug(s"Iterating all ${refs.size} refs")
       refs.toIterator.flatMap { ref =>
         log.debug(s" $ref")
