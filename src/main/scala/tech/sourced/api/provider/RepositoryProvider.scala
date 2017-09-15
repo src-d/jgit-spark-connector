@@ -65,6 +65,7 @@ object RepositoryProvider {
     val localSivaPath = new Path(localPath, new Path(temporalSivaFolder, remotePath.getName))
 
     // Copy siva file to local fs
+    println(s"Copy $remotePath to $localSivaPath")
     FileSystem.get(conf)
       .copyToLocalFile(remotePath, localSivaPath)
 
