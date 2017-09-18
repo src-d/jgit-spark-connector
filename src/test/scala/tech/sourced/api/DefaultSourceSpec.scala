@@ -24,13 +24,15 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
     commitsDf.show()
 
-    // TODO files not implemented yet
-    //    val filesDf = ss.read.format("tech.sourced.api")
-    //      .option("table", "files")
-    //      .load(resourcePath)
-    //
-    //    filesDf.withColumn("content string", filesDf("content").cast(StringType)).show()
+    info("Files/blobs (without commit hash filtered) at HEAD or every ref:\n")
+    val filesDf = ss.read.format("tech.sourced.api")
+      .option("table", "files")
+      .load(resourcePath)
 
+    filesDf.explain(true)
+    filesDf.show()
+
+    assert(filesDf.count() != 0)
   }
 
   "Additional methods" should "work correctly" in {
@@ -44,8 +46,38 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     val reposDf = spark.getRepositories
       .filter($"id" === "github.com/mawag/faq-xiyoulinux" || $"id" === "github.com/xiyou-linuxer/faq-xiyoulinux")
     val refsDf = reposDf.getReferences.filter($"name".equalTo("refs/heads/HEAD"))
-    val commitsDf = refsDf.getCommits.select("repository_id", "reference_name", "message")
 
+    val commitsDf = refsDf.getCommits.select("repository_id", "reference_name", "message", "hash")
     commitsDf.show()
+
+    info("Files/blobs with commit hashes:\n")
+    val filesDf = refsDf.getCommits.getFiles.select("repository_id", "reference_name", "path", "commit_hash", "file_hash")
+    filesDf.explain(true)
+    filesDf.show()
+
+    val cnt = filesDf.count()
+    info(s"Total $cnt rows")
+    assert(cnt != 0)
   }
+
+  "Convenience for getting files" should "work without commits" in {
+    val spark = ss
+    spark.sqlContext.setConf("tech.sourced.api.repositories.path", resourcePath)
+
+    import Implicits._
+    import spark.implicits._
+
+    val filesDf = ss
+      .getRepositories.filter($"id" === "github.com/mawag/faq-xiyoulinux")
+      .getReferences.filter($"name".equalTo("refs/heads/HEAD"))
+      .getFiles
+      .select("repository_id", "name", "path", "commit_hash", "file_hash", "content")
+
+    val cnt = filesDf.count()
+    info(s"Total $cnt rows")
+    assert(cnt != 0)
+
+    filesDf.show()
+  }
+
 }

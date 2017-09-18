@@ -10,7 +10,10 @@ trait BaseSparkSpec extends BeforeAndAfterAll {
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    ss = SparkSession.builder().appName("test").master("local[*]").getOrCreate()
+    ss = SparkSession.builder()
+      .appName("test").master("local[*]")
+      .config("spark.driver.host", "localhost")
+      .getOrCreate()
   }
 
   override protected def afterAll(): Unit = {
