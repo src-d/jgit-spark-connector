@@ -12,6 +12,7 @@ lazy val root = (project in file(".")).
     name := "spark-api",
     libraryDependencies += scalaTest % Test,
     libraryDependencies += sparkSql % Provided,
+    libraryDependencies += newerHadoopClient % Provided, //due to newer v. of guava in bblfsh
     libraryDependencies += jgit % Compile,
     libraryDependencies += siva % Compile,
     libraryDependencies += bblfsh % Compile,
