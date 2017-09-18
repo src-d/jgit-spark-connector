@@ -3,6 +3,7 @@ package tech.sourced.api
 import org.scalatest._
 
 class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSparkSpec {
+
   "Default source" should "load correctly" in {
     val reposDf = ss.read.format("tech.sourced.api")
       .option("table", "repositories")
@@ -57,7 +58,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     assert(cnt != 0)
   }
 
-  "Convenience for getting files" should "work without commits" in {
+  "Convenience for getting files" should "work without reading commits" in {
     val spark = ss
     import spark.implicits._
 
@@ -72,6 +73,13 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     assert(cnt != 0)
 
     filesDf.show()
+
+    info("UAST for files:\n")
+    val filesCols = filesDf.columns.length
+    val uasts = filesDf.extractUASTs()
+    uasts.show()
+    val uastsCols = uasts.columns.length
+    assert(uastsCols - 1 == filesCols)
   }
 
 }

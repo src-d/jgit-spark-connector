@@ -14,6 +14,7 @@ lazy val root = (project in file(".")).
     libraryDependencies += sparkSql % Provided,
     libraryDependencies += jgit % Compile,
     libraryDependencies += siva % Compile,
+    libraryDependencies += bblfsh % Compile,
     libraryDependencies += commonsIO % Compile,
     libraryDependencies += "tech.sourced" % "enry-java" % "1.0",
 
