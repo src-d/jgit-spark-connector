@@ -72,8 +72,8 @@ object Implicits {
       .load(session.sqlContext.getConf("tech.sourced.api.repositories.path"))
 
   def checkCols(df: DataFrame, cols: String*): Unit = {
-    if (!df.schema.fieldNames.containsSlice(cols)) {
-      throw new SparkException("method cannot be applied into this DataFrame")
+    if (!df.columns.exists(cols.contains)) {
+      throw new SparkException(s"Method can not be applied to this DataFrame: required:'${cols.mkString(" ")}', actual columns:'${df.columns.mkString(" ")}'")
     }
   }
 
