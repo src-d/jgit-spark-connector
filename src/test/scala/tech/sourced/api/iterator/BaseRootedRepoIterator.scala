@@ -13,7 +13,8 @@ trait BaseRootedRepoIterator extends Suite with BaseSparkSpec with BaseSivaSpec 
     val prov: SivaRDDProvider = SivaRDDProvider(ss.sparkContext)
     val rdd: RDD[PortableDataStream] = prov.get(resourcePath)
 
-    val pds: PortableDataStream = rdd.collect()(1)
+    val pds: PortableDataStream = rdd.filter(pds => pds.getPath()
+      .contains("fff7062de8474d10a67d417ccea87ba6f58ca81d.siva")).first()
     val repo: Repository = RepositoryProvider("/tmp").get(pds)
 
     val ri: Iterator[Row] = iterator(repo)
