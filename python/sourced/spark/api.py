@@ -331,7 +331,7 @@ class BlobsDataFrame(SourcedDataFrame):
     """
 
     def __init__(self, jdf, session, implicits):
-        SourcedDataFrame.__init__(jdf, session, implicits)
+        SourcedDataFrame.__init__(self, jdf, session, implicits)
 
     
     def classify_languages(self):

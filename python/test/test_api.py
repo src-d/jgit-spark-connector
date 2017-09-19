@@ -72,13 +72,16 @@ class APITestCase(BaseTestCase):
 
         self.assertEquals(len(repo_commits), len(REPOSITORIES))
         for repo in repo_commits:
-            self.assertEquals(repo['count'], 
-                              REPOSITORY_COMMITS[repo.repository_id])
+            self.assertEqual(repo['count'], 
+                             REPOSITORY_COMMITS[repo.repository_id])
 
 
-    @expectedFailure
     def test_blobs(self):
         df = self.api.repositories.references.commits.blobs
+        self.assertEqual(df.count(), 5275)
+        blob = df.sort(df.file_hash).limit(1).first()
+        self.assertEqual(blob.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
+        self.assertEqual(blob.path, 'sequel_core/stress/mem_array_keys.rb')
 
 
     @expectedFailure
