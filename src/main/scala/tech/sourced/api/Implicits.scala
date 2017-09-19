@@ -61,6 +61,7 @@ object Implicits {
       Implicits.checkCols(df, "path", "content")
       import org.apache.spark.sql.functions.udf
       val extractUastUDF = udf(BblfshUDF.extractUAST)
+      df.sparkSession.udf.register("extract_uasts", extractUastUDF)
       df.withColumn("uast", extractUastUDF('path, 'content))
     }
 
