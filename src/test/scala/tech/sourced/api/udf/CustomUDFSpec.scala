@@ -1,4 +1,4 @@
-package tech.sourced.api.customudf
+package tech.sourced.api.udf
 
 import org.apache.spark.sql.types.{StringType, StructField}
 import org.scalatest.{FlatSpec, Matchers}

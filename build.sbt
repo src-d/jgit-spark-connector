@@ -18,7 +18,7 @@ lazy val root = (project in file(".")).
     libraryDependencies += siva % Compile,
     libraryDependencies += bblfsh % Compile,
     libraryDependencies += commonsIO % Compile,
-    libraryDependencies += "tech.sourced" % "enry-java" % "1.0",
+    libraryDependencies += enry % Compile,
 
     resolvers += "jitpack" at "https://jitpack.io",
     // TODO: remove this local resolver when enry-java will be available from jitpack.
