@@ -1,6 +1,6 @@
+import os
 from sourced.spark import API as SparkAPI
 from pyspark.sql import SparkSession
-import os 
 
 def main():
     file_path = os.path.dirname(os.path.realpath(__file__))

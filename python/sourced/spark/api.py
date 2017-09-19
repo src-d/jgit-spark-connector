@@ -21,6 +21,7 @@ class API(object):
         java_import(self.__jvm, 'tech.sourced.api.Implicits')
         self.__implicits = self.__jvm.tech.sourced.api.Implicits
 
+
     @property
     def repositories(self):
         """
@@ -331,3 +332,19 @@ class BlobsDataFrame(SourcedDataFrame):
 
     def __init__(self, jdf, session, implicits):
         SourcedDataFrame.__init__(jdf, session, implicits)
+
+    
+    def classify_languages(self):
+        """
+        Returns a new DataFrame with the language data of any blob added to
+        its row.
+        """
+        raise NotImplementedError("classify_languages not yet implemented")
+
+
+    def parse_uasts(self):
+        """
+        Returns a new DataFrame with the parsed UAST data of any blob added to
+        its row.
+        """
+        raise NotImplementedError("parse_uasts not yet implemented")
