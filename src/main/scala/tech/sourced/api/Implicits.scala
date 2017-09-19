@@ -51,11 +51,21 @@ object Implicits {
       }
     }
 
+    /**
+      * Classify content of eahc file by programming language used, using Enry
+      *
+      * @return DataFrame with a new column 'lang'
+      */
     def classifyLanguages: DataFrame = {
       Implicits.checkCols(df, "is_binary", "path", "content")
       df.withColumn("lang", ClassifyLanguagesUDF.function('is_binary, 'path, 'content))
     }
 
+    /**
+      * Extract UAST from each file using Bblfsh
+      *
+      * @return DataFrame with a new column 'uast', that contains Protobuf serialized UAST
+      */
     def extractUASTs(): DataFrame = {
       Implicits.checkCols(df, "path", "content")
       if (df.columns.contains("lang")) {
