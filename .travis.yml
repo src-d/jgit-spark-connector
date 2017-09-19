@@ -58,6 +58,17 @@ include:
     after_success:
       - echo "" # noop to avoid executing the one from the main build
 
+    before_deploy:
+      - echo "$TRAVIS_TAG" | cut -c 2- > version.txt
+
+    deploy:
+      provider: pypi
+      user: $PYPI_USERNAME
+      password: $PYPI_PASSWORD
+      skip_cleanup: true
+      on:
+        tags: true
+
 script:
   - ./sbt ++$TRAVIS_SCALA_VERSION jacoco:cover
   - ./sbt assembly
