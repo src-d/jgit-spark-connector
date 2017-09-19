@@ -1,12 +1,24 @@
 language: scala
+
 scala:
    - 2.11.11
 jdk:
   - openjdk8
   - jdk8
+
 matrix:
   fast_finish: true
+
+cache:
+  directories:
+    - $HOME/.sbt
+    - $HOME/.ivy2
+
+before_script:
+  - ./local-install-enry-java.sh
+
 script:
   - sbt ++$TRAVIS_SCALA_VERSION jacoco:cover
+
 after_success:
   - bash <(curl -s https://codecov.io/bash)
