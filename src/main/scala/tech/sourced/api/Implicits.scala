@@ -7,12 +7,19 @@ import tech.sourced.api.customudf.{CustomUDF, ClassifyLanguagesUDF}
 
 object Implicits {
 
+  val repositoriesPathKey = "tech.sourced.api.repositories.path"
+
   implicit class SessionFunctions(session: SparkSession) {
     def registerUDFs(): Unit = {
       SessionFunctions.UDFtoRegister.foreach(customUDF => session.udf.register(customUDF.name, customUDF.function))
     }
 
     def getRepositories(): DataFrame = Implicits.getDataSource("repositories", session)
+
+    def setRepositoriesPath(path: String): SparkSession = {
+      session.sqlContext.setConf(Implicits.repositoriesPathKey, path)
+      session
+    }
   }
 
   object SessionFunctions {
@@ -61,7 +68,7 @@ object Implicits {
   def getDataSource(table: String, session: SparkSession): DataFrame =
     session.read.format("tech.sourced.api.DefaultSource")
       .option("table", table)
-      .load(session.sqlContext.getConf("tech.sourced.api.repositories.path"))
+      .load(session.sqlContext.getConf(repositoriesPathKey))
 
   def checkCols(df: DataFrame, cols: String*): Unit = {
     if (!df.schema.fieldNames.containsSlice(cols)) {

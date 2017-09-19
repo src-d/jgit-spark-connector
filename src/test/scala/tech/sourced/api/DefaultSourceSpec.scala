@@ -38,12 +38,10 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
   "Additional methods" should "work correctly" in {
     val spark = ss
 
-    spark.sqlContext.setConf("tech.sourced.api.repositories.path", resourcePath)
-
     import Implicits._
     import spark.implicits._
 
-    val reposDf = spark.getRepositories
+    val reposDf = spark.setRepositoriesPath(resourcePath).getRepositories
       .filter($"id" === "github.com/mawag/faq-xiyoulinux" || $"id" === "github.com/xiyou-linuxer/faq-xiyoulinux")
     val refsDf = reposDf.getReferences.filter($"name".equalTo("refs/heads/HEAD"))
 
@@ -62,12 +60,11 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
   "Convenience for getting files" should "work without commits" in {
     val spark = ss
-    spark.sqlContext.setConf("tech.sourced.api.repositories.path", resourcePath)
 
     import Implicits._
     import spark.implicits._
 
-    val filesDf = ss
+    val filesDf = spark.setRepositoriesPath(resourcePath)
       .getRepositories.filter($"id" === "github.com/mawag/faq-xiyoulinux")
       .getReferences.filter($"name".equalTo("refs/heads/HEAD"))
       .getFiles
