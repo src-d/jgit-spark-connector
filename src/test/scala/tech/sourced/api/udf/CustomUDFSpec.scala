@@ -59,7 +59,6 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
 
   "UAST parsing of content" should "produce non-empty results" in {
     val spark = ss
-    import Implicits._
     import spark.implicits._
 
     val uastDf = fileSeq.toDF(fileColumns: _*).extractUASTs
@@ -75,7 +74,6 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
 
   "UAST parsing of content with language" should "produce non-empty results" in {
     val spark = ss
-    import Implicits._
     import spark.implicits._
 
     val uastDf = fileSeq.toDF(fileColumns: _*).classifyLanguages.extractUASTs

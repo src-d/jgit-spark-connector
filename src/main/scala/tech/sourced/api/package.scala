@@ -2,7 +2,7 @@ package tech.sourced
 
 import org.apache.spark.SparkException
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import tech.sourced.api.customudf.{ClassifyLanguagesUDF, CustomUDF}
+import tech.sourced.api.udf.{ClassifyLanguagesUDF, CustomUDF, ExtractUASTsUDF}
 
 /**
   * Provides the [[tech.sourced.api.SparkAPI]] class, which is the main entry point
@@ -35,6 +35,9 @@ package object api {
 
   implicit class SessionFunctions(session: SparkSession) {
     def registerUDFs(): Unit = {
+      ExtractUASTsUDF.bblfshHost = session.sparkContext.getConf.get(bblfshHostKey, "0.0.0.0")
+      ExtractUASTsUDF.bblfshPort = session.sparkContext.getConf.getInt(bblfsPortKey, 9432)
+
       SessionFunctions.UDFtoRegister.foreach(customUDF => session.udf.register(customUDF.name, customUDF.function))
     }
   }
@@ -43,6 +46,7 @@ package object api {
     * Adds some utility methods to the [[org.apache.spark.sql.DataFrame]] class
     * so you can, for example, get the references, commits, etc from a data frame
     * containing repositories.
+    *
     * @param df the DataFrame
     */
   implicit class ApiDataFrame(df: DataFrame) {
@@ -114,7 +118,7 @@ package object api {
 
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with a new column "lang" added
-      * containing the language of the file.
+      * containing the language of the non-binary files.
       * It requires the current dataframe to have the files data.
       *
       * {{{
@@ -127,6 +131,28 @@ package object api {
       checkCols(df, "is_binary", "path", "content")
       df.withColumn("lang", ClassifyLanguagesUDF.function('is_binary, 'path, 'content))
     }
+
+    /**
+      * Returns a new [[org.apache.spark.sql.DataFrame]] with a new column "uast" added,
+      * that contains Protobuf serialized UAST.
+      * It requires the current dataframe to have file's data: path and content.
+      * If language is available, it's going to be used i.e to avoid parsing Text and Markdown.
+      *
+      * {{{
+      * val uastsDf = filesDf.extractUASTs
+      * }}}
+      *
+      * @return new DataFrame that contains Protobuf serialized UAST.
+      */
+    def extractUASTs(): DataFrame = {
+      checkCols(df, "path", "content")
+      if (df.columns.contains("lang")) {
+        df.withColumn("uast", ExtractUASTsUDF.functionMoreArgs('path, 'content, 'lang))
+      } else {
+        df.withColumn("uast", ExtractUASTsUDF.function('path, 'content))
+      }
+    }
+
   }
 
   private[api] def getDataSource(table: String, session: SparkSession): DataFrame =
@@ -135,14 +161,15 @@ package object api {
       .load(session.sqlContext.getConf(repositoriesPathKey))
 
   private[api] def checkCols(df: DataFrame, cols: String*): Unit = {
-    if (!df.schema.fieldNames.containsSlice(cols)) {
-      throw new SparkException("method cannot be applied into this DataFrame")
+    if (!df.columns.exists(cols.contains)) {
+      throw new SparkException(s"Method can not be applied to this DataFrame: required:'${cols.mkString(" ")}'," +
+        s" actual columns:'${df.columns.mkString(" ")}'")
     }
   }
 
+
   private[api] object SessionFunctions {
-    val UDFtoRegister = List[CustomUDF](
-      ClassifyLanguagesUDF
-    )
+    val UDFtoRegister = List[CustomUDF](ClassifyLanguagesUDF, ExtractUASTsUDF)
   }
+
 }
