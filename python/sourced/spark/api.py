@@ -1,3 +1,4 @@
+from __future__ import print_function
 from py4j.java_gateway import java_import
 from pyspark.sql import SparkSession, DataFrame
 
@@ -18,8 +19,12 @@ class API(object):
         self.__jsparkSession = session._jsparkSession
         self.session.conf.set('tech.sourced.api.repositories.path', repos_path)
         self.__jvm = self.session.sparkContext._gateway.jvm
-        java_import(self.__jvm, 'tech.sourced.api.Implicits')
-        self.__implicits = self.__jvm.tech.sourced.api.Implicits
+        java_import(self.__jvm, 'tech.sourced.api.SparkAPI')
+        java_import(self.__jvm, 'tech.sourced.api.package$')
+        self.__api = self.__jvm.tech.sourced.api.SparkAPI(self.__jsparkSession)
+        self.__api.setRepositoriesPath(repos_path)
+        self.__api.registerUDFs()
+        self.__implicits = getattr(getattr(self.__jvm.tech.sourced.api, 'package$'), 'MODULE$')
 
 
     @property
@@ -27,8 +32,7 @@ class API(object):
         """
         Returns a DataFrame with the repositories available at the given path.
         """
-        return RepositoriesDataFrame(self.__implicits.getDataSource('repositories',
-                                                                    self.__jsparkSession),
+        return RepositoriesDataFrame(self.__api.getRepositories(), 
                                      self.session, self.__implicits)
 
 
