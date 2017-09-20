@@ -69,7 +69,7 @@ object Implicits {
     def extractUASTs(): DataFrame = {
       Implicits.checkCols(df, "path", "content")
       if (df.columns.contains("lang")) {
-          df.withColumn("uast", extractUASTsUDF.function('path, 'content, 'lang))
+          df.withColumn("uast", extractUASTsUDF.functionMoreArgs('path, 'content, 'lang))
       } else {
         df.withColumn("uast", extractUASTsUDF.function('path, 'content))
       }
