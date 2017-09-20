@@ -1,8 +1,18 @@
 # spark-api [![Build Status](https://travis-ci.org/src-d/spark-api.svg?branch=master)](https://travis-ci.org/src-d/spark-api)
 
-High-level Spark API is for running scalable data retrieval pipelines that process and manipulate any number of code repositories for source code analysis. Written mostly in Scala, it aims to be robust, friendly and flexible: it is built on top of Apache Spark, accessible both via Scala and Python Spark APIs, and capable of running on large-scale distributed clusters over petabytes of data.
+**Spark API** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
 
-# Quickstart
+It is written in Scala and built on top of Apache Spark to enable rapid construction of custom analysis pipelines and processing large number of Git repositories stored in HDFS in [Siva file format](https://github.com/src-d/go-siva). It is accessible both via Scala and Python Spark APIs, and capable of running on large-scale distributed clusters.
+
+Current implementation combines:
+ - [src-d/enry](https://github.com/src-d/enry) to detect programming language of every file
+ - [bblfsh/client-scala](https://github.com/bblfsh/client-scala) to parse every file to UAST
+ - [src-d/siva-java](https://github.com/src-d/siva-java) for reading Siva files in JVM 
+ - [apache/spark](https://github.com/apache/spark) to extend DataFrame API
+ - [eclipse/jgit](https://github.com/eclipse/jgit) for working with Git .pack files
+
+
+# Quick-start
 
 ```bash
 $ wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz"
