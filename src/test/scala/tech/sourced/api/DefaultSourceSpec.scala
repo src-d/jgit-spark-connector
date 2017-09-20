@@ -76,7 +76,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
     info("UAST for files:\n")
     val filesCols = filesDf.columns.length
-    val uasts = filesDf.extractUASTs()
+    val uasts = filesDf.classifyLanguages.extractUASTs
     uasts.show()
     val uastsCols = uasts.columns.length
     assert(uastsCols - 1 == filesCols)
