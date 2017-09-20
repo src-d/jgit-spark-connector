@@ -15,8 +15,6 @@ trait BaseSparkSpec extends BeforeAndAfterAll {
       .appName("test").master("local[*]")
       .config("spark.driver.host", "localhost")
       .getOrCreate()
-
-    import Implicits._
     ss.registerUDFs()
   }
 
