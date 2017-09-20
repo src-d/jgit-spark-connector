@@ -172,3 +172,7 @@ To run tests:
 ```
 $ sbt tests
 ```
+
+# License
+
+Apache License Version 2.0, see [LICENSE](https://github.com/src-d/spark-api/blob/master/LICENSE)
