@@ -1,12 +1,12 @@
 # spark-api [![Build Status](https://travis-ci.org/src-d/spark-api.svg?branch=master)](https://travis-ci.org/src-d/spark-api)
 
-High-level Spark API for running scalable data retrieval pipelines that process and manipulate any number of code repositories for source code analysis. Written mostly in Scala, it aims to be robust, friendly and flexible: it is built on top of Apache Spark, accessible both via Scala and Python Spark APIs, and capable of running on large-scale distributed clusters over petabytes of data.
+High-level Spark API is for running scalable data retrieval pipelines that process and manipulate any number of code repositories for source code analysis. Written mostly in Scala, it aims to be robust, friendly and flexible: it is built on top of Apache Spark, accessible both via Scala and Python Spark APIs, and capable of running on large-scale distributed clusters over petabytes of data.
 
 # Quickstart
 
 ```bash
-$ wget https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz
-$ tar -xzf spark-2.2.0-bin-hadoop2.7.tgz
+$ wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz"
+$ tar -xzf spark-2.2.0-bin-hadoop2.7.tgz; cd spark-2.2.0-bin-hadoop2.7
 $ bin/spark-shell --packages "com.github.src-d:spark-api:master-SNAPSHOT" --repositories "https://jitpack.io"
 
 # or
@@ -18,7 +18,7 @@ $ bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:
 
 ## Apache Spark Installation
 
-Firstly, you need to download [Apache Spark](https://spark.apache.org/) somewhere on your machine:
+First, you need to download [Apache Spark](https://spark.apache.org/) somewhere on your machine:
 
 ```bash
 $ cd /tmp && wget https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz
@@ -146,7 +146,7 @@ scala> spark.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
 Build the fatjar is needed to build the docker image that contains the jupyter server,  or test changes in spark-shell just passing the jar with `--jars` flag:
 
 ```bash
-$ sbt assembly
+$ ./sbt assembly
 ```
 
 It leaves the fatjar in `target/scala-2.11/spark-api-uber.jar`
@@ -169,10 +169,10 @@ docker run -d --privileged -p 9432:9432 --name bblfsh bblfsh/server bblfsh serve
 ```
 
 To run tests:
-```
-$ sbt tests
+```bash
+$ ./sbt tests
 ```
 
 # License
 
-Apache License Version 2.0, see [LICENSE](https://github.com/src-d/spark-api/blob/master/LICENSE)
+Apache License Version 2.0, see [LICENSE](https://github.com/src-d/spark-api/blob/master/LICENSE    )
