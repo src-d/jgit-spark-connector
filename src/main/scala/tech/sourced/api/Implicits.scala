@@ -8,6 +8,9 @@ object Implicits {
 
   implicit class SessionFunctions(session: SparkSession) {
     def registerUDFs(): Unit = {
+      ExtractUASTsUDF.bblfshHost = session.sparkContext.getConf.get("tech.sourced.bblfsh.grpc.host", "0.0.0.0")
+      ExtractUASTsUDF.bblfshPort = session.sparkContext.getConf.getInt("tech.sourced.bblfsh.grpc.port", 9432)
+
       SessionFunctions.UDFtoRegister.foreach(customUDF => session.udf.register(customUDF.name, customUDF.function))
     }
 

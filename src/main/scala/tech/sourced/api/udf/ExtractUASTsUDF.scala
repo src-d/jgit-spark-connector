@@ -12,8 +12,8 @@ object ExtractUASTsUDF extends CustomUDF {
 
   val excludedLangs = Set("markdown", "text")
 
-  val bblfshHost = "0.0.0.0" //TODO(bzz) parametrize
-  val bblfshPort = 9432
+  var bblfshHost = "0.0.0.0"
+  var bblfshPort = 9432
 
   def extractUASTs(path: String, content: Array[Byte]): Array[Byte] = {
     extractUAST(path, content, "")
