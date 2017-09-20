@@ -66,7 +66,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
       .getRepositories.filter($"id" === "github.com/mawag/faq-xiyoulinux")
       .getReferences.filter($"name".equalTo("refs/heads/HEAD"))
       .getFiles
-      .select("repository_id", "name", "path", "commit_hash", "file_hash", "content")
+      .select("repository_id", "name", "path", "commit_hash", "file_hash", "content", "is_binary")
 
     val cnt = filesDf.count()
     info(s"Total $cnt rows")
@@ -79,7 +79,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     val uasts = filesDf.classifyLanguages.extractUASTs
     uasts.show()
     val uastsCols = uasts.columns.length
-    assert(uastsCols - 1 == filesCols)
+    assert(uastsCols - 2 == filesCols)
   }
 
 }

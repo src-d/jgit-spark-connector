@@ -26,7 +26,7 @@ object ExtractUASTsUDF extends CustomUDF {
   def extractUAST(path: String, content: Array[Byte], lang: String = ""): Array[Byte] =
     if (null == content || content.isEmpty) {
       Array.emptyByteArray
-    } else if (excludedLangs.contains(lang)) {
+    } else if (excludedLangs.contains(lang.toLowerCase)) {
       Array.emptyByteArray
     } else {
       val bblfshClient = BblfshClient(bblfshHost, bblfshPort)
