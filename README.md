@@ -14,7 +14,7 @@ $ bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:
 ```
 
 
-# Pre-requests
+# Pre-requisites
 
 ## Apache Spark Installation
 
@@ -36,7 +36,7 @@ Binaries and scripts to run `Spark` are located in spark-2.2.0-bin-hadoop2.7/bin
 $ export PATH=$PATH:$HOME/spark-2.2.0-bin-hadoop2.7/bin
 ```
 
-or just set SPARK_HOME and run it as following:
+or just set `SPARK_HOME` and run it as following:
 
 ```bash
 $ export SPARK_HOME=$HOME/spark-2.2.0-bin-hadoop2.7
@@ -45,14 +45,14 @@ $ $SPARK_HOME/bin/spark-shell
 
 # Examples of API usage
 
-## pySpark
+## pyspark
 
 ### Local mode
 
 Install python-wrappers is necessary to use spark-api from pyspark:
 
 ``` bash
-$ pip install  'git+https://github.com/erizocosmico/spark-api.git@feature/python-wrapper#egg=spark-api&subdirectory=python'
+$ pip install  'git+https://github.com/src-d/spark-api.git@master/python-wrapper#egg=spark-api&subdirectory=python'
 ```
 
 Then you should point to the remote repository where spark-api is hosted and provide the maven coordinates:
@@ -64,17 +64,17 @@ $ $SPARK_HOME/bin/pyspark --repositories "https://jitpack.io"  --packages "tech.
 
 Install spark-api wrappers as in local mode:
 ```bash
-$ pip install -e 'git+https://github.com/erizocosmico/spark-api.git@feature/python-wrapper#egg=spark-api&subdirectory=python'
+$ pip install -e 'git+https://github.com/src-d/spark-api.git@master/python-wrapper#egg=spark-api&subdirectory=python'
 ```
 
-Then you should package and compress with `zip`  the python-wrappers to provide pyspark with it. It's required to distribute the code among the nodes of the cluster.
+Then you should package and compress with `zip`  the python wrappers to provide pyspark with it. It's required to distribute the code among the nodes of the cluster.
 
 ```bash
 $ zip <path-to-installed-package> ./spark-api.zip
 $ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./spark-api.zip
 ```
 
-### pySpark API usage
+### pyspark API usage
 
 Run pyspark as explained before to start using spark-api:
 
@@ -103,7 +103,7 @@ SparkSession available as 'spark'.
 
 ## Scala API
 
-For the moment, `spark-api`  can only be installed from [jitpack](https://jitpack.io) (will be available from the Maven Central soon), so you should be able to run the `spark-shell` with `spark-api` as a required dependency in the following way:
+For the moment, `spark-api`  can only be installed from [jitpack](https://jitpack.io) (will be available from Maven Central soon), so you should be able to run the `spark-shell` with `spark-api` as a required dependency in the following way:
 
 ```bash
 $ spark-shell --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
@@ -112,7 +112,7 @@ $ spark-shell --packages com.github.src-d:spark-api:master-SNAPSHOT --repositori
 To start using spark-api from the shell you must import `spark-api` package and Implicits object from it:
 
 ```bash
-scala> import tech.sourced.api.Implicits_
+scala> import tech.sourced.api.Implicits._
 import tech.sourced.api.Implicits_
 ```
 
@@ -173,6 +173,22 @@ To run tests:
 $ ./sbt tests
 ```
 
+To run tests for python wrappers:
+
+```bash
+$ cd python
+$ python -m unittest discover -v
+```
+
+## enry
+
+spark-api uses [java bindings](https://github.com/src-d/enry/tree/master/java) from [enry](https://github.com/src-d/enry) but for the moment you must build them manually and publish them in your local repository.
+
+```bash
+$ git clone https://github.com/src-d/enry.git; cd enry/java
+$ make package && ./sbt publish-local
+```
+
 # License
 
-Apache License Version 2.0, see [LICENSE](https://github.com/src-d/spark-api/blob/master/LICENSE    )
+Apache License Version 2.0, see [LICENSE](https://github.com/src-d/spark-api/blob/master/LICENSE)
