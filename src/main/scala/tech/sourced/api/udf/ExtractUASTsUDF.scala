@@ -35,7 +35,9 @@ object ExtractUASTsUDF extends CustomUDF {
 
   def extractUsingBblfsh(bblfshClient: BblfshClient, path: String, content: Array[Byte], lang: String): Array[Byte] = {
     //FIXME(bzz): not everything is UTF-8 encoded :/
-    val parsed = bblfshClient.parse(path, content = new String(content, StandardCharsets.UTF_8), lang = lang)
+    val contentStr = new String(content, StandardCharsets.UTF_8)
+    println(s"Parsing path:'$path' with content:'$contentStr' using lang:'$lang'")
+    val parsed = bblfshClient.parse(path, content = contentStr, lang = lang)
     if (parsed.errors.isEmpty) {
       parsed.uast.get.toByteArray
     } else {
