@@ -62,7 +62,7 @@ $ $SPARK_HOME/bin/spark-shell
 Install python-wrappers is necessary to use spark-api from pyspark:
 
 ``` bash
-$ pip install  'git+https://github.com/src-d/spark-api.git@master/python-wrapper#egg=spark-api&subdirectory=python'
+$ pip install  'git+https://github.com/src-d/spark-api.git@master#egg=spark-api&subdirectory=python'
 ```
 
 Then you should point to the remote repository where spark-api is hosted and provide the maven coordinates:
@@ -74,7 +74,7 @@ $ $SPARK_HOME/bin/pyspark --repositories "https://jitpack.io"  --packages "tech.
 
 Install spark-api wrappers as in local mode:
 ```bash
-$ pip install -e 'git+https://github.com/src-d/spark-api.git@master/python-wrapper#egg=spark-api&subdirectory=python'
+$ pip install -e 'git+https://github.com/src-d/spark-api.git@master#egg=spark-api&subdirectory=python'
 ```
 
 Then you should package and compress with `zip`  the python wrappers to provide pyspark with it. It's required to distribute the code among the nodes of the cluster.
@@ -83,6 +83,8 @@ Then you should package and compress with `zip`  the python wrappers to provide 
 $ zip <path-to-installed-package> ./spark-api.zip
 $ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./spark-api.zip
 ```
+
+**NOTE:** right now, all the cluster nodes must be running the same operating system, since jar is not yet uploaded to maven central containing the native binaries for MacOS and Linux.
 
 ### pyspark API usage
 
@@ -119,23 +121,23 @@ For the moment, `spark-api`  can only be installed from [jitpack](https://jitpac
 $ spark-shell --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
 ```
 
-To start using spark-api from the shell you must import `spark-api` package and Implicits object from it:
+To start using spark-api from the shell you must import everything inside the `tech.sourced.api` package (or, if you prefer, just import `SparkAPI` and `ApiDataFrame` classes):
 
 ```bash
-scala> import tech.sourced.api.Implicits._
-import tech.sourced.api.Implicits_
+scala> import tech.sourced.api._
+import tech.sourced.api._
 ```
 
-To load siva files as the data source, you have to point to the directory that contains them:
+Now, you need to create an instance of `SparkAPI` and give it the spark session and the path of the directory containing the siva files:
 
 ```bash
-scala> spark.sqlContext.setConf("tech.sourced.api.repositories.path", "/path/to/siva-files")
+scala> val api = SparkAPI(spark, "/path/to/siva-files")
 ```
 
-Then you will be able to perform queries over the repositories:
+Then, you will be able to perform queries over the repositories:
 
 ```bash
-scala> spark.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
+scala> api.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
      | getReferences.filter('name === "refs/heads/HEAD").
      | getCommits.filter('message.contains("Initial")).
      | select('repository_id, 'hash, 'message).
@@ -183,7 +185,7 @@ To run tests:
 $ ./sbt tests
 ```
 
-To run tests for python wrappers:
+To run tests for python wrapper:
 
 ```bash
 $ cd python
@@ -198,6 +200,10 @@ spark-api uses [java bindings](https://github.com/src-d/enry/tree/master/java) f
 $ git clone https://github.com/src-d/enry.git; cd enry/java
 $ make package && ./sbt publish-local
 ```
+
+### Windows support
+
+There is no windows support in enry-java right now, so all the language detection features also have no windows support.
 
 # License
 
