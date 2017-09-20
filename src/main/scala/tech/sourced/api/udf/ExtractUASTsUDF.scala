@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets
 import org.apache.spark.sql.functions.udf
 import org.bblfsh.client.BblfshClient
 
-object extractUASTsUDF extends CustomUDF {
+object ExtractUASTsUDF extends CustomUDF {
   val name = "extractUASTs"
   val function = udf[Array[Byte], String, Array[Byte]](extractUASTs)
   val functionMoreArgs = udf[Array[Byte], String, Array[Byte], String](extractUASTsWithLang)

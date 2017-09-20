@@ -2,7 +2,7 @@ package tech.sourced.api
 
 import org.apache.spark.SparkException
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import tech.sourced.api.udf.{extractUASTsUDF, ClassifyLanguagesUDF, CustomUDF}
+import tech.sourced.api.udf.{ExtractUASTsUDF, ClassifyLanguagesUDF, CustomUDF}
 
 object Implicits {
 
@@ -16,7 +16,7 @@ object Implicits {
 
   object SessionFunctions {
     val UDFtoRegister = List[CustomUDF](
-      ClassifyLanguagesUDF
+      ClassifyLanguagesUDF, ExtractUASTsUDF
     )
   }
 
@@ -69,9 +69,9 @@ object Implicits {
     def extractUASTs(): DataFrame = {
       Implicits.checkCols(df, "path", "content")
       if (df.columns.contains("lang")) {
-          df.withColumn("uast", extractUASTsUDF.functionMoreArgs('path, 'content, 'lang))
+          df.withColumn("uast", ExtractUASTsUDF.functionMoreArgs('path, 'content, 'lang))
       } else {
-        df.withColumn("uast", extractUASTsUDF.function('path, 'content))
+        df.withColumn("uast", ExtractUASTsUDF.function('path, 'content))
       }
     }
 
