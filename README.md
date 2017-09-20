@@ -1,5 +1,6 @@
 # spark-api [![Build Status](https://travis-ci.org/src-d/spark-api.svg?branch=master)](https://travis-ci.org/src-d/spark-api)
 
+High-level Spark API for running scalable data retrieval pipelines that process and manipulate any number of code repositories for source code analysis. Written mostly in Scala, it aims to be robust, friendly and flexible: it is built on top of Apache Spark, accessible both via Scala and Python Spark APIs, and capable of running on large-scale distributed clusters over petabytes of data.
 
 # Quickstart
 
@@ -136,4 +137,38 @@ scala> spark.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
      |github.com/mawag/...|fff7062de8474d10a...|Initial commit|
      +--------------------------------+-------------------------------+--------------------+
 
+```
+
+# Development
+
+## Build fatjar
+
+Build the fatjar is needed to build the docker image that contains the jupyter server,  or test changes in spark-shell just passing the jar with `--jars` flag:
+
+```bash
+$ sbt assembly
+```
+
+It leaves the fatjar in `target/scala-2.11/spark-api-uber.jar`
+
+## Build and run docker to get a Jupyter server
+
+```bash
+$ docker -t spark-api-jupyter .
+$ docker run -p 8888:8888 -v /path/to/siva-files:/repositories spark-api-jupyter
+```
+
+Notebooks under examples folder will be included on the image.
+
+## Run tests
+
+spark-api uses [bblfsh](https://github.com/bblfsh) so you need an instance of a bblfsh server running, and you can get one so easy with docker:
+
+```bash
+docker run -d --privileged -p 9432:9432 --name bblfsh bblfsh/server bblfsh server --log-level debug
+```
+
+To run tests:
+```
+$ sbt tests
 ```
