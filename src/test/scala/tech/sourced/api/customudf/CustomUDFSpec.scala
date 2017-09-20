@@ -2,7 +2,7 @@ package tech.sourced.api.customudf
 
 import org.apache.spark.sql.types.{StringType, StructField}
 import org.scalatest.{FlatSpec, Matchers}
-import tech.sourced.api.{BaseSparkSpec, Implicits}
+import tech.sourced.api._
 
 class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
 
@@ -19,8 +19,6 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
 
   "Language detection" should "works correctly" in {
     val spark = ss
-
-    import Implicits._
     import spark.implicits._
 
     val languagesDf = fileSeq.toDF(fileColumns: _*).classifyLanguages
@@ -31,7 +29,6 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
 
   it should "guess the correct language" in {
     val spark = ss
-    import Implicits._
     import spark.implicits._
 
     val languagesDf = fileSeq.toDF(fileColumns: _*).classifyLanguages
