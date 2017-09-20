@@ -4,8 +4,34 @@ import org.apache.spark.SparkException
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import tech.sourced.api.customudf.{ClassifyLanguagesUDF, CustomUDF}
 
+/**
+  * Provides the [[tech.sourced.api.SparkAPI]] class, which is the main entry point
+  * of all the analysis you might do using this library as well as some implicits
+  * to make it easier to use. In particular, it adds some methods to be able to
+  * join with other "tables" directly from any [[org.apache.spark.sql.DataFrame]].
+  *
+  * {{{
+  * import tech.sourced.api._
+  *
+  * val api = SparkAPI(sparkSession, "/path/to/repositories")
+  * }}}
+  *
+  * If you don't want to import everything in the package, even though it only exposes
+  * what's truly needed to not pollute the user namespace, you can do it by just importing
+  * the [[tech.sourced.api.SparkAPI]] class and the [[tech.sourced.api.ApiDataFrame]]
+  * implicit class.
+  *
+  * {{{
+  * import tech.sourced.api.{SparkAPI, ApiDataFrame}
+  *
+  * val api = SparkAPI(sparkSession, "/path/to/repositories")
+  * }}}
+  */
 package object api {
+
   private[api] val repositoriesPathKey = "tech.sourced.api.repositories.path"
+  private[api] val bblfshHostKey = "tech.sourced.bblfsh.grpc.host"
+  private[api] val bblfsPortKey = "tech.sourced.bblfsh.grpc.port"
 
   implicit class SessionFunctions(session: SparkSession) {
     def registerUDFs(): Unit = {
@@ -13,16 +39,46 @@ package object api {
     }
   }
 
+  /**
+    * Adds some utility methods to the [[org.apache.spark.sql.DataFrame]] class
+    * so you can, for example, get the references, commits, etc from a data frame
+    * containing repositories.
+    * @param df the DataFrame
+    */
   implicit class ApiDataFrame(df: DataFrame) {
 
     import df.sparkSession.implicits._
 
+    /**
+      * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
+      * current dataframe with the references dataframe.
+      * It requires the dataframe to have an "id" column, which should be the repository
+      * identifier.
+      *
+      * {{{
+      * val refsDf = reposDf.getReferences
+      * }}}
+      *
+      * @return new DataFrame containing also references data.
+      */
     def getReferences: DataFrame = {
       checkCols(df, "id")
       val reposIdsDf = df.select($"id").distinct()
       getDataSource("references", df.sparkSession).join(reposIdsDf, $"repository_id" === $"id").drop($"id")
     }
 
+    /**
+      * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
+      * current dataframe with the commits dataframe.
+      * It requires the current dataframe to have a "repository_id" column, which is the
+      * identifier of the repository.
+      *
+      * {{{
+      * val commitDf = refsDf.getCommits
+      * }}}
+      *
+      * @return new DataFrame containing also commits data.
+      */
     def getCommits: DataFrame = {
       checkCols(df, "repository_id")
       val refsIdsDf = df.select($"name", $"repository_id").distinct()
@@ -32,6 +88,18 @@ package object api {
         .drop(refsIdsDf("name")).drop(refsIdsDf("repository_id"))
     }
 
+    /**
+      * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
+      * current dataframe with the files dataframe.
+      * It requires the current dataframe to have a "files" column, which is are the
+      * files of a commit.
+      *
+      * {{{
+      * val filesDf = commitsDf.getFiles
+      * }}}
+      *
+      * @return new DataFrame containing also files data.
+      */
     def getFiles: DataFrame = {
       val filesDf = getDataSource("files", df.sparkSession)
 
@@ -44,6 +112,17 @@ package object api {
       }
     }
 
+    /**
+      * Returns a new [[org.apache.spark.sql.DataFrame]] with a new column "lang" added
+      * containing the language of the file.
+      * It requires the current dataframe to have the files data.
+      *
+      * {{{
+      * val languagesDf = filesDf.classifyLanguages
+      * }}}
+      *
+      * @return new DataFrame containing also language data.
+      */
     def classifyLanguages: DataFrame = {
       checkCols(df, "is_binary", "path", "content")
       df.withColumn("lang", ClassifyLanguagesUDF.function('is_binary, 'path, 'content))

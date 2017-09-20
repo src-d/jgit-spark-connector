@@ -2,7 +2,7 @@ package tech.sourced.api
 
 import org.apache.spark.sql.types._
 
-object Schema {
+private[api] object Schema {
   val repositories = StructType(
     StructField("id", StringType) ::
       StructField("urls", ArrayType(StringType, containsNull = false)) ::
