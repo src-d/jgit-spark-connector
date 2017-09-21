@@ -20,8 +20,16 @@ class RepositoryProvider(val localPath: String) extends Logging {
   private val repositories: concurrent.Map[String, Repository] =
     new ConcurrentHashMap[String, Repository]().asScala
 
-  def get(conf: Configuration, path: String): Repository =
-    repositories.getOrElseUpdate(path, genRepository(conf, path, localPath))
+  def get(conf: Configuration, path: String): Repository = synchronized {
+    repositories.get(path) match {
+      case Some(repo) => repo
+      case None => {
+        val repo = genRepository(conf, path, localPath)
+        repositories.put(path, repo)
+        repo
+      }
+    }
+  }
 
   def get(pds: PortableDataStream): Repository =
     this.get(pds.getConfiguration, pds.getPath())
