@@ -84,6 +84,14 @@ class APITestCase(BaseTestCase):
         self.assertEqual(file.path, 'sequel_core/stress/mem_array_keys.rb')
 
 
+    def test_files_from_refs(self):
+        df = self.api.repositories.references.files
+        self.assertEqual(df.count(), 2689)
+        file = df.sort(df.file_hash).limit(1).first()
+        self.assertEqual(file.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
+        self.assertEqual(file.path, 'sequel_core/stress/mem_array_keys.rb')
+
+
     @expectedFailure
     def test_classify_languages(self):
         df = self.api.repositories.references.commits.files\

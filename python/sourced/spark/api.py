@@ -310,6 +310,14 @@ class ReferencesDataFrame(SourcedDataFrame):
         return CommitsDataFrame(self._api_dataframe.getCommits(), self._session, self._implicits)
 
 
+    @property
+    def files(self):
+        """
+        Returns this DataFrame joined with the files DataSource.
+        """
+        return FilesDataFrame(self._api_dataframe.getFiles(), self._session, self._implicits)
+
+
 class CommitsDataFrame(SourcedDataFrame):
     """
     DataFrame with commits data.
