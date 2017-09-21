@@ -12,10 +12,13 @@ lazy val root = (project in file(".")).
     name := "spark-api",
     libraryDependencies += scalaTest % Test,
     libraryDependencies += sparkSql % Provided,
+    libraryDependencies += newerHadoopClient % Provided, //due to newer v. of guava in bblfsh
+    libraryDependencies += fixNettyForGrpc, // grpc for bblfsh/client-scala needs to be newer then in Spark
     libraryDependencies += jgit % Compile,
     libraryDependencies += siva % Compile,
+    libraryDependencies += bblfsh % Compile,
     libraryDependencies += commonsIO % Compile,
-    libraryDependencies += "tech.sourced" % "enry-java" % "1.0",
+    libraryDependencies += enry % Compile,
 
     resolvers += "jitpack" at "https://jitpack.io",
     // TODO: remove this local resolver when enry-java will be available from jitpack.

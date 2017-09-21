@@ -1,3 +1,6 @@
+dist: trusty
+sudo: required
+
 language: scala
 
 scala:
@@ -14,8 +17,12 @@ cache:
     - $HOME/.sbt
     - $HOME/.ivy2
 
+services:
+  - docker
+
 before_script:
   - ./local-install-enry-java.sh
+  - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION jacoco:cover

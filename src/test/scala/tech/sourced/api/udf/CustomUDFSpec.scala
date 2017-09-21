@@ -1,14 +1,15 @@
-package tech.sourced.api.customudf
+package tech.sourced.api.udf
 
 import org.apache.spark.sql.types.{StringType, StructField}
 import org.scalatest.{FlatSpec, Matchers}
 import tech.sourced.api._
 
+
 class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
 
   val fileSeq = Seq(
-    ("hash1", false, "foo.py", null.asInstanceOf[Array[Byte]]),
-    ("hash2", false, "bar.scala", null.asInstanceOf[Array[Byte]]),
+    ("hash1", false, "foo.py", "with open('somefile.txt') as f: contents=f.read()".getBytes),
+    ("hash2", false, "bar.java", "public class Hello extends GenericServlet { }".getBytes),
     ("hash3", false, "baz.go", null.asInstanceOf[Array[Byte]]),
     ("hash4", false, "no-filename", "#!/usr/bin/env python -tt".getBytes()),
     ("hash5", false, "unknown", null.asInstanceOf[Array[Byte]]),
@@ -34,7 +35,7 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     val languagesDf = fileSeq.toDF(fileColumns: _*).classifyLanguages
     languagesDf.select('path, 'lang).collect().foreach(row => row.getString(0) match {
       case "foo.py" => row.getString(1) should be("Python")
-      case "bar.scala" => row.getString(1) should be("Scala")
+      case "bar.java" => row.getString(1) should be("Java")
       case "baz.go" => row.getString(1) should be("Go")
       case "no-filename" => row.getString(1) should be("Python")
       case _ => row.getString(1) should be(null)
@@ -54,6 +55,49 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     languagesDf.schema.fields should contain(StructField("lang", StringType))
 
     languagesDf.show
+  }
+
+  "UAST parsing of content" should "produce non-empty results" in {
+    val spark = ss
+    import spark.implicits._
+
+    val uastDf = fileSeq.toDF(fileColumns: _*).extractUASTs
+
+    uastDf.columns should contain("uast")
+    uastDf.show
+
+    uastDf.take(2).zipWithIndex.map {
+      case (row, 0) => assert(row(3).asInstanceOf[Array[Byte]].isEmpty == false)
+      case (row, 1) => assert(row(3).asInstanceOf[Array[Byte]].isEmpty == false)
+    }
+  }
+
+  "UAST parsing of content with language" should "produce non-empty results" in {
+    val spark = ss
+    import spark.implicits._
+
+    val uastDf = fileSeq.toDF(fileColumns: _*).classifyLanguages.extractUASTs
+
+    uastDf.columns should contain("lang")
+    uastDf.columns should contain("uast")
+    uastDf.show
+
+    uastDf.take(2).zipWithIndex.map {
+      case (row, 0) => assert(row(3).asInstanceOf[Array[Byte]].isEmpty == false)
+      case (row, 1) => assert(row(3).asInstanceOf[Array[Byte]].isEmpty == false)
+    }
+  }
+
+  it should "work as a registered udf in SQL" in {
+    val spark = ss
+    import spark.implicits._
+
+    spark.catalog.listFunctions().filter('name like "%" + ExtractUASTsUDF.name + "%").show(false)
+    fileSeq.toDF(fileColumns: _*).createTempView("uasts")
+
+    val uastsDF = spark.sqlContext.sql("SELECT *, " + ExtractUASTsUDF.name + "(path, content) AS uast FROM uasts")
+    uastsDF.collect
+    uastsDF.columns should contain("uast")
   }
 
 }
