@@ -349,7 +349,18 @@ class FilesDataFrame(SourcedDataFrame):
         Returns a new DataFrame with the language data of any file added to
         its row.
         """
-        raise NotImplementedError("classify_languages not yet implemented")
+        return FilesWithLanguageDataFrame(self._api_dataframe.classifyLanguages(), 
+                                          self._session, self._implicits)
+
+
+class FilesWithLanguageDataFrame(SourcedDataFrame):
+    """
+    DataFrame containing files and language data.
+    """
+
+
+    def __init__(self, jdf, session, implicits):
+        SourcedDataFrame.__init__(self, jdf, session, implicits)
 
 
     def parse_uasts(self):
