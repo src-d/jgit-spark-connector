@@ -76,21 +76,21 @@ class APITestCase(BaseTestCase):
                              REPOSITORY_COMMITS[repo.repository_id])
 
 
-    def test_blobs(self):
-        df = self.api.repositories.references.commits.blobs
+    def test_files(self):
+        df = self.api.repositories.references.commits.files
         self.assertEqual(df.count(), 5275)
-        blob = df.sort(df.file_hash).limit(1).first()
-        self.assertEqual(blob.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
-        self.assertEqual(blob.path, 'sequel_core/stress/mem_array_keys.rb')
+        file = df.sort(df.file_hash).limit(1).first()
+        self.assertEqual(file.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
+        self.assertEqual(file.path, 'sequel_core/stress/mem_array_keys.rb')
 
 
     @expectedFailure
     def test_classify_languages(self):
-        df = self.api.repositories.references.commits.blobs\
+        df = self.api.repositories.references.commits.files\
             .classify_languages()
 
 
     @expectedFailure
     def test_parse_uasts(self):
-        df = self.api.repositories.references.commits.blobs\
+        df = self.api.repositories.references.commits.files\
             .classify_languages().parse_uasts()

@@ -320,16 +320,16 @@ class CommitsDataFrame(SourcedDataFrame):
 
 
     @property
-    def blobs(self):
+    def files(self):
         """
-        Returns this DataFrame joined with the blobs DataSource.
+        Returns this DataFrame joined with the files DataSource.
         """
-        return BlobsDataFrame(self._api_dataframe.getFiles(), self._session, self._implicits)
+        return FilesDataFrame(self._api_dataframe.getFiles(), self._session, self._implicits)
 
 
-class BlobsDataFrame(SourcedDataFrame):
+class FilesDataFrame(SourcedDataFrame):
     """
-    DataFrame containing Blobs data.
+    DataFrame containing files data.
     """
 
     def __init__(self, jdf, session, implicits):
@@ -338,7 +338,7 @@ class BlobsDataFrame(SourcedDataFrame):
     
     def classify_languages(self):
         """
-        Returns a new DataFrame with the language data of any blob added to
+        Returns a new DataFrame with the language data of any file added to
         its row.
         """
         raise NotImplementedError("classify_languages not yet implemented")
@@ -346,7 +346,7 @@ class BlobsDataFrame(SourcedDataFrame):
 
     def parse_uasts(self):
         """
-        Returns a new DataFrame with the parsed UAST data of any blob added to
+        Returns a new DataFrame with the parsed UAST data of any file added to
         its row.
         """
         raise NotImplementedError("parse_uasts not yet implemented")
