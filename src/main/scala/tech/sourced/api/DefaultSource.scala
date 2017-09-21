@@ -46,9 +46,10 @@ case class GitRelation(sqlContext: SQLContext, tableName: String, path: String, 
     // TODO broadcast filters
 
     val sivaRDD = SivaRDDProvider(sc).get(path)
+    val skipCleanup = sqlContext.sparkContext.getConf.getBoolean(skipCleanupKey, false)
 
     sivaRDD.flatMap(pds => {
-      val repo = RepositoryProvider(localPathB.value).get(pds)
+      val repo = RepositoryProvider(localPathB.value, skipCleanup).get(pds)
 
       tableB.value match {
         case "repositories" => new RepositoryIterator(requiredB.value, repo)

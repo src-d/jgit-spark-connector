@@ -89,6 +89,26 @@ class SparkAPI(session: SparkSession) {
     this
   }
 
+  /**
+    * Configures the SparkAPI so it won't cleanup the unpacked siva files after
+    * it's done with them to avoid having to unpack them afterwards.
+    *
+    * {{{
+    * // disable cleanup
+    * api.skipCleanup(true)
+    *
+    * // enable cleanup again
+    * api.skipCleanup(false)
+    * }}}
+    *
+    * @param skip whether to skip cleanup or not
+    * @return instance of the api itself
+    */
+  def skipCleanup(skip: Boolean): SparkAPI = {
+    session.sparkContext.getConf.set(skipCleanupKey, skip.toString())
+    this
+  }
+
 }
 
 /**

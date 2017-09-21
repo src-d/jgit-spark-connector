@@ -32,6 +32,7 @@ package object api {
   private[api] val repositoriesPathKey = "tech.sourced.api.repositories.path"
   private[api] val bblfshHostKey = "tech.sourced.bblfsh.grpc.host"
   private[api] val bblfsPortKey = "tech.sourced.bblfsh.grpc.port"
+  private[api] val skipCleanupKey = "tech.sourced.api.cleanup.skip"
 
   implicit class SessionFunctions(session: SparkSession) {
     def registerUDFs(): Unit = {
