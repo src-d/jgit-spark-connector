@@ -8,10 +8,11 @@ object ClassifyLanguagesUDF extends CustomUDF {
   val name = "classifyLanguages"
   val function = udf[Option[String], Boolean, String, Array[Byte]](getLanguage)
 
-  def getLanguage(isBinary: Boolean, path: String, content: Array[Byte]): Option[String] = if (isBinary) {
-    None
-  } else {
-    val lang = Enry.getLanguage(path, content)
-    if (lang != "") Some(lang) else None
-  }
+  def getLanguage(isBinary: Boolean, path: String, content: Array[Byte]): Option[String] =
+    if (isBinary) {
+      None
+    } else {
+      val lang = Enry.getLanguage(path, content)
+      if (null == lang || lang.isEmpty) None else Some(lang)
+    }
 }

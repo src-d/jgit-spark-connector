@@ -20,13 +20,14 @@ object ExtractUASTsUDF extends CustomUDF {
   }
 
   def extractUASTsWithLang(path: String, content: Array[Byte], lang: String): Array[Byte] = {
+    println(s"extractUASTsWithLang: $path, $content, $lang")
     extractUAST(path, content, lang)
   }
 
-  def extractUAST(path: String, content: Array[Byte], lang: String = ""): Array[Byte] =
+  def extractUAST(path: String, content: Array[Byte], lang: String): Array[Byte] =
     if (null == content || content.isEmpty) {
       Array.emptyByteArray
-    } else if (excludedLangs.contains(lang.toLowerCase)) {
+    } else if (lang != null && excludedLangs.contains(lang.toLowerCase)) {
       Array.emptyByteArray
     } else {
       val bblfshClient = BblfshClient(bblfshHost, bblfshPort)
