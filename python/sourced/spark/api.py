@@ -21,9 +21,7 @@ class API(object):
         self.__jvm = self.session.sparkContext._gateway.jvm
         java_import(self.__jvm, 'tech.sourced.api.SparkAPI')
         java_import(self.__jvm, 'tech.sourced.api.package$')
-        self.__api = self.__jvm.tech.sourced.api.SparkAPI(self.__jsparkSession)
-        self.__api.setRepositoriesPath(repos_path)
-        self.__api.registerUDFs()
+        self.__api = self.__jvm.tech.sourced.api.SparkAPI.apply(self.__jsparkSession, repos_path)
         self.__implicits = getattr(getattr(self.__jvm.tech.sourced.api, 'package$'), 'MODULE$')
 
 
