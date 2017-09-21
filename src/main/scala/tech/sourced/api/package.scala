@@ -113,6 +113,51 @@ package object api {
     }
 
     /**
+      * Returns a new [[org.apache.spark.sql.DataFrame]] containing only the rows
+      * with a HEAD reference.
+      *
+      * {{{
+      * val headDf = refsDf.getHEAD
+      * }}}
+      *
+      * @return new dataframe with only HEAD reference rows
+      */
+    def getHEAD: DataFrame = getReference("refs/heads/HEAD")
+
+    /**
+      * Returns a new [[org.apache.spark.sql.DataFrame]] containing only the rows
+      * with a master reference.
+      *
+      * {{{
+      * val masterDf = refsDf.getMaster
+      * }}}
+      *
+      * @return new dataframe with only the master reference rows
+      */
+    def getMaster: DataFrame = getReference("refs/heads/master")
+
+    /**
+      * Returns a new [[org.apache.spark.sql.DataFrame]] containing only the rows
+      * with a reference whose name equals the one provided.
+      *
+      * {{{
+      * val developDf = refsDf.getReference("refs/heads/develop")
+      * }}}
+      *
+      * @param name name of the reference to filter by
+      * @return new dataframe with only the given reference rows
+      */
+    def getReference(name: String): DataFrame = {
+      if (df.schema.fieldNames.contains("reference_name")) {
+        df.filter($"reference_name" === name)
+      } else if (df.schema.fieldNames.contains("name")) {
+        df.filter($"name" === name)
+      } else {
+        df.getReferences.getReference(name)
+      }
+    }
+
+    /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with a new column "lang" added
       * containing the language of the file.
       * It requires the current dataframe to have the files data.
