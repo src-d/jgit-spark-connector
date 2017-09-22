@@ -31,7 +31,7 @@ $ bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:
 First, you need to download [Apache Spark](https://spark.apache.org/) somewhere on your machine:
 
 ```bash
-$ cd /tmp && wget https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz
+$ cd /tmp && wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz"
 ```
 The Apache Software Foundation suggests you the better mirror where you can download `Spark` from. If you wish to take a look and find the best option in your case, you can [do it here](https://www.apache.org/dyn/closer.lua/spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz).
 
