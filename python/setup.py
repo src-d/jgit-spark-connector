@@ -1,10 +1,18 @@
 from __future__ import with_statement
 from setuptools import setup
+from os.path import exists, join, dirname, realpath
 
-with open('version.txt', 'r') as f:
-    __version__ = f.read().strip()
+CURR_DIR = dirname(realpath(__file__))
+VERSION_FILE = join(CURR_DIR, "version.txt")
+README_FILE = join(CURR_DIR, "README.rst")
 
-with open('README.rst', 'r') as f:
+if exists(VERSION_FILE):
+    with open(VERSION_FILE, 'r') as f:
+        __version__ = f.read().strip()
+else:
+    __version__ = 'local'
+
+with open(README_FILE, 'r') as f:
     README = f.read()
 
 setup(
