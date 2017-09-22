@@ -182,7 +182,7 @@ docker run -d --privileged -p 9432:9432 --name bblfsh bblfsh/server bblfsh serve
 
 To run tests:
 ```bash
-$ ./sbt tests
+$ ./sbt test
 ```
 
 To run tests for python wrapper:
