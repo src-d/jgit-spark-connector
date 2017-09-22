@@ -10,6 +10,7 @@ cache:
   directories:
     - $HOME/.sbt
     - $HOME/.ivy2
+    - .spark-dist
 
 services:
   - docker
@@ -41,6 +42,19 @@ matrix:
             tags: true
 
     - jdk: openjdk8
+
+    - jdk: openjdk8
+
+      env:
+        - END_TO_END=true
+
+      before_script:
+        - make docker-bblfsh
+
+      script:
+        - make build
+        - ./_tools/getApacheSpark.sh "2.2.0" "2.7"
+        - ./spark/bin/spark-shell --jars ./target/engine-uber.jar -i src/test/resources/SparkShellScript.scala
 
     - language: python
       python: 2.7
@@ -80,7 +94,7 @@ matrix:
             tags: true
 
 before_script:
-  - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
+  - make docker-bblfsh
 
 script:
   - make travis-test
