@@ -3,6 +3,7 @@ package tech.sourced.api.provider
 import java.io.File
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
@@ -16,15 +17,21 @@ import tech.sourced.siva.SivaReader
 import scala.collection.JavaConverters._
 import scala.collection.concurrent
 
-class RepositoryProvider(val localPath: String) extends Logging {
-  private var skipCleanup = false
+class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false) extends Logging {
 
   private val repositories: concurrent.Map[String, Repository] =
     new ConcurrentHashMap[String, Repository]().asScala
 
+  private val repoRefCounts: concurrent.Map[String, AtomicInteger] =
+    new ConcurrentHashMap[String, AtomicInteger]().asScala
+
   def get(conf: Configuration, path: String): Repository = synchronized {
+    this.incrCounter(path)
     repositories.get(path) match {
-      case Some(repo) => repo
+      case Some(repo) => {
+        repo.incrementOpen()
+        repo
+      }
       case None => {
         val repo = genRepository(conf, path, localPath)
         repositories.put(path, repo)
@@ -33,15 +40,32 @@ class RepositoryProvider(val localPath: String) extends Logging {
     }
   }
 
+  private def incrCounter(path: String): Unit = {
+    repoRefCounts.get(path) match {
+      case Some(counter) => counter.incrementAndGet()
+      case None => repoRefCounts.put(path, new AtomicInteger(1))
+    }
+  }
+
   def get(pds: PortableDataStream): Repository =
     this.get(pds.getConfiguration, pds.getPath())
 
-  def close(path: String): Unit =
+  def close(path: String): Unit = synchronized {
     repositories.get(path).foreach(r => {
+      log.debug(s"Close $path")
       r.close()
-      // TODO maybe others are using this repository instance
-      // FileUtils.deleteQuietly(r.getDirectory)
+
+      val counter = repoRefCounts.getOrElse(path, new AtomicInteger(1))
+      if (counter.decrementAndGet() <= 0) {
+        if (!skipCleanup) {
+          log.debug(s"Deleting unpacked files for $path at ${r.getDirectory}")
+          FileUtils.deleteQuietly(r.getDirectory)
+        }
+        repositories.remove(path)
+        repoRefCounts.remove(path)
+      }
     })
+  }
 
   private[provider] def genRepository(conf: Configuration, path: String, localPath: String): Repository = {
     val remotePath = new Path(path)
@@ -93,9 +117,8 @@ object RepositoryProvider {
 
   def apply(localPath: String, skipCleanup: Boolean = false): RepositoryProvider = {
     if (provider == null) {
-      provider = new RepositoryProvider(localPath)
+      provider = new RepositoryProvider(localPath, skipCleanup=skipCleanup)
     }
-    provider.skipCleanup = skipCleanup
 
     if (provider.localPath != localPath) {
       throw new RuntimeException(s"actual provider instance is not intended " +
