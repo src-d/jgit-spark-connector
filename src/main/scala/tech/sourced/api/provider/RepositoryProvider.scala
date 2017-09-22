@@ -17,6 +17,8 @@ import scala.collection.JavaConverters._
 import scala.collection.concurrent
 
 class RepositoryProvider(val localPath: String) extends Logging {
+  private var skipCleanup = false
+
   private val repositories: concurrent.Map[String, Repository] =
     new ConcurrentHashMap[String, Repository]().asScala
 
@@ -41,7 +43,7 @@ class RepositoryProvider(val localPath: String) extends Logging {
       // FileUtils.deleteQuietly(r.getDirectory)
     })
 
-  private def genRepository(conf: Configuration, path: String, localPath: String): Repository = {
+  private[provider] def genRepository(conf: Configuration, path: String, localPath: String): Repository = {
     val remotePath = new Path(path)
 
     val localCompletePath =
@@ -52,27 +54,34 @@ class RepositoryProvider(val localPath: String) extends Logging {
       )
 
     val localSivaPath = new Path(localPath, new Path(RepositoryProvider.temporalSivaFolder, remotePath.getName))
+    val fs = FileSystem.get(conf)
 
-    // Copy siva file to local fs
-    log.debug(s"Copy $remotePath to $localSivaPath")
-    FileSystem.get(conf)
-      .copyToLocalFile(remotePath, localSivaPath)
+    if (!fs.exists(localSivaPath)) {
+      // Copy siva file to local fs
+      log.debug(s"Copy $remotePath to $localSivaPath")
+      fs.copyToLocalFile(remotePath, localSivaPath)
+    }
 
-    // unpack siva file
-    val sr = new SivaReader(new File(localSivaPath.toString))
-    val index = sr.getIndex.getFilteredIndex.getEntries.asScala
-    index.foreach(ie => {
-      val e = sr.getEntry(ie)
-      val outPath = Paths.get(localCompletePath.toString, ie.getName)
+    if (!fs.exists(localCompletePath)) {
+      // unpack siva file
+      val sr = new SivaReader(new File(localSivaPath.toString))
+      val index = sr.getIndex.getFilteredIndex.getEntries.asScala
+      index.foreach(ie => {
+        val e = sr.getEntry(ie)
+        val outPath = Paths.get(localCompletePath.toString, ie.getName)
 
-      FileUtils.copyInputStreamToFile(e, new File(outPath.toString))
-    })
+        FileUtils.copyInputStreamToFile(e, new File(outPath.toString))
+      })
+    }
 
     // After copy create a repository instance using the local path
     val repo = new RepositoryBuilder().setGitDir(new File(localCompletePath.toString)).build()
 
     // delete siva file
-    FileUtils.deleteQuietly(Paths.get(localSivaPath.toString).toFile)
+    if (!skipCleanup) {
+      log.debug(s"Delete $localSivaPath")
+      FileUtils.deleteQuietly(Paths.get(localSivaPath.toString).toFile)
+    }
 
     repo
   }
@@ -82,10 +91,11 @@ class RepositoryProvider(val localPath: String) extends Logging {
 object RepositoryProvider {
   var provider: RepositoryProvider = _
 
-  def apply(localPath: String): RepositoryProvider = {
+  def apply(localPath: String, skipCleanup: Boolean = false): RepositoryProvider = {
     if (provider == null) {
       provider = new RepositoryProvider(localPath)
     }
+    provider.skipCleanup = skipCleanup
 
     if (provider.localPath != localPath) {
       throw new RuntimeException(s"actual provider instance is not intended " +

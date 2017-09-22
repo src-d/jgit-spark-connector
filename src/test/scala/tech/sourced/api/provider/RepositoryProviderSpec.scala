@@ -1,5 +1,7 @@
 package tech.sourced.api.provider
 
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.spark.input.PortableDataStream
 import org.eclipse.jgit.lib.ObjectId
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import tech.sourced.api.{BaseSivaSpec, BaseSparkSpec}
@@ -47,6 +49,36 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec wi
 
     ex.getMessage should be("actual provider instance is not intended to be used " +
       "with the localPath provided: /tmp/two")
+  }
+
+  "RepositoryProvider" should "not delete siva file with skipCleanup = true" in {
+    val prov = SivaRDDProvider(ss.sparkContext)
+    val sivaRDD = prov.get(resourcePath)
+    val sivaFilesExist = sivaRDD.map(pds => {
+      val _ = RepositoryProvider("/tmp", skipCleanup = true)
+        .genRepository(pds.getConfiguration, pds.getPath(), "/tmp")
+      val localSivaPath = new Path("/tmp", new Path(RepositoryProvider.temporalSivaFolder, pds.getPath()))
+      FileSystem.get(pds.getConfiguration).exists(localSivaPath)
+    }).collect()
+
+    assert(sivaFilesExist.length == 3)
+    assert(sivaFilesExist.forall(_ == true))
+  }
+
+  "RepositoryProvider" should "delete siva file with skipCleanup = false" in {
+    val prov = SivaRDDProvider(ss.sparkContext)
+
+    val sivaRDD = prov.get(resourcePath)
+
+    val sivaFilesExist = sivaRDD.map(pds => {
+      val provider = new RepositoryProvider("/tmp/two")
+        .genRepository(pds.getConfiguration, pds.getPath(), "/tmp/two")
+      val localSivaPath = new Path("/tmp/two", new Path(RepositoryProvider.temporalSivaFolder, new Path(pds.getPath()).getName()))
+      FileSystem.get(pds.getConfiguration).exists(localSivaPath)
+    }).collect()
+
+    assert(sivaFilesExist.length == 3)
+    assert(sivaFilesExist.forall(!_))
   }
 
 }
