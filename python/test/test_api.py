@@ -100,7 +100,17 @@ class APITestCase(BaseTestCase):
         self.assertEqual(row.lang, "Ruby")
 
 
-    @expectedFailure
-    def test_parse_uasts(self):
-        df = self.api.repositories.references.commits.files\
-            .classify_languages().parse_uasts()
+    def test_extract_uasts(self):
+        df = self.api.repositories.references.commits.files
+        row = df.sort(df.file_hash).limit(1).classify_languages()\
+            .extract_uasts().first()
+        self.assertEqual(row.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
+        self.assertEqual(row.path, 'sequel_core/stress/mem_array_keys.rb')
+        self.assertEqual(row.lang, "Ruby")
+        self.assertEqual(row.uast, "")
+
+        df = self.api.repositories.references.commits.files
+        row = df.sort(df.file_hash).limit(1).extract_uasts().first()
+        self.assertEqual(row.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
+        self.assertEqual(row.path, 'sequel_core/stress/mem_array_keys.rb')
+        self.assertEqual(row.uast, "")

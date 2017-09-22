@@ -352,20 +352,38 @@ class FilesDataFrame(SourcedDataFrame):
         return FilesWithLanguageDataFrame(self._api_dataframe.classifyLanguages(), 
                                           self._session, self._implicits)
 
+                                
+    def extract_uasts(self):
+        """
+        Returns a new DataFrame with the parsed UAST data of any file added to
+        its row.
+        """
+        return UASTsDataFrame(self._api_dataframe.extractUASTs(), 
+                              self._session, self._implicits)
+
 
 class FilesWithLanguageDataFrame(SourcedDataFrame):
     """
     DataFrame containing files and language data.
     """
 
-
     def __init__(self, jdf, session, implicits):
         SourcedDataFrame.__init__(self, jdf, session, implicits)
 
 
-    def parse_uasts(self):
+    def extract_uasts(self):
         """
         Returns a new DataFrame with the parsed UAST data of any file added to
         its row.
         """
-        raise NotImplementedError("parse_uasts not yet implemented")
+        return UASTsDataFrame(self._api_dataframe.extractUASTs(), 
+                              self._session, self._implicits)
+
+
+class UASTsDataFrame(SourcedDataFrame):
+    """
+    DataFrame containing UAST data.
+    """
+
+    def __init__(self, jdf, session, implicits):
+        SourcedDataFrame.__init__(self, jdf, session, implicits)
