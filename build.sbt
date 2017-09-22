@@ -35,3 +35,11 @@ jacoco.reportFormats in jacoco.Config := Seq(
 
 parallelExecution in Test := false
 logBuffered in Test := false
+
+
+assemblyMergeStrategy in assembly := {
+  case "META-INF/io.netty.versions.properties" => MergeStrategy.last
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}
