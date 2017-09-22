@@ -27,9 +27,9 @@ before_script:
 
 script:
   - ./sbt ++$TRAVIS_SCALA_VERSION jacoco:cover || travis_terminate 1
-  - ./sbt assembly
+  - ./sbt package
   - ./_tools/getApacheSpark.sh "2.2.0" "2.7"
-  - ./spark/bin/spark-shell --jars ./target/scala-2.11/spark-api-uber.jar -i src/test/resources/SparkShellScript.scala --properties-file src/main/resources/spark-config.properties
+  - ./spark-shell -i src/test/resources/SparkShellScript.scala
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

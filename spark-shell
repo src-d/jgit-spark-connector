@@ -1,0 +1,34 @@
+#!/bin/bash
+
+hash java >/dev/null 2>&1 || { echo "Please install is Java" >&2; exit 1; }
+
+jar="target/scala-2.11/spark-api_2.11-0.1.0-SNAPSHOT.jar"
+build_command="./sbt package"
+
+if [[ ! -f "${jar}" ]]; then
+    echo "${jar} not found. Running build ${build_command}"
+    $build_command
+fi
+
+sparkShell() {
+    if hash spark-shell 2>/dev/null; then
+        exec spark-submit "$@"
+    elif [[ -d "./spark" ]]; then    
+        echo "Using spark-shell from ./spark/"
+        SPARK_HOME='' "./spark/bin/spark-shell" "$@"
+    elif [[ -n "${SPARK_HOME}" ]]; then
+        echo "Using spark-shell from ${SPARK_HOME}"
+        "${SPARK_HOME}/bin/spark-shell" "$@"
+    else
+        echo "Please, install and configure Apache Spark and set SPARK_HOME"
+        exit "${E_NO_SPARK}"
+    fi
+}
+
+sparkShell \
+  --jars "${jar}" \
+  --repositories "https://jitpack.io" \
+  --packages "tech.sourced:enry-java:1.0,com.github.src-d:siva-java:master-SNAPSHOT,org.eclipse.jgit:org.eclipse.jgit:4.8.0.201706111038-r,com.github.bblfsh:client-scala:v0.1.0" \
+  --exclude-packages "org.slf4j:slf4j-api" \
+  --properties-file src/main/resources/spark-config.properties \
+  "$@"

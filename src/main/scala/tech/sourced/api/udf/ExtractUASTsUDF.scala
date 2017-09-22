@@ -20,7 +20,6 @@ object ExtractUASTsUDF extends CustomUDF {
   }
 
   def extractUASTsWithLang(path: String, content: Array[Byte], lang: String): Array[Byte] = {
-    println(s"extractUASTsWithLang: $path, $content, $lang")
     extractUAST(path, content, lang)
   }
 
