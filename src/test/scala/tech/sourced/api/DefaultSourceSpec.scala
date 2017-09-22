@@ -43,7 +43,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
     val reposDf = SparkAPI(spark, resourcePath).getRepositories
       .filter($"id" === "github.com/mawag/faq-xiyoulinux" || $"id" === "github.com/xiyou-linuxer/faq-xiyoulinux")
-    val refsDf = reposDf.getReferences.filter($"name".equalTo("refs/heads/HEAD"))
+    val refsDf = reposDf.getReferences.getHEAD
 
     val commitsDf = refsDf.getCommits.select("repository_id", "reference_name", "message", "hash")
     commitsDf.show()
@@ -64,7 +64,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
     val filesDf = SparkAPI(spark, resourcePath)
       .getRepositories.filter($"id" === "github.com/mawag/faq-xiyoulinux")
-      .getReferences.filter($"name".equalTo("refs/heads/HEAD"))
+      .getReferences.getHEAD
       .getFiles
       .select("repository_id", "name", "path", "commit_hash", "file_hash", "content", "is_binary")
 
@@ -80,6 +80,58 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     uasts.show()
     val uastsCols = uasts.columns.length
     assert(uastsCols - 2 == filesCols)
+  }
+
+  "Filter by reference from repos dataframe" should "work" in {
+    val spark = ss
+
+    val count = SparkAPI(spark, resourcePath)
+      .getRepositories
+      .getReference("refs/heads/develop")
+      .count()
+
+    assert(count == 2)
+  }
+
+  "Filter by reference from commits dataframe" should "work" in {
+    val spark = ss
+
+    val count = SparkAPI(spark, resourcePath)
+      .getRepositories
+        .getReferences
+        .getCommits
+      .getReference("refs/heads/develop")
+      .count()
+
+    assert(count == 103)
+  }
+
+  "Filter by reference from references dataframe" should "work" in {
+    val spark = ss
+
+    val count = SparkAPI(spark, resourcePath)
+      .getRepositories
+      .getReferences
+      .getReference("refs/heads/develop")
+      .count()
+
+    assert(count == 2)
+  }
+
+  "Filter by HEAD reference" should "return only HEAD references" in {
+    val spark = ss
+    val count = SparkAPI(spark, resourcePath).getRepositories.getHEAD
+      .select("name").distinct().count()
+
+    assert(count == 1)
+  }
+
+  "Filter by master reference" should "return only master references" in {
+    val spark = ss
+    val count = SparkAPI(spark, resourcePath).getRepositories.getMaster
+      .select("name").distinct().count()
+
+    assert(count == 1)
   }
 
 }
