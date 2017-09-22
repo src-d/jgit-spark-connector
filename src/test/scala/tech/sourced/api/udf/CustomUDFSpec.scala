@@ -11,6 +11,7 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     ("hash1", false, "foo.py", "with open('somefile.txt') as f: contents=f.read()".getBytes),
     ("hash2", false, "bar.java", "public class Hello extends GenericServlet { }".getBytes),
     ("hash3", false, "baz.go", null.asInstanceOf[Array[Byte]]),
+    ("hash3", false, "buz.go", "".getBytes()),
     ("hash4", false, "no-filename", "#!/usr/bin/env python -tt".getBytes()),
     ("hash5", false, "unknown", null.asInstanceOf[Array[Byte]]),
     ("hash6", true, "binary-file", Array[Byte](0, 0, 0, 0))
@@ -37,6 +38,7 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
       case "foo.py" => row.getString(1) should be("Python")
       case "bar.java" => row.getString(1) should be("Java")
       case "baz.go" => row.getString(1) should be("Go")
+      case "buz.go" => row.getString(1) should be("Go")
       case "no-filename" => row.getString(1) should be("Python")
       case _ => row.getString(1) should be(null)
     })
