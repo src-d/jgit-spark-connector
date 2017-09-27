@@ -9,10 +9,6 @@ jdk:
   - jdk8
   - openjdk8
 
-matrix:
-  fast_finish: true
-
-
 cache:
   directories:
     - $HOME/.sbt
@@ -21,53 +17,59 @@ cache:
 services:
   - docker
 
+matrix:
+  fast_finish: true
+  include:
+    - language: python
+      python: 2.7
+
+      install:
+        - ./local-install-enry-java.sh
+        - ./sbt assembly
+        - mkdir -p python/jars
+        - cp target/**/spark-api-uber.jar python/jars
+        - cd python
+        - cp ../local-install-enry-java.sh .
+        - pip install -r requirements.txt
+
+      script:
+        - python -m unittest discover -v
+
+      after_success:
+        - echo "" # noop to avoid executing the one from the main build
+
+    - language: python
+      python: 3.6
+
+      install:
+        - ./local-install-enry-java.sh
+        - ./sbt assembly
+        - mkdir -p python/jars
+        - cp target/**/spark-api-uber.jar python/jars
+        - cd python
+        - cp ../local-install-enry-java.sh .
+        - pip install -r requirements.txt
+
+      script:
+        - python -m unittest discover -v
+
+      after_success:
+        - echo "" # noop to avoid executing the one from the main build
+
+      before_deploy:
+        - echo "$TRAVIS_TAG" | cut -c 2- > version.txt
+
+      deploy:
+        provider: pypi
+        user: $PYPI_USERNAME
+        password: $PYPI_PASSWORD
+        skip_cleanup: true
+        on:
+          tags: true
+
 before_script:
   - ./local-install-enry-java.sh
   - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
-
-include:
-  - language: python
-    python: 2.7
-
-    install:
-      - sbt assembly
-      - mkdir -p python/jars
-      - cp target/**/spark-api-assembly-*.jar python/jars
-      - cd python
-      - pip install -r requirements.txt
-
-    script:
-      - python -m unittest discover -v
-
-    after_success:
-      - echo "" # noop to avoid executing the one from the main build
-
-  - language: python
-    python: 3.6
-
-    install:
-      - sbt assembly
-      - mkdir -p python/jars
-      - cp target/**/spark-api-assembly-*.jar python/jars
-      - cd python
-      - pip install -r requirements.txt
-
-    script:
-      - python -m unittest discover -v
-
-    after_success:
-      - echo "" # noop to avoid executing the one from the main build
-
-    before_deploy:
-      - echo "$TRAVIS_TAG" | cut -c 2- > version.txt
-
-    deploy:
-      provider: pypi
-      user: $PYPI_USERNAME
-      password: $PYPI_PASSWORD
-      skip_cleanup: true
-      on:
-        tags: true
 
 script:
   - ./sbt ++$TRAVIS_SCALA_VERSION jacoco:cover

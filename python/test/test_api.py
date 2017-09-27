@@ -70,7 +70,7 @@ class APITestCase(BaseTestCase):
             .count()\
             .collect()
 
-        self.assertEquals(len(repo_commits), len(REPOSITORIES))
+        self.assertEqual(len(repo_commits), len(REPOSITORIES))
         for repo in repo_commits:
             self.assertEqual(repo['count'], 
                              REPOSITORY_COMMITS[repo.repository_id])
@@ -107,10 +107,10 @@ class APITestCase(BaseTestCase):
         self.assertEqual(row.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
         self.assertEqual(row.path, 'sequel_core/stress/mem_array_keys.rb')
         self.assertEqual(row.lang, "Ruby")
-        self.assertEqual(row.uast, "")
+        self.assertEqual(row.uast, b"")
 
         df = self.api.repositories.references.commits.files
         row = df.sort(df.file_hash).limit(1).extract_uasts().first()
         self.assertEqual(row.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
         self.assertEqual(row.path, 'sequel_core/stress/mem_array_keys.rb')
-        self.assertEqual(row.uast, "")
+        self.assertEqual(row.uast, b"")

@@ -36,6 +36,10 @@ jacoco.reportFormats in jacoco.Config := Seq(
 parallelExecution in Test := false
 logBuffered in Test := false
 
+assemblyShadeRules in assembly := Seq(
+  ShadeRule.rename("com.google.common.**" -> "com.google.shadedcommon.@1").inAll,
+  ShadeRule.rename("io.netty.**" -> "io.shadednetty.@1").inAll
+)
 
 assemblyMergeStrategy in assembly := {
   case "META-INF/io.netty.versions.properties" => MergeStrategy.last
