@@ -80,7 +80,7 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     val localSivaPath = new Path(localPath, new Path(RepositoryProvider.temporalSivaFolder, remotePath.getName))
     val fs = FileSystem.get(conf)
 
-    if (!fs.exists(localSivaPath)) {
+    if (!fs.exists(localSivaPath) && !fs.exists(localCompletePath)) {
       // Copy siva file to local fs
       log.debug(s"Copy $remotePath to $localSivaPath")
       fs.copyToLocalFile(remotePath, localSivaPath)
@@ -88,6 +88,7 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
 
     if (!fs.exists(localCompletePath)) {
       // unpack siva file
+      log.debug(s"Unpack siva file $localSivaPath to $localCompletePath")
       val sr = new SivaReader(new File(localSivaPath.toString))
       val index = sr.getIndex.getFilteredIndex.getEntries.asScala
       index.foreach(ie => {
