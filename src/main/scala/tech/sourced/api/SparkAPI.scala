@@ -1,5 +1,7 @@
 package tech.sourced.api
 
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.spark.SparkException
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
@@ -66,6 +68,10 @@ class SparkAPI(session: SparkSession) {
     * @return instance of the api itself
     */
   def setRepositoriesPath(path: String): SparkAPI = {
+    if (!FileSystem.get(session.sparkContext.hadoopConfiguration).exists(new Path(path))) {
+      throw new SparkException(s"the given repositories path ($path) does not exist, so siva files can't be read from there")
+    }
+
     session.sqlContext.setConf(repositoriesPathKey, path)
     this
   }
