@@ -10,6 +10,8 @@ Here you can find a list of annotated *spark-api* examples:
 
 - [pyspark's shell classifying languages](https://github.com/src-d/spark-api/blob/master/_examples/pyspark/pyspark-shell-classifying-languages.md)
 
+- [pyspark's shell data schemas](https://github.com/src-d/spark-api/blob/master/_examples/pyspark/pyspark-shell-schemas.md)
+
 ### scala
 
 - [spark-shell basic example](https://github.com/src-d/spark-api/blob/master/_examples/scala/spark-shell-basic.md)
@@ -17,6 +19,8 @@ Here you can find a list of annotated *spark-api* examples:
 - [spark-shell UAST extraction](https://github.com/src-d/spark-api/blob/master/_examples/scala/spark-shell-uast-extraction.md)
 
 - [spark-shell classifying languages](https://github.com/src-d/spark-api/blob/master/_examples/scala/spark-shell-classifying-languages.md)
+
+- [spark-shell data schemas](https://github.com/src-d/spark-api/blob/master/_examples/scala/spark-shell-schemas.md)
 
 ### jupyter notebooks
 
