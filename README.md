@@ -17,10 +17,10 @@ Current implementation combines:
 ```bash
 $ wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz"
 $ tar -xzf spark-2.2.0-bin-hadoop2.7.tgz; cd spark-2.2.0-bin-hadoop2.7
-$ bin/spark-shell --packages "com.github.src-d:spark-api:master-SNAPSHOT" --repositories "https://jitpack.io"
+$ ./bin/spark-shell --packages "com.github.src-d:spark-api:master-SNAPSHOT" --repositories "https://jitpack.io"
 
 # or
-$ bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:spark-api:master-SNAPSHOT"
+$ ./bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:spark-api:master-SNAPSHOT"
 ```
 
 
@@ -91,7 +91,7 @@ $ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./spark-api.zip
 Run pyspark as explained before to start using spark-api:
 
 ```bash
-$ $SPARK_HOME/bin/pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.ios
+$ $SPARK_HOME/bin/pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
 Welcome to
 
    spark version 2.2.0
