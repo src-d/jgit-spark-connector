@@ -1,11 +1,11 @@
 package tech.sourced.api
 
-import org.apache.spark.SparkException
+import org.apache.spark.{InterruptibleIterator, SparkException, TaskContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Row, SQLContext}
-import tech.sourced.api.iterator.{BlobIterator, CommitIterator, ReferenceIterator, RepositoryIterator}
+import tech.sourced.api.iterator._
 import tech.sourced.api.provider.{RepositoryProvider, SivaRDDProvider}
 import tech.sourced.api.util.ColumnFilter
 
@@ -49,15 +49,18 @@ case class GitRelation(sqlContext: SQLContext, tableName: String, path: String, 
     val skipCleanup = sqlContext.sparkContext.getConf.getBoolean(skipCleanupKey, false)
 
     sivaRDD.flatMap(pds => {
-      val repo = RepositoryProvider(localPathB.value, skipCleanup).get(pds)
+      val provider = RepositoryProvider(localPathB.value, skipCleanup)
+      val repo = provider.get(pds)
 
-      tableB.value match {
+      val iter = tableB.value match {
         case "repositories" => new RepositoryIterator(requiredB.value, repo)
         case "references" => new ReferenceIterator(requiredB.value, repo)
         case "commits" => new CommitIterator(requiredB.value, repo)
         case "files" => new BlobIterator(requiredB.value, repo, filters.map(ColumnFilter.compileFilter))
         case other => throw new SparkException(s"table '$other' is not supported")
       }
+
+      new CleanupIterator(iter, provider.close(pds.getPath()))
     })
   }
 }
