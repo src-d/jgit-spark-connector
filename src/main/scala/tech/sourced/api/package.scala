@@ -68,7 +68,7 @@ package object api {
       */
     def getReferences: DataFrame = {
       checkCols(df, "id")
-      val reposIdsDf = df.select($"id").distinct()
+      val reposIdsDf = df.select($"id")
       getDataSource("references", df.sparkSession).join(reposIdsDf, $"repository_id" === $"id").drop($"id")
     }
 
@@ -86,7 +86,7 @@ package object api {
       */
     def getCommits: DataFrame = {
       checkCols(df, "repository_id")
-      val refsIdsDf = df.select($"name", $"repository_id").distinct()
+      val refsIdsDf = df.select($"name", $"repository_id")
       val commitsDf = getDataSource("commits", df.sparkSession)
       commitsDf.join(refsIdsDf, refsIdsDf("repository_id") === commitsDf("repository_id") &&
         commitsDf("reference_name") === refsIdsDf("name"))
