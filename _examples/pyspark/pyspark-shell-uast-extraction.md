@@ -30,6 +30,4 @@ $ pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories h
 +---------------+--------------------+--------------------+
 only showing top 20 rows
 
-
-
 ```
