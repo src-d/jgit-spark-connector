@@ -40,7 +40,9 @@ private[api] object Schema {
   )
 
   val files = StructType(
-    StructField("file_hash", StringType) ::
+    StructField("repository_id", StringType) ::
+      StructField("reference_name", StringType) ::
+      StructField("file_hash", StringType) ::
       StructField("content", BinaryType) ::
       StructField("commit_hash", StringType) ::
       StructField("is_binary", BooleanType, nullable = false) ::

@@ -103,10 +103,15 @@ package object api {
       * val filesDf = commitsDf.getFiles
       * }}}
       *
+      * Right now this method is very slow. If you are processing a lot of repositories
+      * you might have to consider pre-processing the repositories, references and hashes
+      * and then using [[tech.sourced.api.SparkAPI.getFiles]] to get the files, instead.
+      * This is likely to change in the near future.
+      *
       * @return new DataFrame containing also files data.
       */
     def getFiles: DataFrame = {
-      val filesDf = getDataSource("files", df.sparkSession)
+      val filesDf = getDataSource("files", df.sparkSession).drop("repository_id", "reference_name")
 
       if (df.schema.fieldNames.contains("hash")) {
         val commitsDf = df.drop("tree").distinct()

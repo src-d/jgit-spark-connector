@@ -29,16 +29,7 @@ class CommitIterator(requiredColumns: Array[String], repo: Repository)
         while ((commits == null || !commits.hasNext) && refs.hasNext) {
           actualRef = refs.next()
           index = 0
-          commits =
-            try {
-              Git.wrap(repo).log()
-                .add(Option(actualRef.getPeeledObjectId).getOrElse(actualRef.getObjectId))
-                .call().asScala.toIterator
-            } catch {
-              case _: IncorrectObjectTypeException => null
-              // TODO log this
-              // This reference is pointing to a non commit object
-            }
+          commits = CommitIterator.refCommits(repo, actualRef)
         }
 
         refs.hasNext || (commits != null && commits.hasNext)
@@ -99,3 +90,18 @@ class CommitIterator(requiredColumns: Array[String], repo: Repository)
 
 
 case class ReferenceWithCommit(ref: Ref, commit: RevCommit, index: Int)
+
+object CommitIterator {
+  def refCommits(repo: Repository, refs: Ref*): Iterator[RevCommit] =
+    try {
+      var log = Git.wrap(repo).log()
+      refs.foreach(ref => {
+        log = log.add(Option(ref.getPeeledObjectId).getOrElse(ref.getObjectId))
+      })
+      log.call().asScala.toIterator
+    } catch {
+      case _: IncorrectObjectTypeException => null
+      // TODO log this
+      // This reference is pointing to a non commit object
+    }
+}

@@ -98,8 +98,8 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
     val count = SparkAPI(spark, resourcePath)
       .getRepositories
-        .getReferences
-        .getCommits
+      .getReferences
+      .getCommits
       .getReference("refs/heads/develop")
       .count()
 
@@ -132,6 +132,22 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
       .select("name").distinct().count()
 
     assert(count == 1)
+  }
+
+  "Get files" should "return the correct files" in {
+    val spark = ss
+    val api = SparkAPI(spark, resourcePath)
+    val df = api.getRepositories.getHEAD.getCommits
+      .sort("hash").limit(10)
+    val rows = df.collect()
+      .map(row => (row.getString(row.fieldIndex("repository_id")), row.getString(row.fieldIndex("hash"))))
+    val repositories = rows.map(_._1)
+    val hashes = rows.map(_._2)
+
+    val files = SparkAPI(spark, resourcePath)
+      .getFiles(repositories.distinct, List[String]("refs/heads/HEAD"), hashes.distinct)
+
+    assert(files.count == 3)
   }
 
 }

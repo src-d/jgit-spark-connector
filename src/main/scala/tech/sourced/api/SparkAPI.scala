@@ -51,6 +51,50 @@ class SparkAPI(session: SparkSession) {
   def getRepositories(): DataFrame = getDataSource("repositories", session)
 
   /**
+    * Retrieves the files of a list of repositories, reference names and commit hashes.
+    * So the result will be a [[org.apache.spark.sql.DataFrame]] of all the files in the given commits that are
+    * in the given references that belong to the given repositories.
+    *
+    * NOTE: due to some specifics in the SparkAPI internals, this is way faster than
+    * using the DataFrame implicit methods to get the files, although this might change
+    * in the near future.
+    *
+    * {{{
+    * val filesDf = api.getRepositories.filter($"is_fork" === false)
+    *   .getReferences.filter($"name" === "some ref")
+    *   .getCommits.filter($"hash" === "some hash")
+    *   .getFiles
+    *
+    * // is way slower than
+    *
+    * val filesDfFast = api.getFiles(repoIds, refNames, hashes)
+    * }}}
+    *
+    * @param repositoryIds  List of the repository ids to filter by
+    * @param referenceNames List of reference names to filter by
+    * @param commitHashes   List of commit hashes to filter by
+    * @return [[org.apache.spark.sql.DataFrame]] with files of the given commits, refs and repos.
+    */
+  def getFiles(repositoryIds: Seq[String], referenceNames: Seq[String], commitHashes: Seq[String]): DataFrame = {
+    val df = getRepositories()
+    import df.sparkSession.implicits._
+
+    checkCols(df, "id")
+
+    val filesDf = getDataSource("files", df.sparkSession)
+      .filter($"repository_id".isin(repositoryIds: _*))
+      .filter($"reference_name".isin(referenceNames: _*))
+      .filter($"commit_hash".isin(commitHashes: _*))
+
+    val commitsDf = df.filter($"id".isin(repositoryIds: _*))
+      .getReferences.filter($"name".isin(referenceNames: _*))
+      .getCommits.filter($"hash".isin(commitHashes: _*))
+      .drop("tree").distinct()
+
+    filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
+  }
+
+  /**
     * Sets the path where the siva files of the repositories are stored.
     * Although this can actually be called the proper way to use SparkAPI is
     * to instantiate it using the SparkAPI companion object, which already
@@ -131,7 +175,7 @@ object SparkAPI {
     * val api = SparkAPI(sparkSession, "/path/to/repositories")
     * }}}
     *
-    * @param session spark session to use
+    * @param session          spark session to use
     * @param repositoriesPath the path to the repositories' siva files
     * @return SparkAPI instance
     */
