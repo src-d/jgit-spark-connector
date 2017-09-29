@@ -9,14 +9,14 @@ import tech.sourced.api.provider.{RepositoryProvider, SivaRDDProvider}
 import tech.sourced.api.{BaseSivaSpec, BaseSparkSpec}
 
 trait BaseRootedRepoIterator extends Suite with BaseSparkSpec with BaseSivaSpec with Matchers {
+  lazy val prov: SivaRDDProvider = SivaRDDProvider(ss.sparkContext)
+  lazy val rdd: RDD[PortableDataStream] = prov.get(resourcePath)
+
+  lazy val pds: PortableDataStream = rdd.filter(pds => pds.getPath()
+    .contains("fff7062de8474d10a67d417ccea87ba6f58ca81d.siva")).first()
+  lazy val repo: Repository = RepositoryProvider("/tmp").get(pds)
+
   def testIterator(iterator: (Repository) => Iterator[Row], matcher: (Int, Row) => Unit, total: Int, columnsCount: Int): Unit = {
-    val prov: SivaRDDProvider = SivaRDDProvider(ss.sparkContext)
-    val rdd: RDD[PortableDataStream] = prov.get(resourcePath)
-
-    val pds: PortableDataStream = rdd.filter(pds => pds.getPath()
-      .contains("fff7062de8474d10a67d417ccea87ba6f58ca81d.siva")).first()
-    val repo: Repository = RepositoryProvider("/tmp").get(pds)
-
     val ri: Iterator[Row] = iterator(repo)
 
     var count: Int = 0

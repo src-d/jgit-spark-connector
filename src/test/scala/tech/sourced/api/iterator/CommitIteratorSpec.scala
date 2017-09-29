@@ -3,6 +3,7 @@ package tech.sourced.api.iterator
 import java.sql.Timestamp
 
 import org.scalatest.FlatSpec
+import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
 class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
 
@@ -165,5 +166,17 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         case _ =>
       }, total = 1062, columnsCount = 2
     )
+  }
+
+  "refCommits" should "not crash if no refs are given" in {
+    val iter = CommitIterator.refCommits(repo)
+    iter.isEmpty should be(true)
+  }
+
+  "refCommits" should "not return duplicated commits even if refs share commits" in {
+    val refs = repo.getAllRefs.values.asScala.toList
+    val commits = CommitIterator.refCommits(repo, refs: _*).map(c => c.getId.name).toList
+
+    commits.distinct.length should be(commits.length)
   }
 }
