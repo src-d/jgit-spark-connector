@@ -134,6 +134,21 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     assert(count == 1)
   }
 
+  "Get files after reading commits" should "return the correct files" in {
+    val spark = ss
+    val files = SparkAPI(spark, resourcePath).getRepositories.getReferences.getCommits.getFiles
+
+    assert(files.count == 1536360)
+  }
+
+  "Get files without reading commits" should "return the correct files" in {
+    val spark = ss
+    val api = SparkAPI(spark, resourcePath)
+    val files = api.getRepositories.getReferences.getFiles
+
+    assert(files.count == 19126)
+  }
+
   "Get files" should "return the correct files" in {
     val spark = ss
     val api = SparkAPI(spark, resourcePath)
