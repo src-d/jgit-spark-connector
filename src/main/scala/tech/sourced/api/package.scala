@@ -111,14 +111,15 @@ package object api {
       * @return new DataFrame containing also files data.
       */
     def getFiles: DataFrame = {
-      val filesDf = getDataSource("files", df.sparkSession).drop("repository_id", "reference_name")
+      var filesDf = getDataSource("files", df.sparkSession)
 
       if (df.schema.fieldNames.contains("hash")) {
         val commitsDf = df.drop("tree").distinct()
+        filesDf = filesDf.drop("repository_id", "reference_name")
         filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
       } else {
         checkCols(df, "reference_name")
-        filesDf
+        filesDf.join(df, filesDf("reference_name") === df("name")).drop($"name")
       }
     }
 
