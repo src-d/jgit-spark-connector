@@ -29,19 +29,13 @@ import tech.sourced.api.udf.{ClassifyLanguagesUDF, CustomUDF, ExtractUASTsUDF}
   */
 package object api {
 
-  /**
-    * Key used for the option to specify the path of siva files.
-    */
+  /** Key used for the option to specify the path of siva files. */
   private[api] val repositoriesPathKey = "tech.sourced.api.repositories.path"
 
-  /**
-    * Key used for the option to specify the host of the bblfsh grpc service.
-    */
+  /** Key used for the option to specify the host of the bblfsh grpc service. */
   private[api] val bblfshHostKey = "tech.sourced.bblfsh.grpc.host"
 
-  /**
-    * Key used for the option to specify the port of the bblfsh grpc service.
-    */
+  /** Key used for the option to specify the port of the bblfsh grpc service. */
   private[api] val bblfsPortKey = "tech.sourced.bblfsh.grpc.port"
 
   /**
@@ -49,6 +43,9 @@ package object api {
     * their usage or not.
     */
   private[api] val skipCleanupKey = "tech.sourced.api.cleanup.skip"
+
+  /** Local spark directory. */
+  private[api] val localPathKey = "spark.local.dir"
 
   /**
     * Implicit class that adds some functions to the [[org.apache.spark.sql.SparkSession]].
@@ -145,8 +142,7 @@ package object api {
       var filesDf = getDataSource("files", df.sparkSession)
 
       if (df.schema.fieldNames.contains("hash")) {
-        val commitsDf = df.drop("tree").distinct()
-        filesDf = filesDf.drop("repository_id", "reference_name")
+        val commitsDf = df.drop("tree")
         filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
       } else {
         checkCols(df, "reference_name")
