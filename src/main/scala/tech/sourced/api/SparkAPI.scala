@@ -70,9 +70,19 @@ class SparkAPI(session: SparkSession) {
     * val filesDfFast = api.getFiles(repoIds, refNames, hashes)
     * }}}
     *
-    * @param repositoryIds  List of the repository ids to filter by
-    * @param referenceNames List of reference names to filter by
-    * @param commitHashes   List of commit hashes to filter by
+    * Calling this function with no arguments is the same as:
+    *
+    * {{{
+    * api.getRepositories.getReferences.getCommits.getFiles
+    * }}}
+    *
+    * What makes this method faster than just the example above is the fact of passing
+    * repository ids to filter by, so it's recommended to do so. You can pass any number
+    * of elements to filter by (including none).
+    *
+    * @param repositoryIds  List of the repository ids to filter by (optional)
+    * @param referenceNames List of reference names to filter by (optional)
+    * @param commitHashes   List of commit hashes to filter by (optional)
     * @return [[org.apache.spark.sql.DataFrame]] with files of the given commits, refs and repos.
     */
   def getFiles(repositoryIds: Seq[String] = Seq(),
