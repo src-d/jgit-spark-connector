@@ -24,12 +24,10 @@ matrix:
       python: 2.7
 
       install:
-        - ./local-install-enry-java.sh
         - ./sbt assembly
         - mkdir -p python/jars
         - cp target/**/spark-api-uber.jar python/jars
         - cd python
-        - cp ../local-install-enry-java.sh .
         - pip install -r requirements.txt
 
       script:
@@ -42,12 +40,10 @@ matrix:
       python: 3.6
 
       install:
-        - ./local-install-enry-java.sh
         - ./sbt assembly
         - mkdir -p python/jars
         - cp target/**/spark-api-uber.jar python/jars
         - cd python
-        - cp ../local-install-enry-java.sh .
         - pip install -r requirements.txt
 
       script:
@@ -68,7 +64,6 @@ matrix:
           tags: true
 
 before_script:
-  - ./local-install-enry-java.sh
   - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
 
 script:
