@@ -44,7 +44,6 @@ class API(object):
                                      self.session, self.__implicits)
 
 
-    @property
     def files(self, repository_ids=[], reference_names=[], commit_hashes=[]):
         """
         Retrieves the files of a list of repositories, reference names and commit hashes.

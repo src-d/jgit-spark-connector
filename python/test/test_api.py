@@ -114,3 +114,29 @@ class APITestCase(BaseTestCase):
         self.assertEqual(row.file_hash, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
         self.assertEqual(row.path, 'spec/database_spec.rb')
         self.assertEqual(row.uast, b"")
+
+
+    def test_api_files(self):
+        rows = self.api.repositories.references.head_ref.commits.sort('hash').limit(10).collect()
+        repos = []
+        hashes = []
+        for row in rows:
+            repos.append(row['repository_id'])
+            hashes.append(row['hash'])
+
+        self.assertEqual(self.api.files(repos, ["refs/heads/HEAD"], hashes).count(), 745)
+
+
+    def test_api_files_repository(self):
+        files = self.api.files(repository_ids=['github.com/xiyou-linuxer/faq-xiyoulinux'])
+        self.assertEqual(files.count(), 20048)
+
+
+    def test_api_files_reference(self):
+        files = self.api.files(reference_names=['refs/heads/develop'])
+        self.assertEqual(files.count(), 404)
+
+
+    def test_api_files_hash(self):
+        files = self.api.files(commit_hashes=['fff7062de8474d10a67d417ccea87ba6f58ca81d'])
+        self.assertEqual(files.count(), 86)

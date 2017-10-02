@@ -4,6 +4,8 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkException
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+import scala.collection.JavaConversions.asScalaBuffer
+
 /**
   * SparkAPI is the main entry point to all usage of the source{d} spark-api.
   * It has methods to configure all possible configurable options as well as
@@ -128,6 +130,18 @@ class SparkAPI(session: SparkSession) {
 
     filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
   }
+
+  /**
+    * This method is only offered for easier usage from Python.
+    */
+  private[api] def getFiles(repositoryIds: java.util.List[String],
+               referenceNames: java.util.List[String],
+               commitHashes: java.util.List[String]): DataFrame =
+    getFiles(
+      asScalaBuffer(repositoryIds),
+      asScalaBuffer(referenceNames),
+      asScalaBuffer(commitHashes)
+    )
 
   /**
     * Sets the path where the siva files of the repositories are stored.
