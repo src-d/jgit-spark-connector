@@ -53,6 +53,15 @@ class ColumnFilterSpec extends FlatSpec with Matchers {
     notEq.eval(Map("test" -> "a", "test2" -> "a")) should be(Some(false))
     notEq.eval(Map("test" -> "b", "test2" -> "a")) should be(Some(true))
     notEq.eval(Map("test2" -> "a")) should be(None)
+
+    val in = new InFilter("test", Array("a", "b", "c"))
+
+    in.matchingCases should be(Map("test" -> Seq("a", "b", "c")))
+
+    in.eval(Map("test" -> "a")) should be(Some(true))
+    in.eval(Map("test" -> "a",  "foo" -> "a")) should be(Some(true))
+    in.eval(Map("test" -> "d")) should be(Some(false))
+    in.eval(Map("foo" -> "b")) should be(None)
   }
 
   "ColumnFilter" should "process correctly columns" in {
@@ -72,7 +81,7 @@ class ColumnFilterSpec extends FlatSpec with Matchers {
   }
 
   "ColumnFilter" should "handle correctly unsupported filters" in {
-    val f = ColumnFilter.compileFilter(In("test", Array("a", "b", "c")))
+    val f = ColumnFilter.compileFilter(StringStartsWith("test", "a"))
 
     f.matchingCases should be(Map())
     f.eval(Map("test" -> "a")) should be(None)

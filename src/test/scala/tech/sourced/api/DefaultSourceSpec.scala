@@ -145,9 +145,9 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     val hashes = rows.map(_._2)
 
     val files = SparkAPI(spark, resourcePath)
-      .getFiles(repositories.distinct, List[String]("refs/heads/HEAD"), hashes.distinct)
+      .getFiles(repositories.distinct, List("refs/heads/HEAD"), hashes.distinct)
 
-    assert(files.count == 3)
+    assert(files.count == 745)
   }
 
 }

@@ -22,18 +22,12 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
   extends RootedRepoIterator[CommitTree](requiredColumns, repo) with Logging {
 
   override protected def loadIterator(): Iterator[CommitTree] = {
-    val repositories = mutable.Buffer[String]()
-    val references = mutable.Buffer[String]()
-    val hashes = mutable.Buffer[String]()
+    val f = mutable.HashMap[String, mutable.Buffer[String]]()
 
     filters.flatMap(_.matchingCases)
       .foreach(filter => filter match {
-        case ("repository_id", repos) =>
-          repositories ++= repos.map(_.asInstanceOf[String])
-        case ("reference_name", refs) =>
-          references ++= refs.map(_.asInstanceOf[String])
-        case ("commit_hash", commitHashes) =>
-          hashes ++= commitHashes.map(_.asInstanceOf[String])
+        case (k@("repository_id" | "reference_name" | "commit_hash"), values) =>
+          f(k) = mutable.Buffer(values.map(_.asInstanceOf[String]): _*)
         case anyOtherFilter =>
           log.debug(s"BlobIterator does not support filter $anyOtherFilter")
       })
@@ -41,30 +35,37 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
     // Fast path, if there are no repositories or references to filter by
     // just return the files from the given hashes, which is the fastest
     // option of all.
-    if (!hashes.isEmpty && repositories.isEmpty && references.isEmpty) {
-      filesFromHashes(hashes)
+    if (f.contains("commit_hash") && !f.contains("repository_id") && !f.contains("reference_name")) {
+      filesFromHashes(f("commit_hash"))
     } else {
       var repos = repo.getConfig.getSubsections("remote").asScala
         .map(getRepositoryId(_).get)
 
-      if (!repositories.isEmpty) {
-        repos = repos.filter(repositories.contains(_))
+      if (f.contains("repository_id")) {
+        val repoIds = f("repository_id")
+        repos = repos.filter(repoIds.contains(_))
       }
 
       var refs = repo.getAllRefs.asScala.values.toIterator
         .filter(ref => {
-          val (repoId, refName) = parseRef(ref.getName)
+          val (repoId, _) = parseRef(ref.getName)
           repos.contains(repoId)
         })
 
       // If there are references to filter, just get the hash of the commit they point to
       // and treat it as a hash filter.
-      if (!references.isEmpty) {
+      if (f.contains("reference_name")) {
+        val references = f("reference_name")
         refs = refs.filter(ref => {
           val (_, refName) = parseRef(ref.getName)
           val contained = references.contains(refName)
           if (contained) {
-            hashes += Option(ref.getPeeledObjectId).getOrElse(ref.getObjectId).name
+            val hash = Option(ref.getPeeledObjectId).getOrElse(ref.getObjectId).name
+            f.get("commit_hash") match {
+              case Some(buf) =>
+                buf += hash
+              case None => f("commit_hash") = mutable.Buffer(hash)
+            }
           }
           contained
         })
@@ -73,13 +74,22 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
       if (refs.isEmpty) {
         Seq().toIterator
       } else {
-        hashes.distinct
-        var commits = CommitIterator.refCommits(repo, refs.toList.distinct: _*)
-        if (!hashes.isEmpty) {
-          commits = commits.filter(c => hashes.contains(c.getId.name))
+        val hashes = f.get("commit_hash") match {
+          case Some(hashes) => hashes.distinct
+          case None => Seq()
         }
 
-        commits.flatMap(c => JGitBlobIterator(getTreeWalk(c.getId), log))
+        refs.flatMap(ref => CommitIterator.refCommits(repo, ref).map(c => (ref, c)))
+          .filter(row => {
+            val (_, c) = row
+            hashes.isEmpty || hashes.contains(c.getId.name)
+          })
+          .flatMap(row => {
+            val (ref, commit) = row
+            val (repoId, refName) = parseRef(ref.getName)
+
+            JGitBlobIterator(getTreeWalk(repoId, refName, commit.getId), log)
+          })
       }
     }
   }
@@ -100,8 +110,8 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
     val content = BlobIterator.readFile(commitTree.tree.getObjectId(0), commitTree.tree.getObjectReader)
     val isBinary = RawText.isBinary(content)
     Map[String, () => Any](
-      "repository_id" -> (() => null),
-      "reference_name" -> (() => null),
+      "repository_id" -> (() => commitTree.repoId),
+      "reference_name" -> (() => commitTree.refName),
       "file_hash" -> (() => commitTree.tree.getObjectId(0).name),
       "content" -> (() => if (isBinary) Array.emptyByteArray else content),
       "commit_hash" -> (() => commitTree.commit.name),
@@ -110,13 +120,15 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
     )
   }
 
-  private def getTreeWalk(commitId: ObjectId): CommitTree = {
+  private def getTreeWalk(repoId: String, refName: String, commitId: ObjectId): CommitTree = {
     val revCommit = repo.parseCommit(commitId)
     val treeWalk = new TreeWalk(repo)
     treeWalk.setRecursive(true)
     treeWalk.addTree(revCommit.getTree)
-    CommitTree(commitId, treeWalk)
+    CommitTree(repoId, refName, commitId, treeWalk)
   }
+
+  private def getTreeWalk(commitId: ObjectId): CommitTree = getTreeWalk(null, null, commitId)
 }
 
 /**
@@ -125,7 +137,7 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
   * @param commit ObjectId of the commit
   * @param tree   the tree
   */
-case class CommitTree(commit: ObjectId, tree: TreeWalk)
+case class CommitTree(repoId: String, refName: String, commit: ObjectId, tree: TreeWalk)
 
 object BlobIterator {
   val readMaxBytes = 20 * 1024 * 1024

@@ -85,6 +85,8 @@ class SparkAPI(session: SparkSession) {
       .filter($"repository_id".isin(repositoryIds: _*))
       .filter($"reference_name".isin(referenceNames: _*))
       .filter($"commit_hash".isin(commitHashes: _*))
+      .drop("repository_id", "reference_name")
+      .distinct
 
     val commitsDf = df.filter($"id".isin(repositoryIds: _*))
       .getReferences.filter($"name".isin(referenceNames: _*))
