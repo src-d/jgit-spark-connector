@@ -1,41 +1,33 @@
 package tech.sourced.api
 
-import org.apache.spark.{InterruptibleIterator, SparkException, TaskContext}
+import org.apache.spark.SparkException
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Row, SQLContext}
 import tech.sourced.api.iterator._
 import tech.sourced.api.provider.{RepositoryProvider, SivaRDDProvider}
-import tech.sourced.api.util.ColumnFilter
 
 /**
   * Default source to provide new git relations.
   */
 class DefaultSource extends RelationProvider with DataSourceRegister {
+  
+  override def shortName = "git"
 
-  /**
-    * @inheritdoc
-    */
-  override def shortName(): String = "git"
+  override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): BaseRelation = {
+    val table = parameters.getOrElse(DefaultSource.tableNameKey, throw new SparkException("parameter 'table' must be provided"))
 
-  /**
-    * @inheritdoc
-    */
-  override def createRelation(sqlContext: SQLContext,
-                              parameters: Map[String, String]): BaseRelation = {
-    val table = parameters.getOrElse(
-      DefaultSource.tableNameKey,
-      throw new SparkException("parameter 'table' must be provided")
-    )
+    val schema: StructType = table match {
+      case "repositories" => Schema.repositories
+      case "references" => Schema.references
+      case "commits" => Schema.commits
+      case "files" => Schema.files
+      case other => throw new SparkException(s"table '$other' is not supported")
+    }
 
-    val path = parameters.getOrElse(
-      DefaultSource.pathKey,
-      throw new SparkException("parameter 'path' must be provided")
-    )
-    val localPath = sqlContext.getConf("spark.local.dir", "/tmp")
-
-    GitRelation(sqlContext, table, path, localPath)
+    GitRelation(sqlContext, schema, tableSource = Some(table))
   }
 
 }
@@ -57,55 +49,69 @@ object DefaultSource {
   * @param path       path where the repositories in .siva format are stored
   * @param localPath  Spark local directory
   */
-case class GitRelation(sqlContext: SQLContext,
-                       tableName: String,
-                       path: String,
-                       localPath: String) extends BaseRelation with PrunedFilteredScan {
+case class GitRelation(
+                        sqlContext: SQLContext,
+                        schema: StructType,
+                        joinConditions: Option[Expression] = None,
+                        tableSource: Option[String] = None)
+  extends BaseRelation with CatalystScan {
 
-  /**
-    * Contains the schema for the table given to this GitRelation.
-    *
-    * @return the schema of the given table
-    */
-  override def schema: StructType = tableName match {
-    case "repositories" => Schema.repositories
-    case "references" => Schema.references
-    case "commits" => Schema.commits
-    case "files" => Schema.files
-    case other => throw new SparkException(s"table '$other' is not supported")
+  private val localPath: String = sqlContext.getConf(localPathKey, "/tmp")
+  private val path: String = sqlContext.getConf(repositoriesPathKey)
+  private val skipCleanup: Boolean = sqlContext.sparkContext.getConf.getBoolean(skipCleanupKey, false)
+
+  // TODO implement this correctly to avoid a lot of required columns push up to spark
+  override def unhandledFilters(filters: Array[Filter]): Array[Filter] = {
+    super.unhandledFilters(filters)
   }
 
-  /**
-    * @inheritdoc
-    */
-  override def buildScan(requiredColumns: Array[String], filters: Array[Filter]): RDD[Row] = {
+  override def buildScan(requiredColumns: Seq[Attribute], filters: Seq[Expression]): RDD[Row] = {
+    // TODO remove prints
+    println("JOIN CONDITIONS: ", joinConditions)
+    println("SCHEMA: ", schema)
+    println("SCHEMA METADATA: ", schema.map(_.metadata))
+    println("FILTERS:", filters)
+    println("REQUIRED COLS:", requiredColumns)
+    println("REQUIRED COLS METADATA:", requiredColumns.map(_.metadata))
+    println("PATH AND LOCAL PATH:", path, localPath)
+
+    // TODO process join conditions
+    // TODO process filters
+
+    // get required columns per data source
+    val rc: Map[String, Array[String]] = tableSource match {
+      case Some(ts) => Map(ts -> requiredColumns.map(_.name).toArray)
+      case None =>
+        requiredColumns
+          .map(a => a.metadata.getString("source") -> a.name)
+          .groupBy(_._1).map { case (k, v) => (k, v.map(_._2).toArray) }
+    }
+
     val sc = sqlContext.sparkContext
-
-    val tableB = sc.broadcast(tableName)
-    val requiredB = sc.broadcast(requiredColumns)
-    val localPathB = sc.broadcast(localPath)
-    // TODO broadcast filters
-
     val sivaRDD = SivaRDDProvider(sc).get(path)
-    val skipCleanup = sqlContext.sparkContext.getConf.getBoolean(skipCleanupKey, false)
+
+    val requiredColsB = sc.broadcast(rc)
+    val localPathB = sc.broadcast(localPath)
 
     sivaRDD.flatMap(pds => {
       val provider = RepositoryProvider(localPathB.value, skipCleanup)
       val repo = provider.get(pds)
 
-      val iter = tableB.value match {
-        case "repositories" => new RepositoryIterator(requiredB.value, repo)
-        case "references" => new ReferenceIterator(requiredB.value, repo)
-        case "commits" => new CommitIterator(requiredB.value, repo)
-        case "files" => new BlobIterator(
-          requiredB.value,
-          repo,
-          filters.map(ColumnFilter.compileFilter)
-        )
-        case other => throw new SparkException(s"table '$other' is not supported")
+      // TODO send filters to each iterator
+      val iterators = requiredColsB.value.map {
+        case ("repositories", c) => new RepositoryIterator(c, repo)
+        case ("references", c) => new ReferenceIterator(c, repo)
+        case ("commits", c) => new CommitIterator(c, repo)
+        case ("files", c) => new BlobIterator(c, repo, Array())
+        case other => throw new SparkException(s"required cols for '$other' is not supported")
       }
 
-      new CleanupIterator(iter, provider.close(pds.getPath()))
+      if (iterators.size == 1) {
+        new CleanupIterator(iterators.head, provider.close(pds.getPath()))
+      } else {
+        // TODO process each iterator in order to send data to the next one
+        new CleanupIterator(iterators.head, provider.close(pds.getPath()))
+      }
     })
   }
 }

@@ -54,6 +54,9 @@ package object api {
   // start by "spark." to be able to be loaded from the "spark-defaults.conf" file.
 
 
+  /** Local spark directory. */
+  private[api] val localPathKey = "spark.local.dir"
+
   /**
     * Implicit class that adds some functions to the [[org.apache.spark.sql.SparkSession]].
     *
@@ -146,11 +149,10 @@ package object api {
       * @return new DataFrame containing also files data.
       */
     def getFiles: DataFrame = {
-      var filesDf = getDataSource("files", df.sparkSession)
+      val filesDf = getDataSource("files", df.sparkSession)
 
       if (df.schema.fieldNames.contains("hash")) {
-        val commitsDf = df.drop("tree").distinct()
-        filesDf = filesDf.drop("repository_id", "reference_name")
+        val commitsDf = df.drop("tree")
         filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
       } else {
         checkCols(df, "reference_name")
@@ -278,7 +280,7 @@ package object api {
     /**
       * List of custom functions to be registered.
       */
-    val UDFtoRegister = List[CustomUDF](ClassifyLanguagesUDF, ExtractUASTsUDF)
+    val UDFtoRegister: List[CustomUDF] = List(ClassifyLanguagesUDF, ExtractUASTsUDF)
   }
 
 }
