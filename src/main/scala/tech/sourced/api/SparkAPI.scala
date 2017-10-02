@@ -75,23 +75,46 @@ class SparkAPI(session: SparkSession) {
     * @param commitHashes   List of commit hashes to filter by
     * @return [[org.apache.spark.sql.DataFrame]] with files of the given commits, refs and repos.
     */
-  def getFiles(repositoryIds: Seq[String], referenceNames: Seq[String], commitHashes: Seq[String]): DataFrame = {
+  def getFiles(repositoryIds: Seq[String] = Seq(),
+               referenceNames: Seq[String] = Seq(),
+               commitHashes: Seq[String] = Seq()): DataFrame = {
     val df = getRepositories()
     import df.sparkSession.implicits._
 
     checkCols(df, "id")
 
-    val filesDf = getDataSource("files", df.sparkSession)
-      .filter($"repository_id".isin(repositoryIds: _*))
-      .filter($"reference_name".isin(referenceNames: _*))
-      .filter($"commit_hash".isin(commitHashes: _*))
-      .drop("repository_id", "reference_name")
-      .distinct
+    var filesDf = getDataSource("files", df.sparkSession)
 
-    val commitsDf = df.filter($"id".isin(repositoryIds: _*))
-      .getReferences.filter($"name".isin(referenceNames: _*))
-      .getCommits.filter($"hash".isin(commitHashes: _*))
-      .drop("tree").distinct()
+    if (repositoryIds.nonEmpty) {
+      filesDf = filesDf.filter($"repository_id".isin(repositoryIds: _*))
+    }
+
+    if (referenceNames.nonEmpty) {
+      filesDf = filesDf.filter($"reference_name".isin(referenceNames: _*))
+    }
+
+    if (commitHashes.nonEmpty) {
+      filesDf = filesDf.filter($"commit_hash".isin(commitHashes: _*))
+    }
+
+    filesDf = filesDf.drop("repository_id", "reference_name").distinct
+
+    var reposDf = df
+    if (repositoryIds.nonEmpty) {
+      reposDf = reposDf.filter($"id".isin(repositoryIds: _*))
+    }
+
+    var refsDf = reposDf.getReferences
+    if (referenceNames.nonEmpty) {
+      refsDf = refsDf.filter($"name".isin(referenceNames: _*))
+    }
+
+    var commitsDf = refsDf.getCommits
+    if (commitHashes.nonEmpty) {
+      commitsDf = commitsDf.filter($"hash".isin(commitHashes: _*))
+    }
+
+    commitsDf.drop("tree").distinct()
 
     filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
   }

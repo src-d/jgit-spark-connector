@@ -150,4 +150,28 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     assert(files.count == 745)
   }
 
+  "Get files by repository" should "return the correct files" in {
+    val spark = ss
+    val files = SparkAPI(spark, resourcePath)
+      .getFiles(repositoryIds = List("github.com/xiyou-linuxer/faq-xiyoulinux"))
+
+    assert(files.count == 20048)
+  }
+
+  "Get files by reference" should "return the correct files" in {
+    val spark = ss
+    val files = SparkAPI(spark, resourcePath)
+      .getFiles(referenceNames = List("refs/heads/develop"))
+
+    assert(files.count == 404)
+  }
+
+  "Get files by commit" should "return the correct files" in {
+    val spark = ss
+    val files = SparkAPI(spark, resourcePath)
+      .getFiles(commitHashes = List("fff7062de8474d10a67d417ccea87ba6f58ca81d"))
+
+    assert(files.count == 86)
+  }
+
 }
