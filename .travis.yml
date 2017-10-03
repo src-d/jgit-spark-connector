@@ -67,6 +67,8 @@ before_script:
   - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
 
 script:
+  - ./sbt scalastyle
+  - ./sbt test:scalastyle
   - ./sbt ++$TRAVIS_SCALA_VERSION jacoco:cover
   - ./sbt assembly
 
