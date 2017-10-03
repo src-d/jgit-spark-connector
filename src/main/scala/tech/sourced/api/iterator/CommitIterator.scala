@@ -11,8 +11,16 @@ import org.eclipse.jgit.treewalk.TreeWalk
 
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
+/**
+  * Iterator that generates commit rows.
+  *
+  * @param requiredColumns required columns for the returned row
+  * @param repo            Git repository
+  */
 class CommitIterator(requiredColumns: Array[String], repo: Repository)
   extends RootedRepoIterator[ReferenceWithCommit](requiredColumns, repo) {
+
+  /** @inheritdoc */
   override protected def loadIterator(): Iterator[ReferenceWithCommit] =
   // TODO this can be improved sending filters to loadIterator,
   // because we don't need to get all the references in all the cases
@@ -43,7 +51,7 @@ class CommitIterator(requiredColumns: Array[String], repo: Repository)
       }
     }
 
-
+  /** @inheritdoc */
   override protected def mapColumns(obj: ReferenceWithCommit): Map[String, () => Any] = {
     val (repoId, refName) = parseRef(obj.ref.getName)
 
@@ -71,6 +79,12 @@ class CommitIterator(requiredColumns: Array[String], repo: Repository)
     )
   }
 
+  /**
+    * Retrieves the files for a commit.
+    *
+    * @param c commit
+    * @return map of files
+    */
   private def getFiles(c: RevCommit): Map[String, String] = {
     val treeWalk: TreeWalk = new TreeWalk(repo)
     val nth: Int = treeWalk.addTree(c.getTree.getId)
@@ -89,7 +103,13 @@ class CommitIterator(requiredColumns: Array[String], repo: Repository)
   }
 }
 
-
+/**
+  * Contains a reference with a commit and the index of such commit in the reference.
+  *
+  * @param ref    reference
+  * @param commit commit
+  * @param index  index of the commit in the reference
+  */
 case class ReferenceWithCommit(ref: Ref, commit: RevCommit, index: Int)
 
 object CommitIterator {

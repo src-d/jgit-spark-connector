@@ -10,17 +10,17 @@ import tech.sourced.api.util.CompiledFilter
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-
 /**
-  * Blob iterator: returns all blobs from the filtered commits.
+  * Iterator that generates rows containing files of commits.
   *
-  * @param requiredColumns
-  * @param repo
-  * @param filters
+  * @param requiredColumns required columns for the returned row
+  * @param repo            Git repository
+  * @param filters         list of filters to apply in the iterator
   */
 class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Array[CompiledFilter])
   extends RootedRepoIterator[CommitTree](requiredColumns, repo) with Logging {
 
+  /** @inheritdoc */
   override protected def loadIterator(): Iterator[CommitTree] = {
     val f = mutable.HashMap[String, mutable.Buffer[String]]()
 
@@ -88,23 +88,30 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
             val (ref, commit) = row
             val (repoId, refName) = parseRef(ref.getName)
 
-            JGitBlobIterator(getTreeWalk(repoId, refName, commit.getId), log)
+            JGitBlobIterator(getCommitTree(repoId, refName, commit.getId), log)
           })
       }
     }
   }
 
+  /**
+    * Returns an iterator of [[CommitTree]] with the files of the given commit hashes.
+    *
+    * @param hashes commit hashes
+    * @return iterator of commit trees
+    */
   private def filesFromHashes(hashes: Seq[String]): Iterator[CommitTree] = {
     hashes.toIterator.flatMap(hash => {
       val id = ObjectId.fromString(hash)
       if (repo.hasObject(id)) {
-        JGitBlobIterator(getTreeWalk(id), log)
+        JGitBlobIterator(getCommitTree(id), log)
       } else {
         Seq()
       }
     })
   }
 
+  /** @inheritdoc*/
   override protected def mapColumns(commitTree: CommitTree): Map[String, () => Any] = {
     log.debug(s"Reading blob:${commitTree.tree.getObjectId(0).name()} of tree:${commitTree.tree.getPathString} from commit:${commitTree.commit.name()}")
     val content = BlobIterator.readFile(commitTree.tree.getObjectId(0), commitTree.tree.getObjectReader)
@@ -120,7 +127,15 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
     )
   }
 
-  private def getTreeWalk(repoId: String, refName: String, commitId: ObjectId): CommitTree = {
+  /**
+    * Returns a commit tree for a commit in the given reference and repository.
+    *
+    * @param repoId   Repository id
+    * @param refName  Reference name
+    * @param commitId Commit id
+    * @return Commit tree of the commit
+    */
+  private def getCommitTree(repoId: String, refName: String, commitId: ObjectId): CommitTree = {
     val revCommit = repo.parseCommit(commitId)
     val treeWalk = new TreeWalk(repo)
     treeWalk.setRecursive(true)
@@ -128,27 +143,36 @@ class BlobIterator(requiredColumns: Array[String], repo: Repository, filters: Ar
     CommitTree(repoId, refName, commitId, treeWalk)
   }
 
-  private def getTreeWalk(commitId: ObjectId): CommitTree = getTreeWalk(null, null, commitId)
+  /**
+    * Gets a commit tree only with the ID of the commit.
+    *
+    * @param commitId commit id
+    * @return Commit tree
+    */
+  private def getCommitTree(commitId: ObjectId): CommitTree = getCommitTree(null, null, commitId)
 }
 
 /**
   * Contains a commit and its tree.
   *
-  * @param commit ObjectId of the commit
-  * @param tree   the tree
+  * @param repoId  repository id
+  * @param refName reference name
+  * @param commit  ObjectId of the commit
+  * @param tree    the tree
   */
 case class CommitTree(repoId: String, refName: String, commit: ObjectId, tree: TreeWalk)
 
 object BlobIterator {
+  /** Max bytes to read for the content of a file. */
   val readMaxBytes = 20 * 1024 * 1024
 
   /**
     * Read max N bytes of the given blob
     *
-    * @param objId
-    * @param reader
-    * @param max maximum number of bytes to read in memory
-    * @return
+    * @param objId  ID of the object to read
+    * @param reader Object reader to use
+    * @param max    maximum number of bytes to read in memory
+    * @return Bytearray with the contents of the file
     */
   def readFile(objId: ObjectId, reader: ObjectReader, max: Integer = readMaxBytes): Array[Byte] = {
     val obj = reader.open(objId)
@@ -175,6 +199,7 @@ object BlobIterator {
 class JGitBlobIterator[T <: CommitTree](commitTree: T, log: Logger) extends Iterator[T] {
   var wasAlreadyMoved = false
 
+  /** @inheritdoc */
   override def hasNext: Boolean = {
     if (wasAlreadyMoved) {
       return true
@@ -192,6 +217,7 @@ class JGitBlobIterator[T <: CommitTree](commitTree: T, log: Logger) extends Iter
     hasNext
   }
 
+  /** @inheritdoc */
   override def next(): T = {
     if (!wasAlreadyMoved) {
       moveIteratorSkippingMissingObj
@@ -200,6 +226,11 @@ class JGitBlobIterator[T <: CommitTree](commitTree: T, log: Logger) extends Iter
     commitTree
   }
 
+  /**
+    * Moves the iterator but skips non-existing objects.
+    *
+    * @return whether it contains more rows or not
+    */
   private def moveIteratorSkippingMissingObj: Boolean = {
     val hasNext = commitTree.tree.next()
     if (!hasNext) {
@@ -217,6 +248,14 @@ class JGitBlobIterator[T <: CommitTree](commitTree: T, log: Logger) extends Iter
 }
 
 object JGitBlobIterator {
+  /**
+    * Creates a new JGitBlobIterator from a commit tree and a logger.
+    *
+    * @constructor
+    * @param commitTree commit tree
+    * @param log        logger
+    * @return a JGit blob iterator
+    */
   def apply(commitTree: CommitTree, log: Logger) = new JGitBlobIterator(commitTree, log)
 }
 
