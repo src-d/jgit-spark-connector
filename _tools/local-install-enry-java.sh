@@ -19,7 +19,7 @@ fi
 
 mkdir -p "$GOPATH/src/gopkg.in/src-d"
 ln -s "${PWD}/enry" "$GOPATH/src/gopkg.in/src-d/enry.v1"
-cd enry
+cd "$GOPATH/src/gopkg.in/src-d/enry.v1"
 go get ./...
 cd -
 

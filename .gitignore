@@ -4,3 +4,9 @@ target/*
 project/target/*
 project/project/*
 .idea
+*~
+.#*
+.spark-dist
+spark
+spark-*.tgz
+metastore_db

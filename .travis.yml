@@ -13,6 +13,7 @@ cache:
   directories:
     - $HOME/.sbt
     - $HOME/.ivy2
+    - .spark-dist
 
 services:
   - docker
@@ -68,12 +69,14 @@ matrix:
           tags: true
 
 before_script:
-  - ./local-install-enry-java.sh
+  - ./_tools/local-install-enry-java.sh
   - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
 
 script:
-  - ./sbt ++$TRAVIS_SCALA_VERSION jacoco:cover
-  - ./sbt assembly
+  - ./sbt ++$TRAVIS_SCALA_VERSION jacoco:cover || travis_terminate 1
+  - ./sbt package
+  - ./_tools/getApacheSpark.sh "2.2.0" "2.7"
+  - ./spark-shell -i src/test/resources/SparkShellScript.scala
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
