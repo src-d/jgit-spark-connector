@@ -21,8 +21,6 @@ lazy val root = (project in file(".")).
     libraryDependencies += enry % Compile,
 
     resolvers += "jitpack" at "https://jitpack.io",
-    // TODO: remove this local resolver when enry-java will be available from jitpack.
-    resolvers += "Local Ivy repository" at "file://" + Path.userHome.absolutePath + "/.ivy2/repository",
 
     test in assembly := {},
     assemblyJarName in assembly := s"${name.value}-uber.jar"
