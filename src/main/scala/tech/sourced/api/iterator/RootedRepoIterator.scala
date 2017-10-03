@@ -16,7 +16,8 @@ import scala.collection.JavaConverters.collectionAsScalaIterableConverter
   * @param repo            Git repository
   * @tparam T type of the internal iterator
   */
-abstract class RootedRepoIterator[T](requiredColumns: Array[String], repo: Repository) extends Iterator[Row] {
+abstract class RootedRepoIterator[T](requiredColumns: Array[String],
+                                     repo: Repository) extends Iterator[Row] {
 
   /**
     * Internal iterator of the specific type.
@@ -71,7 +72,9 @@ abstract class RootedRepoIterator[T](requiredColumns: Array[String], repo: Repos
   protected def getRepositoryId(uuid: String): Option[String] = {
     remotes.find(i => i == uuid) match {
       case None => None
-      case Some(i) => Some(GitUrlsParser.getIdFromUrls(repoConfig.getStringList("remote", i, "url")))
+      case Some(i) => Some(GitUrlsParser.getIdFromUrls(
+        repoConfig.getStringList("remote", i, "url")
+      ))
     }
   }
 
@@ -100,7 +103,8 @@ abstract class RootedRepoIterator[T](requiredColumns: Array[String], repo: Repos
   protected def parseRef(ref: String): (String, String) = {
     val split: Array[String] = ref.split("/")
     val uuid: String = split.last
-    val repoId: String = this.getRepositoryId(uuid).getOrElse(throw new IllegalArgumentException(s"cannot parse ref $ref"))
+    val repoId: String = this.getRepositoryId(uuid)
+      .getOrElse(throw new IllegalArgumentException(s"cannot parse ref $ref"))
     val refName: String = split.init.mkString("/")
 
     (repoId, refName)

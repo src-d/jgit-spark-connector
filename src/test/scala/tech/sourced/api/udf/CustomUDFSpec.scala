@@ -4,7 +4,6 @@ import org.apache.spark.sql.types.{StringType, StructField}
 import org.scalatest.{FlatSpec, Matchers}
 import tech.sourced.api._
 
-
 class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
 
   val fileSeq = Seq(
@@ -48,10 +47,12 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     val spark = ss
     import spark.implicits._
 
-    spark.catalog.listFunctions().filter('name like "%" + ClassifyLanguagesUDF.name + "%").show(false)
+    spark.catalog.listFunctions().filter('name like "%"
+      + ClassifyLanguagesUDF.name + "%").show(false)
     fileSeq.toDF(fileColumns: _*).createTempView("files")
 
-    val languagesDf = spark.sqlContext.sql("SELECT *, " + ClassifyLanguagesUDF.name + "(is_binary, path, content) AS lang FROM files")
+    val languagesDf = spark.sqlContext.sql("SELECT *, "
+      + ClassifyLanguagesUDF.name + "(is_binary, path, content) AS lang FROM files")
     languagesDf.schema.fields should contain(StructField("lang", StringType))
 
     languagesDf.show
@@ -95,7 +96,8 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     spark.catalog.listFunctions().filter('name like "%" + ExtractUASTsUDF.name + "%").show(false)
     fileSeq.toDF(fileColumns: _*).createTempView("uasts")
 
-    val uastsDF = spark.sqlContext.sql("SELECT *, " + ExtractUASTsUDF.name + "(path, content) AS uast FROM uasts")
+    val uastsDF = spark.sqlContext.sql("SELECT *, "
+      + ExtractUASTsUDF.name + "(path, content) AS uast FROM uasts")
     uastsDF.collect
     uastsDF.columns should contain("uast")
   }

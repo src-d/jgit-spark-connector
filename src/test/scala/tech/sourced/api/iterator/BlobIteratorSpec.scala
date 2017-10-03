@@ -21,7 +21,8 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         ), _, Array[CompiledFilter]()), {
         case (0, row) =>
           row.getString(0) should be("733c072369ca77331f392c40da7404c85c36542c")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("                    GNU GENERAL PUBLIC LICENSE")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("                    GNU GENERAL PUBLIC LICENSE"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("LICENSE")
@@ -29,7 +30,8 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           row.getString(6) should be("refs/heads/HEAD")
         case (1, row) =>
           row.getString(0) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("# faq-xiyoulinux")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("# faq-xiyoulinux"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("README.md")
@@ -37,7 +39,8 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           row.getString(6) should be("refs/heads/HEAD")
         case (2, row) =>
           row.getString(0) should be("733c072369ca77331f392c40da7404c85c36542c")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("                    GNU GENERAL PUBLIC LICENSE")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("                    GNU GENERAL PUBLIC LICENSE"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("LICENSE")
@@ -67,7 +70,8 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         ), _, refFilters), {
         case (0, row) =>
           row.getString(0) should be("733c072369ca77331f392c40da7404c85c36542c")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("                    GNU GENERAL PUBLIC LICENSE")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("                    GNU GENERAL PUBLIC LICENSE"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("LICENSE")
@@ -75,7 +79,8 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           row.getString(6) should be("refs/heads/HEAD")
         case (1, row) =>
           row.getString(0) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("# faq-xiyoulinux")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8).
+            should(startWith("# faq-xiyoulinux"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("README.md")
@@ -83,7 +88,8 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           row.getString(6) should be("refs/heads/HEAD")
         case (2, row) =>
           row.getString(0) should be("733c072369ca77331f392c40da7404c85c36542c")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("                    GNU GENERAL PUBLIC LICENSE")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("                    GNU GENERAL PUBLIC LICENSE"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("LICENSE")
@@ -91,7 +97,8 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           row.getString(6) should be("refs/heads/HEAD")
         case (3, row) =>
           row.getString(0) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("# faq-xiyoulinux")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("# faq-xiyoulinux"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("README.md")
@@ -118,28 +125,32 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         ), _, refFilters), {
         case (0, row) =>
           row.getString(0) should be("733c072369ca77331f392c40da7404c85c36542c")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("                    GNU GENERAL PUBLIC LICENSE")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("                    GNU GENERAL PUBLIC LICENSE"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("LICENSE")
           row.getString(5) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
         case (1, row) =>
           row.getString(0) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("# faq-xiyoulinux")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("# faq-xiyoulinux"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("README.md")
           row.getString(5) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
         case (2, row) =>
           row.getString(0) should be("733c072369ca77331f392c40da7404c85c36542c")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("                    GNU GENERAL PUBLIC LICENSE")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("                    GNU GENERAL PUBLIC LICENSE"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("LICENSE")
           row.getString(5) should be("github.com/mawag/faq-xiyoulinux")
         case (3, row) =>
           row.getString(0) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("# faq-xiyoulinux")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("# faq-xiyoulinux"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("README.md")
@@ -170,13 +181,15 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         ), _, refFilters), {
         case (0, row) =>
           row.getString(0) should be("733c072369ca77331f392c40da7404c85c36542c")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("                    GNU GENERAL PUBLIC LICENSE")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("                    GNU GENERAL PUBLIC LICENSE"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("LICENSE")
         case (1, row) =>
           row.getString(0) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("# faq-xiyoulinux")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("# faq-xiyoulinux"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("README.md")
@@ -209,7 +222,8 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         ), _, refFilters), {
         case (0, row) =>
           row.getString(0) should be("733c072369ca77331f392c40da7404c85c36542c")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("                    GNU GENERAL PUBLIC LICENSE")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("                    GNU GENERAL PUBLIC LICENSE"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("LICENSE")
@@ -217,7 +231,8 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           row.getString(6) should be("refs/heads/HEAD")
         case (1, row) =>
           row.getString(0) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("# faq-xiyoulinux")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("# faq-xiyoulinux"))
           row.getString(2) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("README.md")
@@ -233,7 +248,8 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           row.getString(6) should be("refs/heads/develop")
         case (3, row) =>
           row.getString(0) should be("733c072369ca77331f392c40da7404c85c36542c")
-          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8) should startWith("                    GNU GENERAL PUBLIC LICENSE")
+          new String(row.getAs[Array[Byte]](1), StandardCharsets.UTF_8)
+            .should(startWith("                    GNU GENERAL PUBLIC LICENSE"))
           row.getString(2) should be("a574356dab47de78259713af2f62955408395974")
           row.getBoolean(3) should be(false)
           row.getString(4) should be("LICENSE")

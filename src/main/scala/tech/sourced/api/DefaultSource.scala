@@ -17,14 +17,22 @@ class DefaultSource extends RelationProvider with DataSourceRegister {
   /**
     * @inheritdoc
     */
-  override def shortName() = "git"
+  override def shortName(): String = "git"
 
   /**
     * @inheritdoc
     */
-  override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): BaseRelation = {
-    val table = parameters.getOrElse(DefaultSource.tableNameKey, throw new SparkException("parameter 'table' must be provided"))
-    val path = parameters.getOrElse(DefaultSource.pathKey, throw new SparkException("parameter 'path' must be provided"))
+  override def createRelation(sqlContext: SQLContext,
+                              parameters: Map[String, String]): BaseRelation = {
+    val table = parameters.getOrElse(
+      DefaultSource.tableNameKey,
+      throw new SparkException("parameter 'table' must be provided")
+    )
+
+    val path = parameters.getOrElse(
+      DefaultSource.pathKey,
+      throw new SparkException("parameter 'path' must be provided")
+    )
     val localPath = sqlContext.getConf("spark.local.dir", "/tmp")
 
     GitRelation(sqlContext, table, path, localPath)
@@ -89,7 +97,11 @@ case class GitRelation(sqlContext: SQLContext,
         case "repositories" => new RepositoryIterator(requiredB.value, repo)
         case "references" => new ReferenceIterator(requiredB.value, repo)
         case "commits" => new CommitIterator(requiredB.value, repo)
-        case "files" => new BlobIterator(requiredB.value, repo, filters.map(ColumnFilter.compileFilter))
+        case "files" => new BlobIterator(
+          requiredB.value,
+          repo,
+          filters.map(ColumnFilter.compileFilter)
+        )
         case other => throw new SparkException(s"table '$other' is not supported")
       }
 

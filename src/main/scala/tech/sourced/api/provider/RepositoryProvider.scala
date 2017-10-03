@@ -115,7 +115,9 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     * @param localPath Local path
     * @return Repository
     */
-  private[provider] def genRepository(conf: Configuration, path: String, localPath: String): Repository = {
+  private[provider] def genRepository(conf: Configuration,
+                                      path: String,
+                                      localPath: String): Repository = {
     val remotePath = new Path(path)
 
     val localCompletePath =
@@ -125,7 +127,10 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
         )
       )
 
-    val localSivaPath = new Path(localPath, new Path(RepositoryProvider.temporalSivaFolder, remotePath.getName))
+    val localSivaPath = new Path(
+      localPath,
+      new Path(RepositoryProvider.temporalSivaFolder, remotePath.getName)
+    )
     val fs = FileSystem.get(conf)
 
     if (!fs.exists(localSivaPath) && !fs.exists(localCompletePath)) {

@@ -59,17 +59,23 @@ class ColumnFilterSpec extends FlatSpec with Matchers {
     in.matchingCases should be(Map("test" -> Seq("a", "b", "c")))
 
     in.eval(Map("test" -> "a")) should be(Some(true))
-    in.eval(Map("test" -> "a",  "foo" -> "a")) should be(Some(true))
+    in.eval(Map("test" -> "a", "foo" -> "a")) should be(Some(true))
     in.eval(Map("test" -> "d")) should be(Some(false))
     in.eval(Map("foo" -> "b")) should be(None)
   }
 
   "ColumnFilter" should "process correctly columns" in {
-    val f = ColumnFilter.compileFilter(Or(Or(EqualTo("test", "val"), IsNull("test")), EqualTo("test2", "val2")))
+    val f = ColumnFilter.compileFilter(Or(
+      Or(
+        EqualTo("test", "val"),
+        IsNull("test")
+      ),
+      EqualTo("test2", "val2")
+    ))
 
     f.matchingCases should be(Map("test" -> Seq("val", null), "test2" -> Seq("val2")))
 
-    f.toString should be ("((test = val OR test = null) OR test2 = val2)")
+    f.toString should be("((test = val OR test = null) OR test2 = val2)")
 
     f.eval(Map("test2" -> "val2")) should be(Some(true))
     f.eval(Map("test2" -> "val1")) should be(Some(false))
