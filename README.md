@@ -84,8 +84,6 @@ $ zip <path-to-installed-package> ./spark-api.zip
 $ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./spark-api.zip
 ```
 
-**NOTE:** right now, all the cluster nodes must be running the same operating system, since jar is not yet uploaded to maven central containing the native binaries for MacOS and Linux.
-
 ### pyspark API usage
 
 Run pyspark as explained before to start using spark-api:
@@ -174,7 +172,7 @@ Notebooks under examples folder will be included on the image.
 
 ## Run tests
 
-spark-api uses [bblfsh](https://github.com/bblfsh) so you need an instance of a bblfsh server running, and you can get one so easy with docker:
+spark-api uses [bblfsh](https://github.com/bblfsh) so you need an instance of a bblfsh server running, and you can get one easily with docker:
 
 ```bash
 docker run -d --privileged -p 9432:9432 --name bblfsh bblfsh/server bblfsh server --log-level debug
@@ -192,18 +190,9 @@ $ cd python
 $ python -m unittest discover -v
 ```
 
-## enry
-
-spark-api uses [java bindings](https://github.com/src-d/enry/tree/master/java) from [enry](https://github.com/src-d/enry) but for the moment you must build them manually and publish them in your local repository.
-
-```bash
-$ git clone https://github.com/src-d/enry.git; cd enry/java
-$ make package && ./sbt publish-local
-```
-
 ### Windows support
 
-There is no windows support in enry-java right now, so all the language detection features also have no windows support.
+There is no windows support in enry-java right now, so all the language detection features have no windows support.
 
 # License
 
