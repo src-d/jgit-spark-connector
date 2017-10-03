@@ -29,18 +29,44 @@ import tech.sourced.api.udf.{ClassifyLanguagesUDF, CustomUDF, ExtractUASTsUDF}
   */
 package object api {
 
+  /**
+    * Key used for the option to specify the path of siva files.
+    */
   private[api] val repositoriesPathKey = "tech.sourced.api.repositories.path"
+
+  /**
+    * Key used for the option to specify the host of the bblfsh grpc service.
+    */
   private[api] val bblfshHostKey = "tech.sourced.bblfsh.grpc.host"
+
+  /**
+    * Key used for the option to specify the port of the bblfsh grpc service.
+    */
   private[api] val bblfsPortKey = "tech.sourced.bblfsh.grpc.port"
+
+  /**
+    * Key used for the option to specify whether files should be deleted after
+    * their usage or not.
+    */
   private[api] val skipCleanupKey = "tech.sourced.api.cleanup.skip"
 
+  /**
+    * Implicit class that adds some functions to the [[org.apache.spark.sql.SparkSession]].
+    *
+    * @param session Spark Session
+    */
   implicit class SessionFunctions(session: SparkSession) {
+
+    /**
+      * Registers some user defined functions in the [[org.apache.spark.sql.SparkSession]].
+      */
     def registerUDFs(): Unit = {
       ExtractUASTsUDF.bblfshHost = session.sparkContext.getConf.get(bblfshHostKey, "0.0.0.0")
       ExtractUASTsUDF.bblfshPort = session.sparkContext.getConf.getInt(bblfsPortKey, 9432)
 
       SessionFunctions.UDFtoRegister.foreach(customUDF => session.udf.register(customUDF.name, customUDF.function))
     }
+
   }
 
   /**
@@ -207,11 +233,25 @@ package object api {
 
   }
 
+  /**
+    * Returns a [[org.apache.spark.sql.DataFrame]] for the given table using the provided [[org.apache.spark.sql.SparkSession]].
+    *
+    * @param table   name of the table
+    * @param session spark session
+    * @return dataframe for the given table
+    */
   private[api] def getDataSource(table: String, session: SparkSession): DataFrame =
     session.read.format("tech.sourced.api.DefaultSource")
       .option("table", table)
       .load(session.sqlContext.getConf(repositoriesPathKey))
 
+  /**
+    * Ensures the given [[org.apache.spark.sql.DataFrame]] contains some required columns.
+    *
+    * @param df   dataframe that must have the columns
+    * @param cols names of the columns that are required
+    * @throws SparkException if any column is missing
+    */
   private[api] def checkCols(df: DataFrame, cols: String*): Unit = {
     if (!df.columns.exists(cols.contains)) {
       throw new SparkException(s"Method can not be applied to this DataFrame: required:'${cols.mkString(" ")}'," +
@@ -219,8 +259,14 @@ package object api {
     }
   }
 
-
+  /**
+    * Object that contains the user defined functions that will be added to the session.
+    */
   private[api] object SessionFunctions {
+
+    /**
+      * List of custom functions to be registered.
+      */
     val UDFtoRegister = List[CustomUDF](ClassifyLanguagesUDF, ExtractUASTsUDF)
   }
 

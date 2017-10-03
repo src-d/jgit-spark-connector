@@ -17,14 +17,35 @@ import tech.sourced.siva.SivaReader
 import scala.collection.JavaConverters._
 import scala.collection.concurrent
 
+/**
+  * Generates repositories from siva files at the given local path and keeps a reference count
+  * on them to know when they have to be cleaned up. All user-facing API methods are thread-safe.
+  *
+  * @param localPath   Local path where siva files are.
+  * @param skipCleanup Skip deleting files after they reference count of a repository gets to 0.
+  */
 class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false) extends Logging {
 
+  /**
+    * Map to keep track of all the repository instances open.
+    */
   private val repositories: concurrent.Map[String, Repository] =
     new ConcurrentHashMap[String, Repository]().asScala
 
+  /**
+    * Map to keep track of the reference count of all repositories.
+    */
   private val repoRefCounts: concurrent.Map[String, AtomicInteger] =
     new ConcurrentHashMap[String, AtomicInteger]().asScala
 
+  /**
+    * Thread-safe method to get a repository given an HDFS configuration and its path.
+    * The count of the given repository is incremented by one.
+    *
+    * @param conf HDFS configuration
+    * @param path Repository path
+    * @return Repository
+    */
   def get(conf: Configuration, path: String): Repository = synchronized {
     this.incrCounter(path)
     repositories.get(path) match {
@@ -40,6 +61,11 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     }
   }
 
+  /**
+    * Increments the reference count of the repository at the given path by one.
+    *
+    * @param path Repository path
+    */
   private def incrCounter(path: String): Unit = {
     repoRefCounts.get(path) match {
       case Some(counter) => counter.incrementAndGet()
@@ -47,9 +73,23 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     }
   }
 
+  /**
+    * Returns a repository corresponding to the given [[PortableDataStream]].
+    *
+    * @param pds Portable Data Stream
+    * @return Repository
+    */
   def get(pds: PortableDataStream): Repository =
     this.get(pds.getConfiguration, pds.getPath())
 
+  /**
+    * Closes a repository with the given path. All the repositories are ref-counted
+    * and when they reach 0 they are removed, unless [[RepositoryProvider#skipCleanup]] is
+    * active.
+    * This method is thread-safe.
+    *
+    * @param path Repository path
+    */
   def close(path: String): Unit = synchronized {
     repositories.get(path).foreach(r => {
       log.debug(s"Close $path")
@@ -67,6 +107,14 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     })
   }
 
+  /**
+    * Generates a repository with the given configuration and paths.
+    *
+    * @param conf      HDFS configuration
+    * @param path      Remote repository path
+    * @param localPath Local path
+    * @return Repository
+    */
   private[provider] def genRepository(conf: Configuration, path: String, localPath: String): Repository = {
     val remotePath = new Path(path)
 
@@ -114,11 +162,21 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
 }
 
 object RepositoryProvider {
+  /** Singleton repository provider. */
   var provider: RepositoryProvider = _
 
+  /**
+    * Returns a new [[RepositoryProvider]] or creates one and returns it if it's not
+    * already created.
+    *
+    * @constructor
+    * @param localPath   local path where repositories are stored
+    * @param skipCleanup skip cleanup after some operations
+    * @return a new repository provider or an already existing one if there is one
+    */
   def apply(localPath: String, skipCleanup: Boolean = false): RepositoryProvider = {
     if (provider == null) {
-      provider = new RepositoryProvider(localPath, skipCleanup=skipCleanup)
+      provider = new RepositoryProvider(localPath, skipCleanup = skipCleanup)
     }
 
     if (provider.localPath != localPath) {

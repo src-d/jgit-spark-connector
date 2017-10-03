@@ -9,10 +9,19 @@ import tech.sourced.api.iterator._
 import tech.sourced.api.provider.{RepositoryProvider, SivaRDDProvider}
 import tech.sourced.api.util.ColumnFilter
 
+/**
+  * Default source to provide new git relations.
+  */
 class DefaultSource extends RelationProvider with DataSourceRegister {
 
+  /**
+    * @inheritdoc
+    */
   override def shortName() = "git"
 
+  /**
+    * @inheritdoc
+    */
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(DefaultSource.tableNameKey, throw new SparkException("parameter 'table' must be provided"))
     val path = parameters.getOrElse(DefaultSource.pathKey, throw new SparkException("parameter 'path' must be provided"))
@@ -20,15 +29,36 @@ class DefaultSource extends RelationProvider with DataSourceRegister {
 
     GitRelation(sqlContext, table, path, localPath)
   }
+
 }
 
+/**
+  * Just contains some useful constants for the DefaultSource class to use.
+  */
 object DefaultSource {
   val tableNameKey = "table"
   val pathKey = "path"
 }
 
-case class GitRelation(sqlContext: SQLContext, tableName: String, path: String, localPath: String) extends BaseRelation with PrunedFilteredScan {
+/**
+  * A relation based on git data from rooted repositories in siva files. The data this relation
+  * will offer depends on the given `tableName`, which controls the table that will be accessed.
+  *
+  * @param sqlContext Spark SQL Context
+  * @param tableName  name of the table that will be accessed
+  * @param path       path where the repositories in .siva format are stored
+  * @param localPath  Spark local directory
+  */
+case class GitRelation(sqlContext: SQLContext,
+                       tableName: String,
+                       path: String,
+                       localPath: String) extends BaseRelation with PrunedFilteredScan {
 
+  /**
+    * Contains the schema for the table given to this GitRelation.
+    *
+    * @return the schema of the given table
+    */
   override def schema: StructType = tableName match {
     case "repositories" => Schema.repositories
     case "references" => Schema.references
@@ -37,6 +67,9 @@ case class GitRelation(sqlContext: SQLContext, tableName: String, path: String, 
     case other => throw new SparkException(s"table '$other' is not supported")
   }
 
+  /**
+    * @inheritdoc
+    */
   override def buildScan(requiredColumns: Array[String], filters: Array[Filter]): RDD[Row] = {
     val sc = sqlContext.sparkContext
 
