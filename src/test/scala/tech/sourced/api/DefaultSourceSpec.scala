@@ -98,8 +98,8 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
     val count = SparkAPI(spark, resourcePath)
       .getRepositories
-        .getReferences
-        .getCommits
+      .getReferences
+      .getCommits
       .getReference("refs/heads/develop")
       .count()
 
@@ -132,6 +132,61 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
       .select("name").distinct().count()
 
     assert(count == 1)
+  }
+
+  "Get files after reading commits" should "return the correct files" in {
+    val spark = ss
+    val files = SparkAPI(spark, resourcePath).getRepositories.getReferences.getCommits.getFiles
+
+    assert(files.count == 1536360)
+  }
+
+  "Get files without reading commits" should "return the correct files" in {
+    val spark = ss
+    val api = SparkAPI(spark, resourcePath)
+    val files = api.getRepositories.getReferences.getFiles
+
+    assert(files.count == 19126)
+  }
+
+  "Get files" should "return the correct files" in {
+    val spark = ss
+    val api = SparkAPI(spark, resourcePath)
+    val df = api.getRepositories.getHEAD.getCommits
+      .sort("hash").limit(10)
+    val rows = df.collect()
+      .map(row => (row.getString(row.fieldIndex("repository_id")), row.getString(row.fieldIndex("hash"))))
+    val repositories = rows.map(_._1)
+    val hashes = rows.map(_._2)
+
+    val files = SparkAPI(spark, resourcePath)
+      .getFiles(repositories.distinct, List("refs/heads/HEAD"), hashes.distinct)
+
+    assert(files.count == 745)
+  }
+
+  "Get files by repository" should "return the correct files" in {
+    val spark = ss
+    val files = SparkAPI(spark, resourcePath)
+      .getFiles(repositoryIds = List("github.com/xiyou-linuxer/faq-xiyoulinux"))
+
+    assert(files.count == 20048)
+  }
+
+  "Get files by reference" should "return the correct files" in {
+    val spark = ss
+    val files = SparkAPI(spark, resourcePath)
+      .getFiles(referenceNames = List("refs/heads/develop"))
+
+    assert(files.count == 404)
+  }
+
+  "Get files by commit" should "return the correct files" in {
+    val spark = ss
+    val files = SparkAPI(spark, resourcePath)
+      .getFiles(commitHashes = List("fff7062de8474d10a67d417ccea87ba6f58ca81d"))
+
+    assert(files.count == 86)
   }
 
 }

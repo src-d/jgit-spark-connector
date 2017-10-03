@@ -15,6 +15,10 @@ abstract class RootedRepoIterator[T](requiredColumns: Array[String], repo: Repos
 
   protected def mapColumns(obj: T): Map[String, () => Any]
 
+  private val repoConfig = repo.getConfig
+
+  private val remotes = repoConfig.getSubsections("remote").asScala
+
   override def hasNext: Boolean = {
     if (internalIterator == null) {
       internalIterator = loadIterator()
@@ -29,20 +33,16 @@ abstract class RootedRepoIterator[T](requiredColumns: Array[String], repo: Repos
   }
 
   protected def getRepositoryId(uuid: String): Option[String] = {
-    // TODO maybe a cache here could improve performance
-    val c: StoredConfig = repo.getConfig
-    c.getSubsections("remote").asScala.find(i => i == uuid) match {
+    remotes.find(i => i == uuid) match {
       case None => None
-      case Some(i) => Some(GitUrlsParser.getIdFromUrls(c.getStringList("remote", i, "url")))
+      case Some(i) => Some(GitUrlsParser.getIdFromUrls(repoConfig.getStringList("remote", i, "url")))
     }
   }
 
   protected def getRepositoryUUID(id: String): Option[String] = {
-    // TODO maybe a cache here could improve performance
-    val c: StoredConfig = repo.getConfig
-    c.getSubsections("remote").asScala.find(uuid => {
+    remotes.find(uuid => {
       val actualId: String =
-        GitUrlsParser.getIdFromUrls(c.getStringList("remote", uuid, "url"))
+        GitUrlsParser.getIdFromUrls(repoConfig.getStringList("remote", uuid, "url"))
 
       actualId == id
     })
@@ -51,7 +51,7 @@ abstract class RootedRepoIterator[T](requiredColumns: Array[String], repo: Repos
   protected def parseRef(ref: String): (String, String) = {
     val split: Array[String] = ref.split("/")
     val uuid: String = split.last
-    val repoId: String = this.getRepositoryId(uuid).get
+    val repoId: String = this.getRepositoryId(uuid).getOrElse(throw new IllegalArgumentException(s"cannot parse ref $ref"))
     val refName: String = split.init.mkString("/")
 
     (repoId, refName)

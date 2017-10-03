@@ -12,6 +12,7 @@ object ColumnFilter {
       case Not(child) => NotFilter(compileFilter(child))
       case And(l, r) => new AndFilter(compileFilter(l), compileFilter(r))
       case Or(l, r) => new OrFilter(compileFilter(l), compileFilter(r))
+      case In(attr, values) => new InFilter(attr, values)
       case _ => UnhandledFilter()
     }
   }
@@ -25,8 +26,9 @@ sealed trait CompiledFilter {
 
   private def getMatchingCases: Array[(String, Any)] =
     this match {
-      case ef: EqualFilter => Array((ef.name, ef.value))
-      case bf: BinaryFilter => bf.l.getMatchingCases ++ bf.r.getMatchingCases
+      case f: EqualFilter => Array((f.name, f.value))
+      case f: BinaryFilter => f.l.getMatchingCases ++ f.r.getMatchingCases
+      case f: InFilter => f.value.asInstanceOf[Array[Any]].map((f.name, _))
       case _ => Array()
     }
 }
@@ -49,6 +51,12 @@ class EqualFilter(name: String, value: Any) extends UnaryFilter(name, value) {
   override def toString: String = s"$name = $value"
 
   override def action(v: Any): Boolean = v == value
+}
+
+class InFilter(name: String, values: Array[Any]) extends UnaryFilter(name, values) {
+  override def toString: String = s"$name IN (${values.mkString(",")})"
+
+  override def action(v: Any): Boolean = values.contains(v)
 }
 
 class AndFilter(l: CompiledFilter, r: CompiledFilter) extends BinaryFilter(l, r) {

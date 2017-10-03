@@ -3,6 +3,7 @@ package tech.sourced.api.iterator
 import java.sql.Timestamp
 
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.errors.IncorrectObjectTypeException
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
 import org.eclipse.jgit.revwalk.RevCommit
@@ -29,16 +30,7 @@ class CommitIterator(requiredColumns: Array[String], repo: Repository)
         while ((commits == null || !commits.hasNext) && refs.hasNext) {
           actualRef = refs.next()
           index = 0
-          commits =
-            try {
-              Git.wrap(repo).log()
-                .add(Option(actualRef.getPeeledObjectId).getOrElse(actualRef.getObjectId))
-                .call().asScala.toIterator
-            } catch {
-              case _: IncorrectObjectTypeException => null
-              // TODO log this
-              // This reference is pointing to a non commit object
-            }
+          commits = CommitIterator.refCommits(repo, actualRef)
         }
 
         refs.hasNext || (commits != null && commits.hasNext)
@@ -99,3 +91,39 @@ class CommitIterator(requiredColumns: Array[String], repo: Repository)
 
 
 case class ReferenceWithCommit(ref: Ref, commit: RevCommit, index: Int)
+
+object CommitIterator {
+  /**
+    * Returns an iterator with all the commits of the given references in the repo.
+    * It's possible for the iterator to be empty in two cases:
+    *  - No refs were passed
+    *  - N refs were passed but all of them are not pointing to commits.
+    * If two references share a commit the returned iterator will not have such commit
+    * twice.
+    *
+    * @param repo repo to extract the commits from.
+    * @param refs references to search commits in.
+    * @return iterator with the commits of the given references
+    */
+  def refCommits(repo: Repository, refs: Ref*): Iterator[RevCommit] = {
+    val log = Git.wrap(repo).log()
+    refs.foreach(ref => {
+      try {
+        log.add(Option(ref.getPeeledObjectId).getOrElse(ref.getObjectId))
+      } catch {
+        // Reference is not pointing to a commit, just skip it.
+        case _: IncorrectObjectTypeException => // TODO: log this
+      }
+    })
+
+    try {
+      log.call().asScala.toIterator
+    } catch {
+      // If no reference is passed we should return an empty iterator instead of
+      // letting the exception get thrown. Specially, because if only one hash is passed
+      // and it does not point to a commit, it won't get added and it will throw this
+      // exception after calling `log.call()`.
+      case _: NoHeadException => Seq[RevCommit]().toIterator
+    }
+  }
+}

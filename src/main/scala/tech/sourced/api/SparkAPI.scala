@@ -4,6 +4,8 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkException
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+import scala.collection.JavaConversions.asScalaBuffer
+
 /**
   * SparkAPI is the main entry point to all usage of the source{d} spark-api.
   * It has methods to configure all possible configurable options as well as
@@ -49,6 +51,97 @@ class SparkAPI(session: SparkSession) {
     * @return DataFrame
     */
   def getRepositories(): DataFrame = getDataSource("repositories", session)
+
+  /**
+    * Retrieves the files of a list of repositories, reference names and commit hashes.
+    * So the result will be a [[org.apache.spark.sql.DataFrame]] of all the files in the given commits that are
+    * in the given references that belong to the given repositories.
+    *
+    * NOTE: due to some specifics in the SparkAPI internals, this is way faster than
+    * using the DataFrame implicit methods to get the files, although this might change
+    * in the near future.
+    *
+    * {{{
+    * val filesDf = api.getRepositories.filter($"is_fork" === false)
+    *   .getReferences.filter($"name" === "some ref")
+    *   .getCommits.filter($"hash" === "some hash")
+    *   .getFiles
+    *
+    * // is way slower than
+    *
+    * val filesDfFast = api.getFiles(repoIds, refNames, hashes)
+    * }}}
+    *
+    * Calling this function with no arguments is the same as:
+    *
+    * {{{
+    * api.getRepositories.getReferences.getCommits.getFiles
+    * }}}
+    *
+    * What makes this method faster than just the example above is the fact of passing
+    * repository ids to filter by, so it's recommended to do so. You can pass any number
+    * of elements to filter by (including none).
+    *
+    * @param repositoryIds  List of the repository ids to filter by (optional)
+    * @param referenceNames List of reference names to filter by (optional)
+    * @param commitHashes   List of commit hashes to filter by (optional)
+    * @return [[org.apache.spark.sql.DataFrame]] with files of the given commits, refs and repos.
+    */
+  def getFiles(repositoryIds: Seq[String] = Seq(),
+               referenceNames: Seq[String] = Seq(),
+               commitHashes: Seq[String] = Seq()): DataFrame = {
+    val df = getRepositories()
+    import df.sparkSession.implicits._
+
+    checkCols(df, "id")
+
+    var filesDf = getDataSource("files", df.sparkSession)
+
+    if (repositoryIds.nonEmpty) {
+      filesDf = filesDf.filter($"repository_id".isin(repositoryIds: _*))
+    }
+
+    if (referenceNames.nonEmpty) {
+      filesDf = filesDf.filter($"reference_name".isin(referenceNames: _*))
+    }
+
+    if (commitHashes.nonEmpty) {
+      filesDf = filesDf.filter($"commit_hash".isin(commitHashes: _*))
+    }
+
+    filesDf = filesDf.drop("repository_id", "reference_name").distinct
+
+    var reposDf = df
+    if (repositoryIds.nonEmpty) {
+      reposDf = reposDf.filter($"id".isin(repositoryIds: _*))
+    }
+
+    var refsDf = reposDf.getReferences
+    if (referenceNames.nonEmpty) {
+      refsDf = refsDf.filter($"name".isin(referenceNames: _*))
+    }
+
+    var commitsDf = refsDf.getCommits
+    if (commitHashes.nonEmpty) {
+      commitsDf = commitsDf.filter($"hash".isin(commitHashes: _*))
+    }
+
+    commitsDf.drop("tree").distinct()
+
+    filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
+  }
+
+  /**
+    * This method is only offered for easier usage from Python.
+    */
+  private[api] def getFiles(repositoryIds: java.util.List[String],
+               referenceNames: java.util.List[String],
+               commitHashes: java.util.List[String]): DataFrame =
+    getFiles(
+      asScalaBuffer(repositoryIds),
+      asScalaBuffer(referenceNames),
+      asScalaBuffer(commitHashes)
+    )
 
   /**
     * Sets the path where the siva files of the repositories are stored.
@@ -131,7 +224,7 @@ object SparkAPI {
     * val api = SparkAPI(sparkSession, "/path/to/repositories")
     * }}}
     *
-    * @param session spark session to use
+    * @param session          spark session to use
     * @param repositoriesPath the path to the repositories' siva files
     * @return SparkAPI instance
     */

@@ -78,15 +78,15 @@ class APITestCase(BaseTestCase):
 
     def test_files(self):
         df = self.api.repositories.references.commits.files
-        self.assertEqual(df.count(), 5275)
+        self.assertEqual(df.count(), 1536360)
         file = df.sort(df.file_hash).limit(1).first()
-        self.assertEqual(file.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
-        self.assertEqual(file.path, 'sequel_core/stress/mem_array_keys.rb')
+        self.assertEqual(file.file_hash, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
+        self.assertEqual(file.path, 'spec/database_spec.rb')
 
 
     def test_files_from_refs(self):
         df = self.api.repositories.references.files
-        self.assertEqual(df.count(), 2689)
+        self.assertEqual(df.count(), 19126)
         file = df.sort(df.file_hash).limit(1).first()
         self.assertEqual(file.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
         self.assertEqual(file.path, 'sequel_core/stress/mem_array_keys.rb')
@@ -95,8 +95,8 @@ class APITestCase(BaseTestCase):
     def test_classify_languages(self):
         df = self.api.repositories.references.commits.files
         row = df.sort(df.file_hash).limit(1).classify_languages().first()
-        self.assertEqual(row.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
-        self.assertEqual(row.path, 'sequel_core/stress/mem_array_keys.rb')
+        self.assertEqual(row.file_hash, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
+        self.assertEqual(row.path, 'spec/database_spec.rb')
         self.assertEqual(row.lang, "Ruby")
 
 
@@ -104,13 +104,39 @@ class APITestCase(BaseTestCase):
         df = self.api.repositories.references.commits.files
         row = df.sort(df.file_hash).limit(1).classify_languages()\
             .extract_uasts().first()
-        self.assertEqual(row.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
-        self.assertEqual(row.path, 'sequel_core/stress/mem_array_keys.rb')
+        self.assertEqual(row.file_hash, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
+        self.assertEqual(row.path, 'spec/database_spec.rb')
         self.assertEqual(row.lang, "Ruby")
         self.assertEqual(row.uast, b"")
 
         df = self.api.repositories.references.commits.files
         row = df.sort(df.file_hash).limit(1).extract_uasts().first()
-        self.assertEqual(row.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
-        self.assertEqual(row.path, 'sequel_core/stress/mem_array_keys.rb')
+        self.assertEqual(row.file_hash, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
+        self.assertEqual(row.path, 'spec/database_spec.rb')
         self.assertEqual(row.uast, b"")
+
+
+    def test_api_files(self):
+        rows = self.api.repositories.references.head_ref.commits.sort('hash').limit(10).collect()
+        repos = []
+        hashes = []
+        for row in rows:
+            repos.append(row['repository_id'])
+            hashes.append(row['hash'])
+
+        self.assertEqual(self.api.files(repos, ["refs/heads/HEAD"], hashes).count(), 745)
+
+
+    def test_api_files_repository(self):
+        files = self.api.files(repository_ids=['github.com/xiyou-linuxer/faq-xiyoulinux'])
+        self.assertEqual(files.count(), 20048)
+
+
+    def test_api_files_reference(self):
+        files = self.api.files(reference_names=['refs/heads/develop'])
+        self.assertEqual(files.count(), 404)
+
+
+    def test_api_files_hash(self):
+        files = self.api.files(commit_hashes=['fff7062de8474d10a67d417ccea87ba6f58ca81d'])
+        self.assertEqual(files.count(), 86)

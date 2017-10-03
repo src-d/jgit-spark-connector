@@ -12,6 +12,11 @@ class API(object):
     >>> from sourced.spark import API as SparkAPI
     >>> repos_df = SparkAPI(sparkSession, "/path/to/my/repositories").repositories
     >>> repos_df.show()
+
+    :param session: spark session to use
+    :type session: pyspark.sql.SparkSession
+    :param repos_path: path to the folder where siva files are stored
+    :type repos_path: str
     """
 
     def __init__(self, session, repos_path):
@@ -28,17 +33,70 @@ class API(object):
     @property
     def repositories(self):
         """
-        Returns a DataFrame with the repositories available at the given path.
+        Returns a DataFrame with the data about the repositories found at
+        the specified repositories path in the form of siva files.
+
+        >>> repos_df = api.repositories
+
+        :rtype: RepositoriesDataFrame
         """
-        return RepositoriesDataFrame(self.__api.getRepositories(), 
+        return RepositoriesDataFrame(self.__api.getRepositories(),
                                      self.session, self.__implicits)
 
 
-def custom_df_instance(func):
+    def files(self, repository_ids=[], reference_names=[], commit_hashes=[]):
+        """
+        Retrieves the files of a list of repositories, reference names and commit hashes.
+        So the result will be a DataFrame of all the files in the given commits that are
+        in the given references that belong to the given repositories.
+
+        NOTE: due to some specifics in the SparkAPI internals, this is way faster than
+        using the DataFrame implicit methods to get the files, although this might change
+        in the near future.
+
+        >>> files_df = api.repositories.filter("is_fork = false")\\
+        >>>     .references.filter("name = 'some ref'")\\
+        >>>     .commits.filter("hash = 'somehash'")
+        >>> # is way slower than
+        >>> files_df_fast = api.files(repo_ids, ref_names, hashes)
+
+        Calling this function with no arguments is the same as:
+
+        >>> api.repositories.references.commits.files
+
+        What makes this method faster than just the example above is the fact of passing
+        repository ids to filter by, so it's recommended to do so. You can pass any number
+        of elements to filter by (including none).
+
+        :param repository_ids: list of repository ids to filter by (optional)
+        :type repository_ids: list of strings
+        :param reference_names: list of reference names to filter by (optional)
+        :type reference_names: list of strings
+        :param commit_hashes: list of hashes to filter by (optional)
+        :type commit_hashes: list of strings
+        :rtype: FilesDataFrame
+        """
+        if not isinstance(repository_ids, list):
+            raise Exception("repository_ids must be a list")
+
+        if not isinstance(reference_names, list):
+            raise Exception("reference_names must be a list")
+
+        if not isinstance(commit_hashes, list):
+            raise Exception("commit_hashes must be a list")
+
+        return FilesDataFrame(self.__api.getFiles(repository_ids,
+                                                  reference_names,
+                                                  commit_hashes),
+                              self.session,
+                              self.__implicits)
+
+
+def _custom_df_instance(func):
     """
     Wraps the resultant DataFrame of the method call with the class of self.
 
-    >>> @custom_df_instance
+    >>> @_custom_df_instance
     >>> def method(self, *args, **kwargs):
     >>>    return ParentClass.method(self, *args, **kwargs)
     """
@@ -57,6 +115,13 @@ class SourcedDataFrame(DataFrame):
     Custom SparkAPI DataFrame that contains some DataFrame overriden methods and utilities.
     This class should not be used directly, please get your SourcedDataFrames using the
     provided methods.
+
+    :param jdf: Java DataFrame
+    :type jdf: py4j.java_gateway.JavaObject
+    :param session: Spark Session to use
+    :type session: pyspark.sql.SparkSession
+    :param implicits: Implicits object from Scala
+    :type implicits: py4j.java_gateway.JavaObject
     """
 
     def __init__(self, jdf, session, implicits):
@@ -70,47 +135,47 @@ class SourcedDataFrame(DataFrame):
         return self._implicits.ApiDataFrame(self._jdf)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def checkpoint(self, *args, **kwargs):
         return DataFrame.checkpoint(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def withWatermark(self, *args, **kwargs):
         return DataFrame.withWatermark(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def hint(self, *args, **kwargs):
         return DataFrame.hint(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def limit(self, *args, **kwargs):
         return DataFrame.limit(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def coalesce(self, *args, **kwargs):
         return DataFrame.coalesce(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def repartition(self, *args, **kwargs):
         return DataFrame.repartition(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def distinct(self):
         return DataFrame.distinct(self)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def sample(self, *args, **kwargs):
         return DataFrame.sample(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def sampleBy(self, *args, **kwargs):
         return DataFrame.sampleBy(self, *args, **kwargs)
 
@@ -122,27 +187,27 @@ class SourcedDataFrame(DataFrame):
         return df_list
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def alias(self, *args, **kwargs):
         return DataFrame.alias(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def crossJoin(self, other):
         return DataFrame.crossJoin(self, other)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def join(self, *args, **kwargs):
         return DataFrame.join(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def sortWithinPartitions(self, *args, **kwargs):
         return DataFrame.sortWithinPartitions(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def sort(self, *args, **kwargs):
         return DataFrame.sort(self, *args, **kwargs)
 
@@ -150,97 +215,97 @@ class SourcedDataFrame(DataFrame):
     orderBy = sort
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def describe(self, *args, **kwargs):
         return DataFrame.describe(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def summary(self, *args, **kwargs):
         return DataFrame.summary(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def select(self, *args, **kwargs):
         return DataFrame.select(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def selectExpr(self, *args, **kwargs):
         return DataFrame.selectExpr(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def filter(self, *args, **kwargs):
         return DataFrame.filter(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def union(self, *args, **kwargs):
         return DataFrame.union(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def unionByName(self, *args, **kwargs):
         return DataFrame.unionByName(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def intersect(self, *args, **kwargs):
         return DataFrame.intersect(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def subtract(self, *args, **kwargs):
         return DataFrame.subtract(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def dropDuplicates(self, *args, **kwargs):
         return DataFrame.dropDuplicates(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def dropna(self, *args, **kwargs):
         return DataFrame.dropna(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def fillna(self, *args, **kwargs):
         return DataFrame.fillna(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def replace(self, *args, **kwargs):
         return DataFrame.replace(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def crosstab(self, *args, **kwargs):
         return DataFrame.crosstab(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def freqItems(self, *args, **kwargs):
         return DataFrame.freqItems(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def withColumn(self, *args, **kwargs):
         return DataFrame.withColumn(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def withColumnRenamed(self, *args, **kwargs):
         return DataFrame.withColumnRenamed(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def drop(self, *args, **kwargs):
         return DataFrame.drop(self, *args, **kwargs)
 
 
-    @custom_df_instance
+    @_custom_df_instance
     def toDF(self, *args, **kwargs):
         return DataFrame.toDF(self, *args, **kwargs)
 
@@ -253,6 +318,15 @@ class SourcedDataFrame(DataFrame):
 class RepositoriesDataFrame(SourcedDataFrame):
     """
     DataFrame containing repositories.
+    This class should not be instantiated directly, please get your RepositoriesDataFrame using the
+    provided methods.
+
+    :param jdf: Java DataFrame
+    :type jdf: py4j.java_gateway.JavaObject
+    :param session: Spark Session to use
+    :type session: pyspark.sql.SparkSession
+    :param implicits: Implicits object from Scala
+    :type implicits: py4j.java_gateway.JavaObject
     """
 
     def __init__(self, jdf, session, implicits):
@@ -263,6 +337,10 @@ class RepositoriesDataFrame(SourcedDataFrame):
     def references(self):
         """
         Returns the joined DataFrame of references and repositories.
+
+        >>> refs_df = repos_df.references
+
+        :rtype: ReferencesDataFrame
         """
         return ReferencesDataFrame(self._api_dataframe.getReferences(),
                                    self._session, self._implicits)
@@ -271,6 +349,15 @@ class RepositoriesDataFrame(SourcedDataFrame):
 class ReferencesDataFrame(SourcedDataFrame):
     """
     DataFrame with references.
+    This class should not be instantiated directly, please get your ReferencesDataFrame using the
+    provided methods.
+
+    :param jdf: Java DataFrame
+    :type jdf: py4j.java_gateway.JavaObject
+    :param session: Spark Session to use
+    :type session: pyspark.sql.SparkSession
+    :param implicits: Implicits object from Scala
+    :type implicits: py4j.java_gateway.JavaObject
     """
 
     def __init__(self, jdf, session, implicits):
@@ -281,6 +368,10 @@ class ReferencesDataFrame(SourcedDataFrame):
     def head_ref(self):
         """
         Filters the current DataFrame to only contain those rows whose reference is HEAD.
+
+        >>> heads_df = refs_df.head_ref
+
+        :rtype: ReferencesDataFrame
         """
         return self.ref('refs/heads/HEAD')
 
@@ -289,6 +380,10 @@ class ReferencesDataFrame(SourcedDataFrame):
     def master_ref(self):
         """
         Filters the current DataFrame to only contain those rows whose reference is master.
+
+        >>> master_df = refs_df.master_ref
+
+        :rtype: ReferencesDataFrame
         """
         return self.ref('refs/heads/master')
 
@@ -297,6 +392,12 @@ class ReferencesDataFrame(SourcedDataFrame):
         """
         Filters the current DataFrame to only contain those rows whose reference is the given
         reference name.
+
+        >>> heads_df = refs_df.ref('refs/heads/HEAD')
+
+        :param ref: Reference to get
+        :type ref: str
+        :rtype: ReferencesDataFrame
         """
         return ReferencesDataFrame(self.filter(self.name == ref)._jdf,
                                    self._session, self._implicits)
@@ -306,6 +407,10 @@ class ReferencesDataFrame(SourcedDataFrame):
     def commits(self):
         """
         Returns the current DataFrame joined with the commits DataFrame.
+
+        >>> commits_df = refs_df.commits
+
+        :rtype: CommitsDataFrame
         """
         return CommitsDataFrame(self._api_dataframe.getCommits(), self._session, self._implicits)
 
@@ -314,6 +419,10 @@ class ReferencesDataFrame(SourcedDataFrame):
     def files(self):
         """
         Returns this DataFrame joined with the files DataSource.
+
+        >>> files_df = refs_df.files
+
+        :rtype: FilesDataFrame
         """
         return FilesDataFrame(self._api_dataframe.getFiles(), self._session, self._implicits)
 
@@ -321,6 +430,15 @@ class ReferencesDataFrame(SourcedDataFrame):
 class CommitsDataFrame(SourcedDataFrame):
     """
     DataFrame with commits data.
+    This class should not be instantiated directly, please get your CommitsDataFrame using the
+    provided methods.
+
+    :param jdf: Java DataFrame
+    :type jdf: py4j.java_gateway.JavaObject
+    :param session: Spark Session to use
+    :type session: pyspark.sql.SparkSession
+    :param implicits: Implicits object from Scala
+    :type implicits: py4j.java_gateway.JavaObject
     """
 
     def __init__(self, jdf, session, implicits):
@@ -331,6 +449,10 @@ class CommitsDataFrame(SourcedDataFrame):
     def files(self):
         """
         Returns this DataFrame joined with the files DataSource.
+
+        >>> files_df = commits_df.FilesDataFrame
+
+        :rtype: FilesDataFrame
         """
         return FilesDataFrame(self._api_dataframe.getFiles(), self._session, self._implicits)
 
@@ -338,33 +460,59 @@ class CommitsDataFrame(SourcedDataFrame):
 class FilesDataFrame(SourcedDataFrame):
     """
     DataFrame containing files data.
+    This class should not be instantiated directly, please get your FilesDataFrame using the
+    provided methods.
+
+    :param jdf: Java DataFrame
+    :type jdf: py4j.java_gateway.JavaObject
+    :param session: Spark Session to use
+    :type session: pyspark.sql.SparkSession
+    :param implicits: Implicits object from Scala
+    :type implicits: py4j.java_gateway.JavaObject
     """
 
     def __init__(self, jdf, session, implicits):
         SourcedDataFrame.__init__(self, jdf, session, implicits)
 
-    
+
     def classify_languages(self):
         """
         Returns a new DataFrame with the language data of any file added to
         its row.
+
+        >>> files_lang_df = files_df.classify_languages
+
+        :rtype: FilesWithLanguageDataFrame
         """
-        return FilesWithLanguageDataFrame(self._api_dataframe.classifyLanguages(), 
+        return FilesWithLanguageDataFrame(self._api_dataframe.classifyLanguages(),
                                           self._session, self._implicits)
 
-                                
+
     def extract_uasts(self):
         """
         Returns a new DataFrame with the parsed UAST data of any file added to
         its row.
+
+        >>> files_df.extract_uasts
+
+        :rtype: UASTsDataFrame
         """
-        return UASTsDataFrame(self._api_dataframe.extractUASTs(), 
+        return UASTsDataFrame(self._api_dataframe.extractUASTs(),
                               self._session, self._implicits)
 
 
 class FilesWithLanguageDataFrame(SourcedDataFrame):
     """
     DataFrame containing files and language data.
+    This class should not be instantiated directly, please get your FilesWithLanguageDataFrame
+    using the provided methods.
+
+    :param jdf: Java DataFrame
+    :type jdf: py4j.java_gateway.JavaObject
+    :param session: Spark Session to use
+    :type session: pyspark.sql.SparkSession
+    :param implicits: Implicits object from Scala
+    :type implicits: py4j.java_gateway.JavaObject
     """
 
     def __init__(self, jdf, session, implicits):
@@ -375,14 +523,27 @@ class FilesWithLanguageDataFrame(SourcedDataFrame):
         """
         Returns a new DataFrame with the parsed UAST data of any file added to
         its row.
+
+        >>> files_lang_df.extract_uasts
+
+        :rtype: UASTsDataFrame
         """
-        return UASTsDataFrame(self._api_dataframe.extractUASTs(), 
+        return UASTsDataFrame(self._api_dataframe.extractUASTs(),
                               self._session, self._implicits)
 
 
 class UASTsDataFrame(SourcedDataFrame):
     """
     DataFrame containing UAST data.
+    This class should not be instantiated directly, please get your UASTsDataFrame using the
+    provided methods.
+
+    :param jdf: Java DataFrame
+    :type jdf: py4j.java_gateway.JavaObject
+    :param session: Spark Session to use
+    :type session: pyspark.sql.SparkSession
+    :param implicits: Implicits object from Scala
+    :type implicits: py4j.java_gateway.JavaObject
     """
 
     def __init__(self, jdf, session, implicits):
