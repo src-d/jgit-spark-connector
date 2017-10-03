@@ -42,14 +42,17 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     import spark.implicits._
 
     val reposDf = SparkAPI(spark, resourcePath).getRepositories
-      .filter($"id" === "github.com/mawag/faq-xiyoulinux" || $"id" === "github.com/xiyou-linuxer/faq-xiyoulinux")
+      .filter($"id" === "github.com/mawag/faq-xiyoulinux"
+        || $"id" === "github.com/xiyou-linuxer/faq-xiyoulinux")
     val refsDf = reposDf.getReferences.getHEAD
 
     val commitsDf = refsDf.getCommits.select("repository_id", "reference_name", "message", "hash")
     commitsDf.show()
 
     info("Files/blobs with commit hashes:\n")
-    val filesDf = refsDf.getCommits.getFiles.select("repository_id", "reference_name", "path", "commit_hash", "file_hash")
+    val filesDf = refsDf.getCommits.getFiles.select(
+      "repository_id", "reference_name", "path", "commit_hash", "file_hash"
+    )
     filesDf.explain(true)
     filesDf.show()
 
@@ -155,7 +158,8 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     val df = api.getRepositories.getHEAD.getCommits
       .sort("hash").limit(10)
     val rows = df.collect()
-      .map(row => (row.getString(row.fieldIndex("repository_id")), row.getString(row.fieldIndex("hash"))))
+      .map(row => (row.getString(row.fieldIndex("repository_id")),
+        row.getString(row.fieldIndex("hash"))))
     val repositories = rows.map(_._1)
     val hashes = rows.map(_._2)
 

@@ -54,8 +54,9 @@ class SparkAPI(session: SparkSession) {
 
   /**
     * Retrieves the files of a list of repositories, reference names and commit hashes.
-    * So the result will be a [[org.apache.spark.sql.DataFrame]] of all the files in the given commits that are
-    * in the given references that belong to the given repositories.
+    * So the result will be a [[org.apache.spark.sql.DataFrame]] of all the files in
+    * the given commits that are in the given references that belong to the given
+    * repositories.
     *
     * NOTE: due to some specifics in the SparkAPI internals, this is way faster than
     * using the DataFrame implicit methods to get the files, although this might change
@@ -135,8 +136,8 @@ class SparkAPI(session: SparkSession) {
     * This method is only offered for easier usage from Python.
     */
   private[api] def getFiles(repositoryIds: java.util.List[String],
-               referenceNames: java.util.List[String],
-               commitHashes: java.util.List[String]): DataFrame =
+                            referenceNames: java.util.List[String],
+                            commitHashes: java.util.List[String]): DataFrame =
     getFiles(
       asScalaBuffer(repositoryIds),
       asScalaBuffer(referenceNames),
@@ -162,7 +163,8 @@ class SparkAPI(session: SparkSession) {
     */
   def setRepositoriesPath(path: String): SparkAPI = {
     if (!FileSystem.get(session.sparkContext.hadoopConfiguration).exists(new Path(path))) {
-      throw new SparkException(s"the given repositories path ($path) does not exist, so siva files can't be read from there")
+      throw new SparkException(s"the given repositories path ($path) does not exist, " +
+        s"so siva files can't be read from there")
     }
 
     session.sqlContext.setConf(repositoriesPathKey, path)
@@ -228,7 +230,7 @@ object SparkAPI {
     * @param repositoriesPath the path to the repositories' siva files
     * @return SparkAPI instance
     */
-  def apply(session: SparkSession, repositoriesPath: String) = {
+  def apply(session: SparkSession, repositoriesPath: String): SparkAPI = {
     session.registerUDFs()
     new SparkAPI(session)
       .setRepositoriesPath(repositoriesPath)

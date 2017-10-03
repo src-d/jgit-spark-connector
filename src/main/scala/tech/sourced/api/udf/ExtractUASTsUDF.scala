@@ -80,7 +80,10 @@ object ExtractUASTsUDF extends CustomUDF {
     * @param lang         File language
     * @return Array of bytes with the UAST
     */
-  def extractUsingBblfsh(bblfshClient: BblfshClient, path: String, content: Array[Byte], lang: String): Array[Byte] = {
+  def extractUsingBblfsh(bblfshClient: BblfshClient,
+                         path: String,
+                         content: Array[Byte],
+                         lang: String): Array[Byte] = {
     //FIXME(bzz): not everything is UTF-8 encoded :/
     val contentStr = new String(content, StandardCharsets.UTF_8)
     val parsed = bblfshClient.parse(path, content = contentStr, lang = lang)

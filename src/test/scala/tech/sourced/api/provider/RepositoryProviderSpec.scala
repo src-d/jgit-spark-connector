@@ -56,7 +56,8 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec wi
     val sivaFilesExist = sivaRDD.map(pds => {
       val _ = RepositoryProvider("/tmp", skipCleanup = true)
         .genRepository(pds.getConfiguration, pds.getPath(), "/tmp")
-      val localSivaPath = new Path("/tmp", new Path(RepositoryProvider.temporalSivaFolder, pds.getPath()))
+      val localSivaPath = new Path("/tmp",
+        new Path(RepositoryProvider.temporalSivaFolder, pds.getPath()))
       FileSystem.get(pds.getConfiguration).exists(localSivaPath)
     }).collect()
 
@@ -70,9 +71,10 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec wi
     val sivaRDD = prov.get(resourcePath)
 
     val sivaFilesExist = sivaRDD.map(pds => {
-      val provider = new RepositoryProvider("/tmp/two")
+      val _ = new RepositoryProvider("/tmp/two")
         .genRepository(pds.getConfiguration, pds.getPath(), "/tmp/two")
-      val localSivaPath = new Path("/tmp/two", new Path(RepositoryProvider.temporalSivaFolder, new Path(pds.getPath()).getName()))
+      val localSivaPath = new Path("/tmp/two",
+        new Path(RepositoryProvider.temporalSivaFolder, new Path(pds.getPath()).getName))
       FileSystem.get(pds.getConfiguration).exists(localSivaPath)
     }).collect()
 
@@ -93,31 +95,33 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec wi
     provider.get(pds)
 
     provider.close(pds.getPath())
-    repo.getDirectory().toPath()
-    fs.exists(new Path(repo.getDirectory().toString())) should be(true)
+    repo.getDirectory.toPath
+    fs.exists(new Path(repo.getDirectory.toString)) should be(true)
 
     provider.close(pds.getPath())
-    fs.exists(new Path(repo.getDirectory().toString())) should be(false)
+    fs.exists(new Path(repo.getDirectory.toString)) should be(false)
   }
 
-  "RepositoryProvider with skipCleanup = true" should "not cleanup unpacked files when nobody else is using the repo" in {
+  "RepositoryProvider with skipCleanup = true"
+    .should("not cleanup unpacked files when nobody else is using the repo").in({
     val prov = SivaRDDProvider(ss.sparkContext)
     val sivaRDD = prov.get(resourcePath)
     val pds = sivaRDD.first()
 
     // needs to be a fresh instance, since some of the tests may not cleanup
-    val provider = new RepositoryProvider("/tmp/cleanup-test-" + System.currentTimeMillis(), skipCleanup = true)
+    val provider = new RepositoryProvider("/tmp/cleanup-test-"
+      + System.currentTimeMillis(), skipCleanup = true)
 
     val repo = provider.get(pds)
     val fs = FileSystem.get(pds.getConfiguration)
     provider.get(pds)
 
     provider.close(pds.getPath())
-    repo.getDirectory().toPath()
-    fs.exists(new Path(repo.getDirectory().toString())) should be(true)
+    repo.getDirectory.toPath
+    fs.exists(new Path(repo.getDirectory.toString)) should be(true)
 
     provider.close(pds.getPath())
-    fs.exists(new Path(repo.getDirectory().toString())) should be(true)
-  }
+    fs.exists(new Path(repo.getDirectory.toString)) should be(true)
+  })
 
 }

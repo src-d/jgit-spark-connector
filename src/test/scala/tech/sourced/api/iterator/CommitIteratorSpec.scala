@@ -41,7 +41,8 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
             )
           )
           row.getAs[Array[String]](7) should be(
-            Array("733c072369ca77331f392c40da7404c85c36542c", "2d2ad68c14c51e62595125b86b464427f6bf2126"))
+            Array("733c072369ca77331f392c40da7404c85c36542c",
+              "2d2ad68c14c51e62595125b86b464427f6bf2126"))
           row.getInt(8) should be(0)
           row.getString(9) should be("wangbo2008@vip.qq.com")
           row.getString(10) should be("wangbo")
@@ -63,7 +64,8 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
             )
           )
           row.getAs[Array[String]](7) should be(
-            Array("733c072369ca77331f392c40da7404c85c36542c", "2d2ad68c14c51e62595125b86b464427f6bf2126"))
+            Array("733c072369ca77331f392c40da7404c85c36542c",
+              "2d2ad68c14c51e62595125b86b464427f6bf2126"))
           row.getInt(8) should be(0)
           row.getString(9) should be("wangbo2008@vip.qq.com")
           row.getString(10) should be("wangbo")
@@ -78,7 +80,8 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           row.getString(3) should be("25fda7c4d616c8a7c017384d7745342c73eb214d")
           row.getString(4) should be("Merge pull request #5 from xiyou-linuxer/develop\n\nDevelop")
           row.getAs[Array[String]](5) should be(
-            Array("531f574cf8c457cbeb4f6a5bae2d81db22c5dc1a", "8331656181f9040d805b729946b12fd4382c4665"))
+            Array("531f574cf8c457cbeb4f6a5bae2d81db22c5dc1a",
+              "8331656181f9040d805b729946b12fd4382c4665"))
           row.getAs[Map[String, String]](6) should be(
             Map(
               "source/search.php" -> "be1dd14a91679b91151357fc37a84fc6b59be1a6",
@@ -145,7 +148,8 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
     )
   }
 
-  "CommitIterator" should "return all commits from all repositories into a siva file, filtering columns" in {
+  "CommitIterator" should "return all commits from all repositories into a siva file, " +
+    "filtering columns" in {
     testIterator(
       new CommitIterator(
         Array(
@@ -161,7 +165,8 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         case (23, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getAs[Array[String]](1) should be(
-            Array("531f574cf8c457cbeb4f6a5bae2d81db22c5dc1a", "8331656181f9040d805b729946b12fd4382c4665"))
+            Array("531f574cf8c457cbeb4f6a5bae2d81db22c5dc1a",
+              "8331656181f9040d805b729946b12fd4382c4665"))
         case (i, _) if i > 1061 => fail("commits not expected")
         case _ =>
       }, total = 1062, columnsCount = 2

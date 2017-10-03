@@ -64,7 +64,10 @@ package object api {
       ExtractUASTsUDF.bblfshHost = session.sparkContext.getConf.get(bblfshHostKey, "0.0.0.0")
       ExtractUASTsUDF.bblfshPort = session.sparkContext.getConf.getInt(bblfsPortKey, 9432)
 
-      SessionFunctions.UDFtoRegister.foreach(customUDF => session.udf.register(customUDF.name, customUDF.function))
+      SessionFunctions.UDFtoRegister.foreach(customUDF => session.udf.register(
+        customUDF.name,
+        customUDF.function
+      ))
     }
 
   }
@@ -95,7 +98,9 @@ package object api {
     def getReferences: DataFrame = {
       checkCols(df, "id")
       val reposIdsDf = df.select($"id")
-      getDataSource("references", df.sparkSession).join(reposIdsDf, $"repository_id" === $"id").drop($"id")
+      getDataSource("references", df.sparkSession)
+        .join(reposIdsDf, $"repository_id" === $"id")
+        .drop($"id")
     }
 
     /**
@@ -234,7 +239,8 @@ package object api {
   }
 
   /**
-    * Returns a [[org.apache.spark.sql.DataFrame]] for the given table using the provided [[org.apache.spark.sql.SparkSession]].
+    * Returns a [[org.apache.spark.sql.DataFrame]] for the given table using the provided
+    * [[org.apache.spark.sql.SparkSession]].
     *
     * @param table   name of the table
     * @param session spark session
@@ -254,8 +260,9 @@ package object api {
     */
   private[api] def checkCols(df: DataFrame, cols: String*): Unit = {
     if (!df.columns.exists(cols.contains)) {
-      throw new SparkException(s"Method can not be applied to this DataFrame: required:'${cols.mkString(" ")}'," +
-        s" actual columns:'${df.columns.mkString(" ")}'")
+      throw new SparkException(s"Method can not be applied to this DataFrame: "
+        + s"required:'${cols.mkString(" ")}',"
+        + s" actual columns:'${df.columns.mkString(" ")}'")
     }
   }
 
