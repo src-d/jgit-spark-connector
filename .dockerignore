@@ -1,0 +1,6 @@
+# Exclude all directories and files except those used by Dockerfile to build the image
+*
+!target/scala-2.11/spark-api-uber.jar
+!examples/
+!python/
+
