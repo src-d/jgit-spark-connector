@@ -1,4 +1,4 @@
-# spark-api [![Build Status](https://travis-ci.org/src-d/spark-api.svg?branch=master)](https://travis-ci.org/src-d/spark-api)
+# spark-api [![Build Status](https://travis-ci.org/src-d/spark-api.svg?branch=master)](https://travis-ci.org/src-d/spark-api) [![codecov](https://codecov.io/gh/src-d/spark-api/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/spark-api)
 
 **Spark API** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
 
