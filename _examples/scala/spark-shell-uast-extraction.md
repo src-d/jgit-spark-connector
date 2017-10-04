@@ -1,3 +1,11 @@
+## Extracting UASTs example
+
+In the example code below, you can take a look to how the `extractUASTs` method works.
+
+From the `api` object instantiated in the spark-shell, a bunch of files has been got filtering repositories by `id`, retrieving their `HEAD` references and requesting for them. Once we have that files, we can call `extractUASTs` which send the files to a [bblfsh server](https://github.com/bblfsh/server) to get back the UASTs.
+
+Finally, the reference `name`, file `path` and `uast` is showed on the table.
+
 ```bash
 $ spark-shell --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
 scala> import tech.sourced.api._

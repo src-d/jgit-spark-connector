@@ -1,3 +1,9 @@
+## Printing schema example
+
+The next example showed,  just try to show the simple usage of the useful method `printSchema`.
+
+It can help you to follow the aggregated or pruned information that your transformations make on the data you are handling.
+
 ```bash
 $ spark-shell --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
 scala> import tech.sourced.api._
@@ -13,7 +19,7 @@ root
  |-- is_fork: boolean (nullable = true)
 
 
-scala> api.getRepositories.getReferenceprintSchema
+scala> api.getRepositories.getReference.printSchema
 getReference   getReferences
 
 scala> api.getRepositories.getReferences.printSchema

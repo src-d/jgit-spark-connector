@@ -1,3 +1,9 @@
+## Printing schema example
+
+The next example showed,  just try to show the simple usage of the useful method `printSchema()`.
+
+It can help you to follow the aggregated or pruned information that your transformations make on the data you are handling.
+
 ```bash
 $ pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
 >>> from sourced.spark import API as SparkAPI

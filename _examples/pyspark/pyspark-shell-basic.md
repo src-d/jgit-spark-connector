@@ -1,3 +1,11 @@
+## Basic example
+
+In this example, the pyspark-shell is used to show a simple usage of the spark-api.
+
+First, you can see how to import the package and instantiate and object that provide all the methods to manipulate the data retrieved from repositories.
+
+The `api` object is used to get all the repositories, get the `HEAD` references from the repositories and eventually, get all the files from these references. Then a table is showed selecting the columns `file_hash`, `path` and reference `name`.
+
 ```bash
 $ pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
 >>> from sourced.spark import API as SparkAPI

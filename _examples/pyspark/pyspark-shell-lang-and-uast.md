@@ -1,3 +1,9 @@
+## Classifying languages and extracting UASTs example
+
+The combined usage of both, `classify_languages()` and `extract_uasts()` methods, has the advantage that doesn't rely the language detection task on the [bblfsh server](https://github.com/bblfsh/server) , so you can save some time.
+
+To do that, you just have to call  `extract_uasts()` on a Dataframe where previously, `classify_languages()` was used.
+
 ```bash
 $ pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
 >>> from sourced.spark import API as SparkAPI
