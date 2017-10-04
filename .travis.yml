@@ -67,10 +67,8 @@ before_script:
   - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
 
 script:
-  - ./sbt scalastyle
-  - ./sbt test:scalastyle
-  - ./sbt ++$TRAVIS_SCALA_VERSION jacoco:cover
-  - ./sbt assembly
+  - ./sbt ++$TRAVIS_SCALA_VERSION scalastyle test test:scalastyle coverage coverageReport
+  - ./sbt ++$TRAVIS_SCALA_VERSION assembly
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

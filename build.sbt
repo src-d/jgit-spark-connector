@@ -1,5 +1,4 @@
 import Dependencies.{scalaTest, _}
-import de.johoop.jacoco4sbt.XMLReport
 import sbt.Keys.{libraryDependencies, resolvers}
 
 lazy val root = (project in file(".")).
@@ -11,6 +10,7 @@ lazy val root = (project in file(".")).
     )),
     name := "spark-api",
     libraryDependencies += scalaTest % Test,
+    libraryDependencies += scoverage % Test,
     libraryDependencies += sparkSql % Provided,
     libraryDependencies += newerHadoopClient % Provided, //due to newer v. of guava in bblfsh
     libraryDependencies += fixNettyForGrpc, // grpc for bblfsh/client-scala needs to be newer then in Spark
@@ -25,11 +25,6 @@ lazy val root = (project in file(".")).
     test in assembly := {},
     assemblyJarName in assembly := s"${name.value}-uber.jar"
   )
-
-jacoco.settings
-
-jacoco.reportFormats in jacoco.Config := Seq(
-  XMLReport(encoding = "utf-8"))
 
 parallelExecution in Test := false
 logBuffered in Test := false
