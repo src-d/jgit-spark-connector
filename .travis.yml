@@ -24,7 +24,7 @@ matrix:
       python: 2.7
 
       install:
-        - ./sbt assembly
+        - make build
         - mkdir -p python/jars
         - cp target/**/spark-api-uber.jar python/jars
         - cd python
@@ -72,5 +72,5 @@ script:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
-  - make push
+  - make docker-push
 
