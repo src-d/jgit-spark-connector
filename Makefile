@@ -69,6 +69,15 @@ clean:
 test:
 	$(SBT) test
 
+scalastyle:
+	./sbt scalastyle
+
+test:
+	./sbt test
+
+test-scalastyle:
+	./sbt test:scalastyle
+
 build:
 	$(SBT) assembly
 
