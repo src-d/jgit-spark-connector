@@ -78,6 +78,9 @@ test:
 test-scalastyle:
 	./sbt test:scalastyle
 
+test-cover:
+	./sbt ++$(SCALA_VERSION) jacoco:cover
+
 build:
 	$(SBT) assembly
 
