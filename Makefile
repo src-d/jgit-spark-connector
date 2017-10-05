@@ -19,6 +19,9 @@ GIT_DIRTY=$(shell test -n "`git status --porcelain`" && echo "-dirty" || true)
 DEV_PREFIX := dev
 VERSION ?= $(DEV_PREFIX)-$(GIT_COMMIT)$(GIT_DIRTY)
 
+# Scala version
+SCALA_VERSION ?= 2.11.11
+
 # escape_docker_tag escape colon char to allow use a docker tag as rule
 define escape_docker_tag
 $(subst :,--,$(1))
@@ -29,9 +32,14 @@ define unescape_docker_tag
 $(subst --,:,$(1))
 endef
 
+# if TRAVIS_SCALA_VERSION defined SCALA_VERSION is overrided
+ifneq ($(TRAVIS_SCALA_VERSION), )
+	SCALA_VERSION := $(TRAVIS_SCALA_VERSION)
+endif
+
 # if TRAVIS_TAG defined VERSION is overrided
 ifneq ($(TRAVIS_TAG), )
-    VERSION := $(TRAVIS_TAG)
+	VERSION := $(TRAVIS_TAG)
 endif
 
 # if we are not in master, and it's not a tag the push is disabled
@@ -63,6 +71,9 @@ test:
 
 test-scalastyle:
 	./sbt test:scalastyle
+
+test-cover:
+	./sbt ++$(SCALA_VERSION) jacoco:cover
 
 build:
 	./sbt assembly
