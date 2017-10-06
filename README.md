@@ -23,6 +23,9 @@ $ ./bin/spark-shell --packages "com.github.src-d:spark-api:master-SNAPSHOT" --re
 $ ./bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:spark-api:master-SNAPSHOT"
 ```
 
+Run [bblfsh server](https://github.com/bblfsh/server):
+
+    docker run --rm --privileged -p 9432:9432 --name bblfsh bblfsh/server bblfsh server --log-level="debug"
 
 # Pre-requisites
 
@@ -52,6 +55,14 @@ or just set `SPARK_HOME` and run it as following:
 $ export SPARK_HOME=$HOME/spark-2.2.0-bin-hadoop2.7
 $ $SPARK_HOME/bin/spark-shell
 ```
+
+## bblfsh
+
+If you want to be able to use the UAST extraction features spark-api provides, you must run a Run [bblfsh server](https://github.com/bblfsh/server). You can do it easily with docker
+
+    docker run --rm --privileged -p 9432:9432 --name bblfsh bblfsh/server bblfsh server --log-level="debug"
+
+The first time the server receives a language it didn't process before, it will download the properly driver to parse the file, so it could take a bit time. Once it has the drivers it will run fast.
 
 # Examples of API usage
 
@@ -153,9 +164,13 @@ scala> api.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
 
 You can launch our docker container which contains some Notebooks examples just running:
 
-    docker run --name spark-api-jupyter -it --rm -p 8888:8888 -v $(pwd)/path/siva-files:/repositories src-d/spark-api-jupyter
+    docker run --name spark-api-jupyter --rm -it -p 8888:8888 -v $(pwd)/path/to/siva-files:/repositories --link bblfsh:bblfsh src-d/spark-api-jupyter
 
-You must have some siva files in local to mount them on the container replacing the path `$(pwd)/path/siva-files`. You can get some siva-files from the project [here](https://github.com/src-d/spark-api/tree/master/src/test/resources/siva-files).
+You must have some siva files in local to mount them on the container replacing the path `$(pwd)/path/to/siva-files`. You can get some siva-files from the project [here](https://github.com/src-d/spark-api/tree/master/examples/siva-files).
+
+You should have a [bblfsh server](https://github.com/bblfsh/server) container running to link the jupyter container (see Pre-requisites).
+
+When the spark-api-jupyter container starts it will show you an URL that you can open in your browser.
 
 # Development
 
@@ -164,7 +179,7 @@ You must have some siva files in local to mount them on the container replacing 
 Build the fatjar is needed to build the docker image that contains the jupyter server,  or test changes in spark-shell just passing the jar with `--jars` flag:
 
 ```bash
-$ ./sbt assembly
+$ make build
 ```
 
 It leaves the fatjar in `target/scala-2.11/spark-api-uber.jar`
@@ -179,25 +194,35 @@ $ make docker-build
 
 Notebooks under examples folder will be included on the image.
 
-To build and run a container with the Jupyter server
+To build and run a container with the Jupyter server:
 
 ```bash
 $ make docker-run
 ```
 
-Container's output will show you an URL that you can paste on your browser.
+Before run the jupyter container you must run a bblfsh server:
+
+```bash
+$ make docker-bblfsh
+```
+
+To remove the development jupyter image generated:
+
+```bash
+$ make docker-clean
+```
 
 ## Run tests
 
-spark-api uses [bblfsh](https://github.com/bblfsh) so you need an instance of a bblfsh server running, and you can get one easily with docker:
+spark-api uses [bblfsh](https://github.com/bblfsh) so you need an instance of a bblfsh server running:
 
 ```bash
-docker run -d --privileged -p 9432:9432 --name bblfsh bblfsh/server bblfsh server --log-level debug
+$ make docker-bblfsh
 ```
 
 To run tests:
 ```bash
-$ ./sbt test
+$ make test
 ```
 
 To run tests for python wrapper:
