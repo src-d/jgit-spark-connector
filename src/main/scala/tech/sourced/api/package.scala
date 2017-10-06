@@ -32,23 +32,27 @@ package object api {
   /**
     * Key used for the option to specify the path of siva files.
     */
-  private[api] val repositoriesPathKey = "tech.sourced.api.repositories.path"
+  private[api] val repositoriesPathKey = "spark.tech.sourced.api.repositories.path"
 
   /**
     * Key used for the option to specify the host of the bblfsh grpc service.
     */
-  private[api] val bblfshHostKey = "tech.sourced.bblfsh.grpc.host"
+  private[api] val bblfshHostKey = "spark.tech.sourced.bblfsh.grpc.host"
 
   /**
     * Key used for the option to specify the port of the bblfsh grpc service.
     */
-  private[api] val bblfsPortKey = "tech.sourced.bblfsh.grpc.port"
+  private[api] val bblfsPortKey = "spark.tech.sourced.bblfsh.grpc.port"
 
   /**
     * Key used for the option to specify whether files should be deleted after
     * their usage or not.
     */
-  private[api] val skipCleanupKey = "tech.sourced.api.cleanup.skip"
+  private[api] val skipCleanupKey = "spark.tech.sourced.api.cleanup.skip"
+
+  // The keys repositoriesPathKey, bblfshHostKey, bblfshPortKey and skipCleanupKey must
+  // start by "spark." to be able to be loaded from the "spark-defaults.conf" file.
+
 
   /**
     * Implicit class that adds some functions to the [[org.apache.spark.sql.SparkSession]].
