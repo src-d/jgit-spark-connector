@@ -121,6 +121,11 @@ package object api {
         .drop(refsIdsDf("name")).drop(refsIdsDf("repository_id"))
     }
 
+    def getFirstReferenceCommit: DataFrame = {
+      checkCols(df, "index")
+      df.filter($"index" === 0)
+    }
+
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
       * current dataframe with the files dataframe.
@@ -139,10 +144,10 @@ package object api {
       * @return new DataFrame containing also files data.
       */
     def getFiles: DataFrame = {
-      var filesDf = getDataSource("files", df.sparkSession)
+      val filesDf = getDataSource("files", df.sparkSession)
 
       if (df.schema.fieldNames.contains("hash")) {
-        val commitsDf = df.drop("tree")
+        val commitsDf = df.select("hash")
         filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
       } else {
         checkCols(df, "reference_name")
@@ -270,7 +275,7 @@ package object api {
     /**
       * List of custom functions to be registered.
       */
-    val UDFtoRegister = List[CustomUDF](ClassifyLanguagesUDF, ExtractUASTsUDF)
+    val UDFtoRegister: List[CustomUDF] = List(ClassifyLanguagesUDF, ExtractUASTsUDF)
   }
 
 }

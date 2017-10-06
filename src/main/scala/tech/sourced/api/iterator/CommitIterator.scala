@@ -3,57 +3,51 @@ package tech.sourced.api.iterator
 import java.sql.Timestamp
 
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.errors.IncorrectObjectTypeException
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.treewalk.TreeWalk
+import tech.sourced.api.util.{Attr, CompiledFilter, EqualExpr, Filter}
 
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
 /**
-  * Iterator that generates commit rows.
+  * Iterator that will return rows of commits in a repository.
   *
-  * @param requiredColumns required columns for the returned row
-  * @param repo            Git repository
+  * @param finalColumns final columns that must be in the resultant row
+  * @param repo         repository to get the data from
+  * @param prevIter     previous iterator, if the iterator is chained
+  * @param filters      filters for the iterator
   */
-class CommitIterator(requiredColumns: Array[String], repo: Repository)
-  extends RootedRepoIterator[ReferenceWithCommit](requiredColumns, repo) {
+class CommitIterator(finalColumns: Array[String],
+                     repo: Repository,
+                     prevIter: ReferenceIterator,
+                     filters: Seq[CompiledFilter])
+  extends RootedRepoIterator[ReferenceWithCommit](finalColumns, repo, prevIter, filters) {
 
-  /** @inheritdoc */
-  override protected def loadIterator(): Iterator[ReferenceWithCommit] =
-  // TODO this can be improved sending filters to loadIterator,
-  // because we don't need to get all the references in all the cases
-    new Iterator[ReferenceWithCommit] {
-      var refs: Iterator[Ref] = _
-      var actualRef: Ref = _
-      var commits: Iterator[RevCommit] = _
-      var index: Int = 0
-
-      override def hasNext: Boolean = {
-        if (refs == null) {
-          refs = repo.getAllRefs.values().asScala.toIterator
-        }
-
-        while ((commits == null || !commits.hasNext) && refs.hasNext) {
-          actualRef = refs.next()
-          index = 0
-          commits = CommitIterator.refCommits(repo, actualRef)
-        }
-
-        refs.hasNext || (commits != null && commits.hasNext)
-      }
-
-      override def next(): ReferenceWithCommit = {
-        val result: ReferenceWithCommit = ReferenceWithCommit(actualRef, commits.next(), index)
-        index += 1
-        result
-      }
+  /** @inheritdoc*/
+  override def getFilters(currentRow: RawRow): Seq[CompiledFilter] = {
+    if (currentRow != null) {
+      val id = currentRow("repository_id")().asInstanceOf[String]
+      val refName = currentRow("name")().asInstanceOf[String]
+      filters ++ Seq(
+        EqualExpr(Attr("repository_id", "commits"), id),
+        EqualExpr(Attr("reference_name", "commits"), refName)
+      )
+    } else {
+      filters
     }
+  }
+
+  type T = Iterator[ReferenceWithCommit]
 
   /** @inheritdoc */
+  override protected def loadIterator(filters: Seq[CompiledFilter]): T =
+    CommitIterator.loadIterator(repo, filters.flatMap(_.matchingCases))
+
+  /** @inheritdoc*/
   override protected def mapColumns(obj: ReferenceWithCommit): Map[String, () => Any] = {
-    val (repoId, refName) = parseRef(obj.ref.getName)
+    val (repoId, refName) = RootedRepo.parseRef(repo, obj.ref.getName)
 
     val c: RevCommit = obj.commit
     lazy val files: Map[String, String] = this.getFiles(obj.commit)
@@ -96,54 +90,82 @@ class CommitIterator(requiredColumns: Array[String], repo: Repository)
         tree.enterSubtree()
       }
       tree
-    })
-      .filter(!_.isSubtree)
+    }).filter(!_.isSubtree)
       .map(
-        walker => new String(walker.getRawPath) -> ObjectId.toString(walker.getObjectId(nth))) toMap
+        walker => new String(walker.getRawPath) -> ObjectId.toString(walker.getObjectId(nth))).toMap
   }
 }
 
-/**
-  * Contains a reference with a commit and the index of such commit in the reference.
-  *
-  * @param ref    reference
-  * @param commit commit
-  * @param index  index of the commit in the reference
-  */
 case class ReferenceWithCommit(ref: Ref, commit: RevCommit, index: Int)
 
 object CommitIterator {
-  /**
-    * Returns an iterator with all the commits of the given references in the repo.
-    * It's possible for the iterator to be empty in two cases:
-    *  - No refs were passed
-    *  - N refs were passed but all of them are not pointing to commits.
-    * If two references share a commit the returned iterator will not have such commit
-    * twice.
-    *
-    * @param repo repo to extract the commits from.
-    * @param refs references to search commits in.
-    * @return iterator with the commits of the given references
-    */
-  def refCommits(repo: Repository, refs: Ref*): Iterator[RevCommit] = {
-    val log = Git.wrap(repo).log()
-    refs.foreach(ref => {
-      try {
-        log.add(Option(ref.getPeeledObjectId).getOrElse(ref.getObjectId))
-      } catch {
-        // Reference is not pointing to a commit, just skip it.
-        case _: IncorrectObjectTypeException => // TODO: log this
-      }
-    })
 
-    try {
-      log.call().asScala.toIterator
-    } catch {
-      // If no reference is passed we should return an empty iterator instead of
-      // letting the exception get thrown. Specially, because if only one hash is passed
-      // and it does not point to a commit, it won't get added and it will throw this
-      // exception after calling `log.call()`.
-      case _: NoHeadException => Seq[RevCommit]().toIterator
+  /**
+    * Returns an iterator of references with commit.
+    *
+    * @param repo    repository to get the data from
+    * @param filters filters to skip some rows. "hash" and "index" fields are supported
+    *                at iterator level. That means, any "hash" filter passed to this iterator
+    *                will make it only retrieve commits with the given hashes. Same for "index".
+    * @return the iterator
+    */
+  def loadIterator(repo: Repository,
+                   filters: Seq[Filter.Match]): Iterator[ReferenceWithCommit] = {
+    val refs = ReferenceIterator.loadIterator(repo, filters, "repository_id", "reference_name")
+    val hashes = filters.flatMap {
+      case ("hash", h) => h.map(_.toString)
+      case _ => Seq()
     }
+
+    val indexes = filters.flatMap {
+      case ("index", idx) => idx.map(_.asInstanceOf[Int])
+      case _ => Seq()
+    }
+
+    new RefWithCommitIterator(repo, refs)
+      .filter(c => hashes.isEmpty || hashes.contains(c.commit.getId.getName))
+      .filter(c => indexes.isEmpty || indexes.contains(c.index))
   }
+
+}
+
+/**
+  * Iterator that will return references with their commit and the commit index in the reference.
+  *
+  * @param repo repository to get the data from
+  * @param refs iterator of references
+  */
+class RefWithCommitIterator(repo: Repository,
+                            refs: Iterator[Ref]) extends Iterator[ReferenceWithCommit] {
+
+  private var actualRef: Ref = _
+  private var commits: Iterator[RevCommit] = _
+  private var index: Int = 0
+
+  /** @inheritdoc*/
+  override def hasNext: Boolean = {
+    while ((commits == null || !commits.hasNext) && refs.hasNext) {
+      actualRef = refs.next()
+      index = 0
+      commits =
+        try {
+          Git.wrap(repo).log()
+            .add(Option(actualRef.getPeeledObjectId).getOrElse(actualRef.getObjectId))
+            .call().asScala.toIterator
+        } catch {
+          case _: IncorrectObjectTypeException => null
+          // TODO: This reference is pointing to a non commit object, log this
+        }
+    }
+
+    refs.hasNext || (commits != null && commits.hasNext)
+  }
+
+  /** @inheritdoc*/
+  override def next(): ReferenceWithCommit = {
+    val result: ReferenceWithCommit = ReferenceWithCommit(actualRef, commits.next(), index)
+    index += 1
+    result
+  }
+
 }

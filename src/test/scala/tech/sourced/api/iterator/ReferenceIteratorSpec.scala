@@ -3,7 +3,7 @@ package tech.sourced.api.iterator
 import org.scalatest.FlatSpec
 
 class ReferenceIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
-
+/*
   "ReferenceIterator" should "return all references from all repositories into a siva file" in {
     testIterator(
       new ReferenceIterator(Array("repository_id", "name", "hash"), _), {
@@ -39,5 +39,5 @@ class ReferenceIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         case _ =>
       }, total = 43, columnsCount = 2
     )
-  }
+  }*/
 }

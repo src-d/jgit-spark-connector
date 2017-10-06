@@ -131,10 +131,30 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
   "Filter by master reference" should "return only master references" in {
     val spark = ss
-    val count = SparkAPI(spark, resourcePath).getRepositories.getMaster
-      .select("name").distinct().count()
+    val df = SparkAPI(spark, resourcePath).getRepositories.getMaster
 
-    assert(count == 1)
+    df.explain(true)
+    df.show
+    assert(df.count == 5)
+  }
+
+  "Get develop commits" should "return only develop commits" in {
+    val spark = ss
+    val df = SparkAPI(spark, resourcePath).getRepositories.getReference("refs/heads/develop").getCommits
+
+    df.explain(true)
+    df.show
+    assert(df.count == 103)
+  }
+
+  "Get files of master" should "return the files" in {
+    val spark = ss
+    val df = SparkAPI(spark, resourcePath).getRepositories().getMaster.getCommits
+      .getFirstReferenceCommit.getFiles
+
+    df.explain(true)
+    df.show(300)
+    assert(df.count == 0)
   }
 
   "Get files after reading commits" should "return the correct files" in {

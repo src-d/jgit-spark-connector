@@ -6,7 +6,7 @@ import org.scalatest.FlatSpec
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
 class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
-
+/*
   "CommitIterator" should "return all commits from all repositories into a siva file" in {
     testIterator(
       new CommitIterator(
@@ -171,6 +171,7 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         case _ =>
       }, total = 1062, columnsCount = 2
     )
+<<<<<<< 0ce62ae8d9cd1aac3c00b9d922b362a742e51dc5
   }
 
   "refCommits" should "not crash if no refs are given" in {
@@ -184,4 +185,7 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
 
     commits.distinct.length should be(commits.length)
   }
+=======
+  }*/
+>>>>>>> WIP: chainable iterators
 }

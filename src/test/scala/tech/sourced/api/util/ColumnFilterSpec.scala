@@ -5,7 +5,7 @@ import org.apache.spark.sql.sources._
 import org.scalatest.{FlatSpec, Matchers}
 
 class ColumnFilterSpec extends FlatSpec with Matchers {
-  "CompiledFilters" should "filter properly depending of his type" in {
+ /* "CompiledFilters" should "filter properly depending of his type" in {
     val eq = new EqualFilter("test", "a")
 
     eq.matchingCases should be(Map("test" -> Seq("a")))
@@ -92,5 +92,5 @@ class ColumnFilterSpec extends FlatSpec with Matchers {
     f.matchingCases should be(Map())
     f.eval(Map("test" -> "a")) should be(None)
     f.eval(Map("test2" -> "a")) should be(None)
-  }
+  }*/
 }

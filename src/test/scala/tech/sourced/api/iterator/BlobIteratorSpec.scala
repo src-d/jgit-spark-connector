@@ -3,6 +3,7 @@ package tech.sourced.api.iterator
 import java.nio.charset.StandardCharsets
 
 import org.scalatest.FlatSpec
+<<<<<<< 0ce62ae8d9cd1aac3c00b9d922b362a742e51dc5
 import tech.sourced.api.util.{CompiledFilter, EqualFilter, InFilter}
 
 class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
@@ -280,3 +281,10 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
   }
 
 }
+=======
+//import tech.sourced.api.util.{CompiledFilter, EqualFilter}
+
+class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
+
+}
+>>>>>>> WIP: chainable iterators
