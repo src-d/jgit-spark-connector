@@ -26,18 +26,15 @@ class RepositoryIterator(finalColumns: Array[String],
     RepositoryIterator.loadIterator(repo, matchingFilters)
 
 
-  /**
-    * @inheritdoc
-    */
-  override protected def mapColumns(uuid: String): Map[String, () => Any] = {
-    val c: StoredConfig = repo.getConfig
-    val urls: Array[String] = c.getStringList("remote", uuid, "url")
-    val isFork: Boolean = c.getBoolean("remote", uuid, "isfork", false)
+  /** @inheritdoc*/
+  override protected def mapColumns(id: String): Map[String, () => Any] = {
+    val c = repo.getConfig
+    val uuid = RootedRepo.getRepositoryUUID(repo, id).get
+    val urls = c.getStringList("remote", uuid, "url")
+    val isFork = c.getBoolean("remote", uuid, "isfork", false)
 
     Map[String, () => Any](
-      "id" -> (() => {
-        RootedRepo.getRepositoryId(repo, uuid).get
-      }),
+      "id" -> (() => id),
       "urls" -> (() => urls),
       "is_fork" -> (() => isFork)
     )
@@ -65,8 +62,14 @@ object RepositoryIterator {
       case _ => Seq()
     }
 
-    repo.getConfig.getSubsections("remote").asScala.toIterator
-      .filter(ids.isEmpty || ids.contains(_))
+    var iter = repo.getConfig.getSubsections("remote").asScala.toIterator
+      .map(RootedRepo.getRepositoryId(repo, _).get)
+
+    if (ids.nonEmpty) {
+      iter = iter.filter(ids.contains(_))
+    }
+
+    iter
   }
 
 }

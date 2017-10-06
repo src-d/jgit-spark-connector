@@ -46,7 +46,7 @@ abstract class RootedRepoIterator[T](finalColumns: Array[String],
     *
     * @return internal iterator
     */
-  private def loadIterator = loadIterator(getFilters(currentRow))
+  private def loadIterator: Iterator[T] = loadIterator(getFilters(currentRow))
 
   /**
     * Returns the filters to be given to loadIterator when it's called. It's meant

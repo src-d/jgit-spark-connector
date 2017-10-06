@@ -146,12 +146,12 @@ package object api {
     def getFiles: DataFrame = {
       val filesDf = getDataSource("files", df.sparkSession)
 
-      if (df.schema.fieldNames.contains("hash")) {
-        val commitsDf = df.select("hash")
+      if (df.schema.fieldNames.contains("index")) {
+        val commitsDf = df.select("hash", "reference_name", "repository_id")
         filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
       } else {
-        checkCols(df, "reference_name")
-        filesDf.join(df, filesDf("reference_name") === df("name")).drop($"name")
+        checkCols(df, "name")
+        df.getCommits.getFiles
       }
     }
 

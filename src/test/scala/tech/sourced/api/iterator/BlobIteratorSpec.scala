@@ -3,11 +3,9 @@ package tech.sourced.api.iterator
 import java.nio.charset.StandardCharsets
 
 import org.scalatest.FlatSpec
-<<<<<<< 0ce62ae8d9cd1aac3c00b9d922b362a742e51dc5
-import tech.sourced.api.util.{CompiledFilter, EqualFilter, InFilter}
 
 class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
-
+/*
   "BlobIterator" should "return all blobs for files at every commit of all refs in repository" in {
     testIterator(
       new BlobIterator(
@@ -279,12 +277,5 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         case _ =>
       }, total = 22187, columnsCount = 5)
   }
-
+*/
 }
-=======
-//import tech.sourced.api.util.{CompiledFilter, EqualFilter}
-
-class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
-
-}
->>>>>>> WIP: chainable iterators

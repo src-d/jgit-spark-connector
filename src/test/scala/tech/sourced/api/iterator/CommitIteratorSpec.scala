@@ -185,7 +185,6 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
 
     commits.distinct.length should be(commits.length)
   }
-=======
+
   }*/
->>>>>>> WIP: chainable iterators
 }

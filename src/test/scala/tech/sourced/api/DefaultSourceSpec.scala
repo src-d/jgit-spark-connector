@@ -5,6 +5,8 @@ import org.scalatest._
 class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSparkSpec {
 
   "Default source" should "load correctly" in {
+    ss.sqlContext.setConf(repositoriesPathKey, resourcePath)
+
     val reposDf = ss.read.format("tech.sourced.api")
       .option("table", "repositories")
       .load(resourcePath)
@@ -69,7 +71,6 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
       .getRepositories.filter($"id" === "github.com/mawag/faq-xiyoulinux")
       .getReferences.getHEAD
       .getFiles
-      .select("repository_id", "name", "path", "commit_hash", "file_hash", "content", "is_binary")
 
     val cnt = filesDf.count()
     info(s"Total $cnt rows")
@@ -79,7 +80,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
     info("UAST for files:\n")
     val filesCols = filesDf.columns.length
-    val uasts = filesDf.classifyLanguages.extractUASTs
+    val uasts = filesDf.classifyLanguages.extractUASTs()
     uasts.show()
     val uastsCols = uasts.columns.length
     assert(uastsCols - 2 == filesCols)
@@ -134,13 +135,14 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     val df = SparkAPI(spark, resourcePath).getRepositories.getMaster
 
     df.explain(true)
-    df.show
+    df.show(false)
     assert(df.count == 5)
   }
 
   "Get develop commits" should "return only develop commits" in {
     val spark = ss
-    val df = SparkAPI(spark, resourcePath).getRepositories.getReference("refs/heads/develop").getCommits
+    val df = SparkAPI(spark, resourcePath).getRepositories
+      .getReference("refs/heads/develop").getCommits
 
     df.explain(true)
     df.show
@@ -149,12 +151,12 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
   "Get files of master" should "return the files" in {
     val spark = ss
-    val df = SparkAPI(spark, resourcePath).getRepositories().getMaster.getCommits
+    val df = SparkAPI(spark, resourcePath).getRepositories.getMaster.getCommits
       .getFirstReferenceCommit.getFiles
 
     df.explain(true)
-    df.show(300)
-    assert(df.count == 0)
+    df.show
+    assert(df.count == 459)
   }
 
   "Get files after reading commits" should "return the correct files" in {

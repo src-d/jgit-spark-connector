@@ -78,9 +78,6 @@ case class GitRelation(sqlContext: SQLContext,
     val sivaRDD = SivaRDDProvider(sc).get(path)
 
     val requiredCols = sc.broadcast(requiredColumns.map(_.name).toArray)
-    val columnsBySource = sc.broadcast(
-      GitRelation.getColumnsBySource(tableSource, requiredColumns)
-    )
     val reposLocalPath = sc.broadcast(localPath)
     val sources = sc.broadcast(GitRelation.getSources(tableSource, schema))
     val filtersBySource = sc.broadcast(GitRelation.getFiltersBySource(filters))
@@ -96,7 +93,6 @@ case class GitRelation(sqlContext: SQLContext,
         case k@"repositories" =>
           iter = Some(new RepositoryIterator(
             requiredCols.value,
-            columnsBySource.value.getOrElse(k, Array[String]()),
             repo,
             filtersBySource.value.getOrElse(k, Seq())
           ))
@@ -104,27 +100,24 @@ case class GitRelation(sqlContext: SQLContext,
         case k@"references" =>
           iter = Some(new ReferenceIterator(
             requiredCols.value,
-            columnsBySource.value.getOrElse(k, Array[String]()),
             repo,
-            iter.orNull,
+            iter.map(_.asInstanceOf[RepositoryIterator]).orNull,
             filtersBySource.value.getOrElse(k, Seq())
           ))
 
         case k@"commits" =>
           iter = Some(new CommitIterator(
             requiredCols.value,
-            columnsBySource.value.getOrElse(k, Array[String]()),
             repo,
-            iter.orNull,
+            iter.map(_.asInstanceOf[ReferenceIterator]).orNull,
             filtersBySource.value.getOrElse(k, Seq())
           ))
 
         case k@"files" =>
           iter = Some(new BlobIterator(
             requiredCols.value,
-            columnsBySource.value.getOrElse(k, Array[String]()),
             repo,
-            iter.orNull,
+            iter.map(_.asInstanceOf[CommitIterator]).orNull,
             filtersBySource.value.getOrElse(k, Seq())
           ))
 
@@ -140,23 +133,6 @@ case class GitRelation(sqlContext: SQLContext,
   * Contains some useful methods to be used inside [[GitRelation]].
   */
 private object GitRelation {
-  /**
-    * Returns the columns that need to be in the final resultant row grouped
-    * by their table source.
-    *
-    * @param tableSource optional table source
-    * @param columns     list of columns
-    * @return grouped columns
-    */
-  private def getColumnsBySource(tableSource: Option[String],
-                                 columns: Seq[Attribute]): Map[String, Array[String]] =
-    tableSource match {
-      case Some(ts) => Map(ts -> columns.map(_.name).toArray)
-      case None => columns
-        .map(a => a.metadata.getString("source") -> a.name)
-        .groupBy(_._1)
-        .map { case (k, v) => (k, v.map(_._2).toArray) }
-    }
 
   /**
     * Returns the list of sources in the schema or the table source if any.

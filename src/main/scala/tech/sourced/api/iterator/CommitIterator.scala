@@ -122,7 +122,9 @@ object CommitIterator {
       case _ => Seq()
     }
 
-    new RefWithCommitIterator(repo, refs)
+    val refsL = refs.toList
+
+    new RefWithCommitIterator(repo, refsL.toIterator)
       .filter(c => hashes.isEmpty || hashes.contains(c.commit.getId.getName))
       .filter(c => indexes.isEmpty || indexes.contains(c.index))
   }
