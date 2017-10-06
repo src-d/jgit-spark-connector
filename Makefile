@@ -57,26 +57,23 @@ endif
 DOCKER_IMAGE ?= src-d/spark-api-jupyter
 DOCKER_IMAGE_VERSIONED ?= $(call escape_docker_tag,$(DOCKER_IMAGE):$(VERSION))
 
+#SBT
+SBT = ./sbt ++$(SCALA_VERSION)
+
 # Rules
 all: clean build
 
 clean:
-	./sbt clean
-
-scalastyle:
-	./sbt scalastyle
+	$(SBT) clean
 
 test:
-	./sbt test
-
-test-scalastyle:
-	./sbt test:scalastyle
-
-test-cover:
-	./sbt ++$(SCALA_VERSION) jacoco:cover
+	$(SBT) test
 
 build:
-	./sbt assembly
+	$(SBT) assembly
+
+travis-test:
+	$(SBT) scalastyle test test:scalastyle coverage coverageReport
 
 docker-build: build
 	$(DOCKER_BUILD) -t $(call unescape_docker_tag,$(DOCKER_IMAGE_VERSIONED)) .

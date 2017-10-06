@@ -40,7 +40,7 @@ matrix:
       python: 3.6
 
       install:
-        - ./sbt assembly
+        - make build
         - mkdir -p python/jars
         - cp target/**/spark-api-uber.jar python/jars
         - cd python
@@ -67,8 +67,8 @@ before_script:
   - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
 
 script:
-  - ./sbt ++$TRAVIS_SCALA_VERSION scalastyle test test:scalastyle coverage coverageReport
-  - ./sbt ++$TRAVIS_SCALA_VERSION assembly
+  - make travis-test
+  - make build
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
