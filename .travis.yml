@@ -72,5 +72,10 @@ script:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
-  - make docker-push
 
+deploy:
+  provider: script
+  script: make docker-push
+  skip_cleanup: true
+  on:
+    tags: true
