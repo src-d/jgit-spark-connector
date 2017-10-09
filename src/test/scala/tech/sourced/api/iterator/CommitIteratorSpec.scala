@@ -3,30 +3,32 @@ package tech.sourced.api.iterator
 import java.sql.Timestamp
 
 import org.scalatest.FlatSpec
-import scala.collection.JavaConverters.iterableAsScalaIterableConverter
+import tech.sourced.api.util.{Attr, EqualFilter, InFilter}
 
 class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
+
+  private val cols = Array(
+    "repository_id",
+    "reference_name",
+    "index",
+    "hash",
+    "message",
+    "parents",
+    "tree",
+    "blobs",
+    "parents_count",
+    "author_email",
+    "author_name",
+    "author_date",
+    "committer_email",
+    "committer_name",
+    "committer_date"
+  )
 
   "CommitIterator" should "return all commits from all repositories into a siva file" in {
     testIterator(
       new CommitIterator(
-        Array(
-          "repository_id",
-          "reference_name",
-          "index",
-          "hash",
-          "message",
-          "parents",
-          "tree",
-          "blobs",
-          "parents_count",
-          "author_email",
-          "author_name",
-          "author_date",
-          "committer_email",
-          "committer_name",
-          "committer_date"
-        ), _), {
+        cols, _, null, Seq()), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getString(1) should be("refs/heads/HEAD")
@@ -155,7 +157,7 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         Array(
           "repository_id",
           "parents"
-        ), _), {
+        ), _, null, Seq()), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getAs[Array[String]](1) should be(Array())
@@ -173,15 +175,75 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
     )
   }
 
-  "refCommits" should "not crash if no refs are given" in {
-    val iter = CommitIterator.refCommits(repo)
-    iter.isEmpty should be(true)
+  "CommitIterator" should "apply passed filters" in {
+    val commits = Array(
+      "fff7062de8474d10a67d417ccea87ba6f58ca81d",
+      "531f574cf8c457cbeb4f6a5bae2d81db22c5dc1a"
+    )
+
+    testIterator(
+      new CommitIterator(
+        Array(
+          "repository_id",
+          "reference_name",
+          "hash"
+        ),
+        _,
+        null,
+        Seq(InFilter(Attr("hash", "commits"), commits))
+      ), {
+        case (0, row) =>
+          row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
+          row.getString(1) should be("refs/heads/HEAD")
+          assert(commits.contains(row.getString(2)))
+        case (1, row) =>
+          row.getString(0) should be("github.com/mawag/faq-xiyoulinux")
+          row.getString(1) should be("refs/heads/HEAD")
+          assert(commits.contains(row.getString(2)))
+        case _ =>
+      }, total = 58, columnsCount = 3
+    )
   }
 
-  "refCommits" should "not return duplicated commits even if refs share commits" in {
-    val refs = repo.getAllRefs.values.asScala.toList
-    val commits = CommitIterator.refCommits(repo, refs: _*).map(c => c.getId.name).toList
+  "CommitIterator" should "apply use prev iterator" in {
+    val commits = Array(
+      "fff7062de8474d10a67d417ccea87ba6f58ca81d",
+      "531f574cf8c457cbeb4f6a5bae2d81db22c5dc1a"
+    )
 
-    commits.distinct.length should be(commits.length)
+    testIterator(repo =>
+      new CommitIterator(
+        Array(
+          "repository_id",
+          "reference_name",
+          "hash"
+        ),
+        repo,
+        new ReferenceIterator(
+          Array("name"),
+          repo,
+          new RepositoryIterator(
+            Array("id"),
+            repo,
+            Seq()
+          ),
+          Seq(InFilter(Attr("name", "references"), Array(
+            "refs/heads/master", "refs/heads/develop"
+          )))
+        ),
+        Seq()
+      ), {
+      case (0, row) =>
+        row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
+        row.getString(1) should be("refs/heads/develop")
+        row.getString(2) should be("880653c14945dbbc915f1145561ed3df3ebaf168")
+      case (1, row) =>
+        row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
+        row.getString(1) should be("refs/heads/develop")
+        row.getString(2) should be("c83aaf5eb40dfe6639d3e400fc07c7360b818404")
+      case _ =>
+    }, total = 105, columnsCount = 3
+    )
   }
+
 }

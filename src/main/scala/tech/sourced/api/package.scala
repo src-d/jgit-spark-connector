@@ -131,6 +131,11 @@ package object api {
         .drop(refsIdsDf("name")).drop(refsIdsDf("repository_id"))
     }
 
+    def getFirstReferenceCommit: DataFrame = {
+      checkCols(df, "index")
+      df.filter($"index" === 0)
+    }
+
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
       * current dataframe with the files dataframe.
@@ -151,12 +156,14 @@ package object api {
     def getFiles: DataFrame = {
       val filesDf = getDataSource("files", df.sparkSession)
 
-      if (df.schema.fieldNames.contains("hash")) {
-        val commitsDf = df.drop("tree")
-        filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
+      if (df.schema.fieldNames.contains("index")) {
+        val commitsDf = df.select("hash")
+        filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash"))
+          .drop($"hash")
+          .distinct()
       } else {
-        checkCols(df, "reference_name")
-        filesDf.join(df, filesDf("reference_name") === df("name")).drop($"name")
+        checkCols(df, "name")
+        df.getCommits.getFiles
       }
     }
 

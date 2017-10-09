@@ -1,7 +1,5 @@
 from sourced.spark import API as SparkAPI
-from pyspark.sql import functions as F
 from .base import BaseTestCase
-from unittest import expectedFailure
 from os import path
 
 
@@ -60,8 +58,8 @@ class APITestCase(BaseTestCase):
 
 
     def test_references_ref(self):
-        df = self.api.repositories.references.ref('refs/pull/23/head')
-        self.assertEqual(len(df.collect()), 1)
+        df = self.api.repositories.references.ref('refs/heads/develop')
+        self.assertEqual(len(df.collect()), 2)
 
 
     def test_commits(self):
@@ -78,7 +76,7 @@ class APITestCase(BaseTestCase):
 
     def test_files(self):
         df = self.api.repositories.references.commits.files
-        self.assertEqual(df.count(), 1536360)
+        self.assertEqual(df.count(), 91944)
         file = df.sort(df.file_hash).limit(1).first()
         self.assertEqual(file.file_hash, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
         self.assertEqual(file.path, 'spec/database_spec.rb')
@@ -86,10 +84,10 @@ class APITestCase(BaseTestCase):
 
     def test_files_from_refs(self):
         df = self.api.repositories.references.files
-        self.assertEqual(df.count(), 19126)
+        self.assertEqual(df.count(), 91944)
         file = df.sort(df.file_hash).limit(1).first()
-        self.assertEqual(file.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
-        self.assertEqual(file.path, 'sequel_core/stress/mem_array_keys.rb')
+        self.assertEqual(file.file_hash, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
+        self.assertEqual(file.path, 'spec/database_spec.rb')
 
 
     def test_classify_languages(self):
@@ -124,19 +122,19 @@ class APITestCase(BaseTestCase):
             repos.append(row['repository_id'])
             hashes.append(row['hash'])
 
-        self.assertEqual(self.api.files(repos, ["refs/heads/HEAD"], hashes).count(), 745)
+        self.assertEqual(self.api.files(repos, ["refs/heads/HEAD"], hashes).count(), 655)
 
 
     def test_api_files_repository(self):
         files = self.api.files(repository_ids=['github.com/xiyou-linuxer/faq-xiyoulinux'])
-        self.assertEqual(files.count(), 20048)
+        self.assertEqual(files.count(), 2421)
 
 
     def test_api_files_reference(self):
         files = self.api.files(reference_names=['refs/heads/develop'])
-        self.assertEqual(files.count(), 404)
+        self.assertEqual(files.count(), 425)
 
 
     def test_api_files_hash(self):
         files = self.api.files(commit_hashes=['fff7062de8474d10a67d417ccea87ba6f58ca81d'])
-        self.assertEqual(files.count(), 86)
+        self.assertEqual(files.count(), 2)

@@ -1,12 +1,13 @@
 package tech.sourced.api.iterator
 
 import org.scalatest.FlatSpec
+import tech.sourced.api.util.{Attr, EqualFilter}
 
 class ReferenceIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
 
   "ReferenceIterator" should "return all references from all repositories into a siva file" in {
     testIterator(
-      new ReferenceIterator(Array("repository_id", "name", "hash"), _), {
+      new ReferenceIterator(Array("repository_id", "name", "hash"), _, null, Seq()), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getString(1) should be("refs/heads/HEAD")
@@ -26,7 +27,7 @@ class ReferenceIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
 
   "ReferenceIterator" should "return only specified columns" in {
     testIterator(
-      new ReferenceIterator(Array("repository_id", "name"), _), {
+      new ReferenceIterator(Array("repository_id", "name"), _, null, Seq()), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getString(1) should be("refs/heads/HEAD")
@@ -38,6 +39,43 @@ class ReferenceIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           row.getString(1) should be("refs/heads/develop")
         case _ =>
       }, total = 43, columnsCount = 2
+    )
+  }
+
+  "ReferenceIterator" should "apply passed filters" in {
+    testIterator(
+      new ReferenceIterator(
+        Array("repository_id", "name"),
+        _,
+        null,
+        Seq(EqualFilter(Attr("name", "references"), "refs/heads/develop"))
+      ), {
+        case (0, row) =>
+          row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
+          row.getString(1) should be("refs/heads/develop")
+        case (1, row) =>
+          row.getString(0) should be("github.com/mawag/faq-xiyoulinux")
+          row.getString(1) should be("refs/heads/develop")
+      }, total = 2, columnsCount = 2
+    )
+  }
+
+  "ReferenceIterator" should "use previously passed iterator" in {
+    testIterator(repo =>
+      new ReferenceIterator(
+        Array("repository_id", "name"),
+        repo,
+        new RepositoryIterator(
+          Array("id"),
+          repo,
+          Seq(EqualFilter(Attr("id", "repository"), "github.com/xiyou-linuxer/faq-xiyoulinux"))
+        ),
+        Seq(EqualFilter(Attr("name", "references"), "refs/heads/develop"))
+      ), {
+      case (0, row) =>
+        row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
+        row.getString(1) should be("refs/heads/develop")
+    }, total = 1, columnsCount = 2
     )
   }
 }

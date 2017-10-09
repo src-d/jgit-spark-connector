@@ -11,7 +11,7 @@ import org.apache.spark.sql.Row
   * @param cleanup cleanup function
   * @tparam T type of the rows in the RootedRepoIterator
   */
-class CleanupIterator[T](it: RootedRepoIterator[T], cleanup: => Unit)
+class CleanupIterator[T](it: Iterator[Row], cleanup: => Unit)
   extends InterruptibleIterator[Row](TaskContext.get(), it) {
 
   /** @inheritdoc
@@ -27,10 +27,9 @@ class CleanupIterator[T](it: RootedRepoIterator[T], cleanup: => Unit)
       }
       hasNext
     } catch {
-      case e: Throwable => {
+      case e: Throwable =>
         val _ = cleanup
         throw e
-      }
     }
   }
 
