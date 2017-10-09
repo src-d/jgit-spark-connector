@@ -54,7 +54,7 @@ ifneq ($(TRAVIS_PULL_REQUEST), false)
         pushdisabled = "push disabled for pull-requests"
 endif
 
-DOCKER_IMAGE ?= src-d/spark-api-jupyter
+DOCKER_IMAGE ?= srcd/spark-api-jupyter
 DOCKER_IMAGE_VERSIONED ?= $(call escape_docker_tag,$(DOCKER_IMAGE):$(VERSION))
 
 #SBT
