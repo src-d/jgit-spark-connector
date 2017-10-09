@@ -7,7 +7,7 @@ It is written in Scala and built on top of Apache Spark to enable rapid construc
 Current implementation combines:
  - [src-d/enry](https://github.com/src-d/enry) to detect programming language of every file
  - [bblfsh/client-scala](https://github.com/bblfsh/client-scala) to parse every file to UAST
- - [src-d/siva-java](https://github.com/src-d/siva-java) for reading Siva files in JVM 
+ - [src-d/siva-java](https://github.com/src-d/siva-java) for reading Siva files in JVM
  - [apache/spark](https://github.com/apache/spark) to extend DataFrame API
  - [eclipse/jgit](https://github.com/eclipse/jgit) for working with Git .pack files
 
@@ -149,6 +149,14 @@ scala> api.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
 
 ```
 
+# Playing around with spark-api on Jupyter
+
+You can launch our docker container which contains some Notebooks examples just running:
+
+    docker run --name spark-api-jupyter -it --rm -p 8888:8888 -v $(pwd)/path/siva-files:/repositories src-d/spark-api-jupyter
+
+You must have some siva files in local to mount them on the container replacing the path `$(pwd)/path/siva-files`. You can get some siva-files from the project [here](https://github.com/src-d/spark-api/tree/master/src/test/resources/siva-files).
+
 # Development
 
 ## Build fatjar
@@ -163,12 +171,21 @@ It leaves the fatjar in `target/scala-2.11/spark-api-uber.jar`
 
 ## Build and run docker to get a Jupyter server
 
+To build an image with the last built of the project:
+
 ```bash
-$ docker -t spark-api-jupyter .
-$ docker run -p 8888:8888 -v /path/to/siva-files:/repositories spark-api-jupyter
+$ make docker-build
 ```
 
 Notebooks under examples folder will be included on the image.
+
+To build and run a container with the Jupyter server
+
+```bash
+$ make docker-run
+```
+
+Container's output will show you an URL that you can paste on your browser.
 
 ## Run tests
 
