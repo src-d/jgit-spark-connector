@@ -55,14 +55,6 @@ matrix:
       before_deploy:
         - echo "$TRAVIS_TAG" | cut -c 2- > version.txt
 
-      deploy:
-        provider: pypi
-        user: $PYPI_USERNAME
-        password: $PYPI_PASSWORD
-        skip_cleanup: true
-        on:
-          tags: true
-
 before_script:
   - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
 
@@ -74,8 +66,14 @@ after_success:
   - bash <(curl -s https://codecov.io/bash)
 
 deploy:
-  provider: script
-  script: make docker-push
-  skip_cleanup: true
-  on:
-    tags: true
+  - provider: script
+    script: make docker-push
+    skip_cleanup: true
+    on:
+        tags: true
+  - provider: pypi
+    user: $PYPI_USERNAME
+    password: $PYPI_PASSWORD
+    skip_cleanup: true
+    on:
+        tags: true
