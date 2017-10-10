@@ -1,5 +1,6 @@
 package tech.sourced.api.udf
 
+import gopkg.in.bblfsh.sdk.v1.uast.generated.{Node, Role}
 import org.apache.spark.sql.types.{StringType, StructField}
 import org.scalatest.{FlatSpec, Matchers}
 import tech.sourced.api._
@@ -49,7 +50,7 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
 
     spark.catalog.listFunctions().filter('name like "%"
       + ClassifyLanguagesUDF.name + "%").show(false)
-    fileSeq.toDF(fileColumns: _*).createTempView("files")
+    fileSeq.toDF(fileColumns: _*).createOrReplaceTempView("files")
 
     val languagesDf = spark.sqlContext.sql("SELECT *, "
       + ClassifyLanguagesUDF.name + "(is_binary, path, content) AS lang FROM files")
@@ -94,12 +95,93 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     import spark.implicits._
 
     spark.catalog.listFunctions().filter('name like "%" + ExtractUASTsUDF.name + "%").show(false)
-    fileSeq.toDF(fileColumns: _*).createTempView("uasts")
+    fileSeq.toDF(fileColumns: _*).createOrReplaceTempView("uasts")
 
     val uastsDF = spark.sqlContext.sql("SELECT *, "
       + ExtractUASTsUDF.name + "(path, content) AS uast FROM uasts")
     uastsDF.collect
     uastsDF.columns should contain("uast")
+  }
+
+  "QueryXPath" should "query an UAST using xpath" in {
+    val spark = ss
+    import spark.implicits._
+
+    spark.catalog.listFunctions().filter('name like "%" + QueryXPathUDF.name + "%").show(false)
+    fileSeq.take(1).toDF(fileColumns: _*).createOrReplaceTempView("files")
+
+    val uastsDF = spark.sqlContext.sql(s"SELECT path, ${ExtractUASTsUDF.name}(path, content) " +
+      s"as uast FROM files")
+    val uast = uastsDF.first()
+
+    val uasts: Seq[(String, Seq[Array[Byte]])] = Seq(
+      (uast(0).asInstanceOf[String], uast(1).asInstanceOf[Seq[Array[Byte]]])
+    )
+    uasts.toDF("path", "uast").createOrReplaceTempView("uasts")
+
+    val filteredDf = spark.sqlContext.sql(s"SELECT ${QueryXPathUDF.name}" +
+      s"(uast, '//*[@roleIdentifier]') FROM uasts")
+    val nodes = filteredDf.first()(0).asInstanceOf[Seq[Array[Byte]]]
+      .map(Node.parseFrom)
+      .filter(!_.roles.contains(Role.INCOMPLETE))
+
+    nodes.length should be(5)
+    nodes.map(_.token) should equal(Seq(
+      "contents",
+      "read",
+      "f",
+      "open",
+      "f"
+    ))
+  }
+
+  it should "query using queryUAST method of dataframe" in {
+    val spark = ss
+    import spark.implicits._
+
+    val identifiers = fileSeq.take(1).toDF(fileColumns: _*)
+      .classifyLanguages
+      .extractUASTs()
+      .queryUAST("//*[@roleIdentifier and not(@roleIncomplete)]")
+      .collect()
+      .map(row => row(row.fieldIndex("result")))
+      .flatMap(_.asInstanceOf[Seq[Array[Byte]]])
+      .map(Node.parseFrom)
+      .map(_.token)
+
+    identifiers.length should be(5)
+    identifiers should equal(Seq(
+      "contents",
+      "read",
+      "f",
+      "open",
+      "f"
+    ))
+  }
+
+  it should "query using queryUAST method of dataframe with custom cols" in {
+    val spark = ss
+    import spark.implicits._
+
+    val identifiers = fileSeq.take(1).toDF(fileColumns: _*)
+      .classifyLanguages
+      .extractUASTs()
+      .queryUAST("//*[@roleIdentifier]")
+      .queryUAST("/*[not(@roleIncomplete)]", "result", "result2")
+      .collect()
+      .map(row => row(row.fieldIndex("result2")))
+      .flatMap(_.asInstanceOf[Seq[Array[Byte]]])
+      .map(Node.parseFrom)
+      .map(_.token)
+
+    identifiers.length should be(5)
+    identifiers should equal(Seq(
+      "contents",
+      "read",
+      "f",
+      "open",
+      "f"
+    ))
   }
 
 }
