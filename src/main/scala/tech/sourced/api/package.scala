@@ -131,6 +131,23 @@ package object api {
         .drop(refsIdsDf("name")).drop(refsIdsDf("repository_id"))
     }
 
+    /**
+      * Returns a new [[org.apache.spark.sql.DataFrame]] with only the first commit in a reference.
+      * Without calling this method, commits may appear multiple times in your [[DataFrame]],
+      * because most of your commits will be shared amongst references. Calling this, your
+      * [[DataFrame]] will only contain the HEAD commit of each reference.
+      *
+      * For the next example, consider we have a master branch with 100 commits and a "foo" branch
+      * whose parent is the HEAD of master and has two more commits.
+      * {{{
+      * > commitsDf.count()
+      * 202
+      * > commitsDf.getFirstReferenceCommit.count()
+      * 2
+      * }}}
+      *
+      * @return dataframe with only the HEAD commits of each reference
+      */
     def getFirstReferenceCommit: DataFrame = {
       checkCols(df, "index")
       df.filter($"index" === 0)
@@ -139,17 +156,10 @@ package object api {
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
       * current dataframe with the files dataframe.
-      * It requires the current dataframe to have a "files" column, which is are the
-      * files of a commit.
       *
       * {{{
       * val filesDf = commitsDf.getFiles
       * }}}
-      *
-      * Right now this method is very slow. If you are processing a lot of repositories
-      * you might have to consider pre-processing the repositories, references and hashes
-      * and then using [[tech.sourced.api.SparkAPI.getFiles]] to get the files, instead.
-      * This is likely to change in the near future.
       *
       * @return new DataFrame containing also files data.
       */

@@ -61,18 +61,7 @@ class SparkAPI(session: SparkSession) {
     * the given commits that are in the given references that belong to the given
     * repositories.
     *
-    * NOTE: due to some specifics in the SparkAPI internals, this is way faster than
-    * using the DataFrame implicit methods to get the files, although this might change
-    * in the near future.
-    *
     * {{{
-    * val filesDf = api.getRepositories.filter($"is_fork" === false)
-    *   .getReferences.filter($"name" === "some ref")
-    *   .getCommits.filter($"hash" === "some hash")
-    *   .getFiles
-    *
-    * // is way slower than
-    *
     * val filesDfFast = api.getFiles(repoIds, refNames, hashes)
     * }}}
     *
@@ -81,10 +70,6 @@ class SparkAPI(session: SparkSession) {
     * {{{
     * api.getRepositories.getReferences.getCommits.getFiles
     * }}}
-    *
-    * What makes this method faster than just the example above is the fact of passing
-    * repository ids to filter by, so it's recommended to do so. You can pass any number
-    * of elements to filter by (including none).
     *
     * @param repositoryIds  List of the repository ids to filter by (optional)
     * @param referenceNames List of reference names to filter by (optional)
