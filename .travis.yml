@@ -36,6 +36,10 @@ matrix:
       after_success:
         - echo "" # noop to avoid executing the one from the main build
 
+      deploy:
+       - provider: script
+         script: echo "" # noop to avoid executing the one from the main build
+
     - language: python
       python: 3.6
 
@@ -56,12 +60,15 @@ matrix:
         - echo "$TRAVIS_TAG" | cut -c 2- > version.txt
 
       deploy:
-        provider: pypi
-        user: $PYPI_USERNAME
-        password: $PYPI_PASSWORD
-        skip_cleanup: true
-        on:
-          tags: true
+        - provider: pypi
+          user: $PYPI_USERNAME
+          password: $PYPI_PASSWORD
+          skip_cleanup: true
+          on:
+            tags: true
+        - provider: script
+          script: echo "" # noop to avoid executing the one from the main build
+
 
 before_script:
   - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
