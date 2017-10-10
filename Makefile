@@ -11,7 +11,7 @@ BBLFSH_CONTAINER_NAME = bblfsh
 BBLFSH_HOST_PORT = 9432
 BBLFSH_CONTAINER_PORT = 9432
 BBLFSH_IMAGE = bblfsh/server
-BBLFSH_VERSION = latest
+BBLFSH_VERSION = v1.2.0
 BBLFSH_CMD = bblfsh server --log-level debug
 BBLFSH_RUN_FLAGS := --rm --privileged \
 	-p $(BBLFSH_HOST_PORT):$(BBLFSH_CONTAINER_PORT) \
@@ -100,7 +100,7 @@ docker-bblfsh:
 docker-build: build
 	$(DOCKER_BUILD) -t $(call unescape_docker_tag,$(JUPYTER_IMAGE_VERSIONED)) .
 
-docker-run: docker-build
+docker-run:
 	$(DOCKER_RUN) $(JUPYTER_RUN_FLAGS)
 
 docker-clean:

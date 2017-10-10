@@ -25,7 +25,7 @@ $ ./bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-
 
 Run [bblfsh server](https://github.com/bblfsh/server):
 
-    docker run --rm --privileged -p 9432:9432 --name bblfsh bblfsh/server bblfsh server --log-level="debug"
+    docker run --rm --privileged -p 9432:9432 --name bblfsh bblfsh/server:v1.2.0 bblfsh server --log-level="debug"
 
 # Pre-requisites
 
@@ -60,7 +60,7 @@ $ $SPARK_HOME/bin/spark-shell
 
 If you want to be able to use the UAST extraction features spark-api provides, you must run a Run [bblfsh server](https://github.com/bblfsh/server). You can do it easily with docker
 
-    docker run --rm --privileged -p 9432:9432 --name bblfsh bblfsh/server bblfsh server --log-level="debug"
+    docker run --rm --privileged -p 9432:9432 --name bblfsh bblfsh/server:v1.2.0 bblfsh server --log-level="debug"
 
 The first time the server receives a language it didn't process before, it will download the properly driver to parse the file, so it could take a bit time. Once it has the drivers it will run fast.
 
@@ -194,7 +194,7 @@ $ make docker-build
 
 Notebooks under examples folder will be included on the image.
 
-To build and run a container with the Jupyter server:
+To run a container with the Jupyter server:
 
 ```bash
 $ make docker-run
