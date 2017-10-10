@@ -5,19 +5,34 @@ DOCKER_TAG ?= $(DOCKER_CMD) tag
 DOCKER_PUSH ?= $(DOCKER_CMD) push
 DOCKER_RUN = $(DOCKER_CMD) run
 DOCKER_RMI = $(DOCKER_CMD) rmi -f
+DOCKER_EXEC = $(DOCKER_CMD) exec
 
 # Docker run bblfsh server container
-BBLFSH_CONTAINER_NAME = bblfsh
+BBLFSH_CONTAINER_NAME = bblfshd
 BBLFSH_HOST_PORT = 9432
 BBLFSH_CONTAINER_PORT = 9432
-BBLFSH_IMAGE = bblfsh/server
-BBLFSH_VERSION = v1.2.0
-BBLFSH_CMD = bblfsh server --log-level debug
-BBLFSH_RUN_FLAGS := --rm --privileged \
+BBLFSH_HOST_VOLUME = /var/lib/bblfshd
+BBLFSH_CONTAINER_VOLUME = /var/lib/bblfshd
+BBLFSH_IMAGE = bblfsh/bblfshd
+BBLFSH_VERSION = v2.0.0
+
+BBLFSH_RUN_FLAGS := --rm --name $(BBLFSH_CONTAINER_NAME) --privileged \
 	-p $(BBLFSH_HOST_PORT):$(BBLFSH_CONTAINER_PORT) \
-	--name $(BBLFSH_CONTAINER_NAME) \
-	$(BBLFSH_IMAGE):$(BBLFSH_VERSION) \
-	$(BBLFSH_CMD)
+	-v $(BBLFSH_HOST_VOLUME):$(BBLFSH_CONTAINER_VOLUME) \
+	$(BBLFSH_IMAGE):$(BBLFSH_VERSION)
+
+BBLFSH_EXEC_FLAGS = -it
+BBLFSH_CTL = bblfshctl
+BBLFSH_CTL_DRIVER := $(BBLFSH_CTL) driver
+
+BBLFSH_CTL_INSTALL_DRIVERS := $(BBLFSH_CTL_DRIVER) install --all
+BBLFSH_EXEC_INSTALL_COMMAND := $(BBLFSH_CONTAINER_NAME) $(BBLFSH_CTL_INSTALL_DRIVERS)
+BBLFSH_INSTALL_DRIVERS := $(BBLFSH_EXEC_FLAGS) $(BBLFSH_EXEC_INSTALL_COMMAND)
+
+BBLFSH_CTL_LIST_DRIVERS := $(BBLFSH_CTL_DRIVER) list
+BBLFSH_EXEC_LIST_COMMAND := $(BBLFSH_CONTAINER_NAME) bblfshctl driver list
+BBLFSH_LIST_DRIVERS := $(BBLFSH_EXEC_FLAGS) $(BBLFSH_EXEC_LIST_COMMAND)
+
 
 # escape_docker_tag escape colon char to allow use a docker tag as rule
 define escape_docker_tag
@@ -48,7 +63,7 @@ REPOSITORIES_CONTAINER_DIR = /repositories
 JUPYTER_RUN_FLAGS := --name $(JUPYTER_CONTAINER_NAME) --rm -it \
 	-p $(JUPYTER_HOST_PORT):$(JUPYTER_CONTAINER_PORT) \
 	-v $(REPOSITORIES_HOST_DIR):$(REPOSITORIES_CONTAINER_DIR) \
-	--link bblfsh:bblfsh \
+	--link $(BBLFSH_CONTAINER_NAME):$(BBLFSH_CONTAINER_NAME) \
 	$(call unescape_docker_tag,$(JUPYTER_IMAGE_VERSIONED))
 
 # Scala version
@@ -96,6 +111,12 @@ travis-test:
 
 docker-bblfsh:
 	$(DOCKER_RUN) $(BBLFSH_RUN_FLAGS)
+
+docker-bblfsh-install-drivers:
+	$(DOCKER_EXEC) $(BBLFSH_INSTALL_DRIVERS)
+
+docker-bblfsh-list-drivers:
+	$(DOCKER_EXEC) $(BBLFSH_LIST_DRIVERS)
 
 docker-build: build
 	$(DOCKER_BUILD) -t $(call unescape_docker_tag,$(JUPYTER_IMAGE_VERSIONED)) .

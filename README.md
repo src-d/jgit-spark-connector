@@ -23,9 +23,13 @@ $ ./bin/spark-shell --packages "com.github.src-d:spark-api:master-SNAPSHOT" --re
 $ ./bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:spark-api:master-SNAPSHOT"
 ```
 
-Run [bblfsh server](https://github.com/bblfsh/server):
+Run [bblfsh daemon](https://github.com/bblfsh/bblfshd):
 
-    docker run --rm --privileged -p 9432:9432 --name bblfsh bblfsh/server:v1.2.0 bblfsh server --log-level="debug"
+    docker run --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.0.0
+
+Install bblfsh drivers:
+
+    docker exec -it bblfshd bblfshctl driver install --all
 
 # Pre-requisites
 
@@ -58,11 +62,18 @@ $ $SPARK_HOME/bin/spark-shell
 
 ## bblfsh
 
-If you want to be able to use the UAST extraction features spark-api provides, you must run a Run [bblfsh server](https://github.com/bblfsh/server). You can do it easily with docker
+If you want to be able to use the UAST extraction features spark-api provides, you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can do it easily with docker
 
-    docker run --rm --privileged -p 9432:9432 --name bblfsh bblfsh/server:v1.2.0 bblfsh server --log-level="debug"
+    docker run --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.0.0
 
-The first time the server receives a language it didn't process before, it will download the properly driver to parse the file, so it could take a bit time. Once it has the drivers it will run fast.
+Then you need to install bblfsh drivers to parse different languages, you should do this the first time you run the [bblfsh daemon](https://github.com/bblfsh/bblfshd):
+
+    docker exec -it bblfshd bblfshctl driver install --all
+
+You should be able to see the installed drivers running:
+
+    docker exec -it bblfshd bblfshctl driver list
+
 
 # Examples of API usage
 
@@ -164,11 +175,11 @@ scala> api.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
 
 You can launch our docker container which contains some Notebooks examples just running:
 
-    docker run --name spark-api-jupyter --rm -it -p 8888:8888 -v $(pwd)/path/to/siva-files:/repositories --link bblfsh:bblfsh src-d/spark-api-jupyter
+    docker run --name spark-api-jupyter --rm -it -p 8888:8888 -v $(pwd)/path/to/siva-files:/repositories --link bblfsh:bblfsh srcd/spark-api-jupyter
 
 You must have some siva files in local to mount them on the container replacing the path `$(pwd)/path/to/siva-files`. You can get some siva-files from the project [here](https://github.com/src-d/spark-api/tree/master/examples/siva-files).
 
-You should have a [bblfsh server](https://github.com/bblfsh/server) container running to link the jupyter container (see Pre-requisites).
+You should have a [bblfsh daemon](https://github.com/bblfsh/bblfshd) container running to link the jupyter container (see Pre-requisites).
 
 When the spark-api-jupyter container starts it will show you an URL that you can open in your browser.
 
@@ -200,10 +211,22 @@ To run a container with the Jupyter server:
 $ make docker-run
 ```
 
-Before run the jupyter container you must run a bblfsh server:
+Before run the jupyter container you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd):
 
 ```bash
 $ make docker-bblfsh
+```
+
+If it's the first time you run the [bblfsh daemon](https://github.com/bblfsh/bblfshd), you must install the drivers:
+
+```bash
+$ make docker-bblfsh-install-drivers
+```
+
+To see installed drivers:
+
+```bash
+$ make docker-bblfsh-list-drivers
 ```
 
 To remove the development jupyter image generated:
