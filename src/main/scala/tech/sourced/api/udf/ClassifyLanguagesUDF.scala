@@ -1,5 +1,7 @@
 package tech.sourced.api.udf
 
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.udf
 import tech.sourced.enry.Enry
 
@@ -9,7 +11,10 @@ import tech.sourced.enry.Enry
 object ClassifyLanguagesUDF extends CustomUDF {
 
   val name = "classifyLanguages"
-  val function = udf[Option[String], Boolean, String, Array[Byte]](getLanguage)
+
+  def function(session: SparkSession): UserDefinedFunction = {
+    udf[Option[String], Boolean, String, Array[Byte]](getLanguage)
+  }
 
   /**
     * Gets the language of the given file and returns the guessed language or none.

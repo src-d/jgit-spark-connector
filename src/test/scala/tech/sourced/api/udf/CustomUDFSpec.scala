@@ -62,14 +62,14 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     val spark = ss
     import spark.implicits._
 
-    val uastDf = fileSeq.toDF(fileColumns: _*).extractUASTs
+    val uastDf = fileSeq.toDF(fileColumns: _*).extractUASTs()
 
     uastDf.columns should contain("uast")
     uastDf.show
 
     uastDf.take(2).zipWithIndex.map {
-      case (row, 0) => assert(row(3).asInstanceOf[Array[Byte]].isEmpty == false)
-      case (row, 1) => assert(row(3).asInstanceOf[Array[Byte]].isEmpty == false)
+      case (row, 0) => assert(row(3).asInstanceOf[Array[Byte]].nonEmpty)
+      case (row, 1) => assert(row(3).asInstanceOf[Array[Byte]].nonEmpty)
     }
   }
 
@@ -77,15 +77,15 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     val spark = ss
     import spark.implicits._
 
-    val uastDf = fileSeq.toDF(fileColumns: _*).classifyLanguages.extractUASTs
+    val uastDf = fileSeq.toDF(fileColumns: _*).classifyLanguages.extractUASTs()
 
     uastDf.columns should contain("lang")
     uastDf.columns should contain("uast")
     uastDf.show
 
     uastDf.take(2).zipWithIndex.map {
-      case (row, 0) => assert(row(3).asInstanceOf[Array[Byte]].isEmpty == false)
-      case (row, 1) => assert(row(3).asInstanceOf[Array[Byte]].isEmpty == false)
+      case (row, 0) => assert(row(3).asInstanceOf[Array[Byte]].nonEmpty)
+      case (row, 1) => assert(row(3).asInstanceOf[Array[Byte]].nonEmpty)
     }
   }
 

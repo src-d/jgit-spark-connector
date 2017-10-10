@@ -1,5 +1,6 @@
 package tech.sourced.api.udf
 
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.expressions.UserDefinedFunction
 
 /**
@@ -10,5 +11,5 @@ abstract class CustomUDF {
   val name: String
 
   /** Function to execute when this function is called. */
-  val function: UserDefinedFunction
+  def function(session: SparkSession): UserDefinedFunction
 }
