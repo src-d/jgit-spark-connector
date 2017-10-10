@@ -19,7 +19,7 @@ REPOSITORY_COMMITS = {'github.com/xiyou-linuxer/faq-xiyoulinux': 927,
 
 
 PYTHON_FILES = [
-    ("hash1", False, "foo.py", bytearray("with open('somefile.txt') as f: contents=f.read()"))
+    ("hash1", False, "foo.py", bytearray("with open('somefile.txt') as f: contents=f.read()",'utf8'))
 ]
 
 FILE_COLUMNS = ["file_hash", "is_binary", "path", "content"]
@@ -130,13 +130,13 @@ class APITestCase(BaseTestCase):
         self.assertEqual(row.file_hash, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
         self.assertEqual(row.path, 'spec/database_spec.rb')
         self.assertEqual(row.lang, "Ruby")
-        self.assertEqual(row.uast, b"")
+        self.assertEqual(row.uast, [])
 
         df = self.api.repositories.references.commits.files
         row = df.sort(df.file_hash).limit(1).extract_uasts().first()
         self.assertEqual(row.file_hash, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
         self.assertEqual(row.path, 'spec/database_spec.rb')
-        self.assertEqual(row.uast, b"")
+        self.assertEqual(row.uast, [])
 
 
     def test_api_files(self):

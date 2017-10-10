@@ -167,7 +167,7 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
       .classifyLanguages
       .extractUASTs()
       .queryUAST("//*[@roleIdentifier]")
-      .queryUAST("/createTempView*[not(@roleIncomplete)]", "result", "result2")
+      .queryUAST("/*[not(@roleIncomplete)]", "result", "result2")
       .collect()
       .map(row => row(row.fieldIndex("result2")))
       .flatMap(_.asInstanceOf[Seq[Array[Byte]]])
