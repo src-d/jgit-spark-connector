@@ -9,7 +9,7 @@ ENV SRCD_JAR /opt/jars/spark-api-uber.jar
 
 # bblfsh endpoint variables
 ENV SPARK_BBLFSH_HOST spark.tech.sourced.bblfsh.grpc.host
-ENV BBLFSH_HOST bblfsh
+ENV BBLFSH_HOST bblfshd
 ENV SPARK_BBLFSH_PORT spark.tech.sourced.bblfsh.grpc.port
 ENV BBLFSH_PORT 9432
 
