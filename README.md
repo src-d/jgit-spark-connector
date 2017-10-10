@@ -84,19 +84,19 @@ You should be able to see the installed drivers running:
 Install python-wrappers is necessary to use spark-api from pyspark:
 
 ``` bash
-$ pip install  'git+https://github.com/src-d/spark-api.git@master#egg=spark-api&subdirectory=python'
+$ pip install sourced-spark-api
 ```
 
 Then you should point to the remote repository where spark-api is hosted and provide the maven coordinates:
 ```bash
-$ $SPARK_HOME/bin/pyspark --repositories "https://jitpack.io"  --packages "tech.sourced:spark-api:0.1.0-SNAPSHOT"
+$ $SPARK_HOME/bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:spark-api:master-SNAPSHOT"
 ```
 
 ### Cluster mode
 
 Install spark-api wrappers as in local mode:
 ```bash
-$ pip install -e 'git+https://github.com/src-d/spark-api.git@master#egg=spark-api&subdirectory=python'
+$ pip install -e sourced-spark-api
 ```
 
 Then you should package and compress with `zip`  the python wrappers to provide pyspark with it. It's required to distribute the code among the nodes of the cluster.
