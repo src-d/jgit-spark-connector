@@ -2,8 +2,11 @@ package tech.sourced.api.udf
 
 import java.nio.charset.StandardCharsets
 
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.udf
 import org.bblfsh.client.BblfshClient
+import tech.sourced.api.util.Bblfsh
 
 /**
   * User defined function to extract UASTs from a row.
@@ -11,10 +14,20 @@ import org.bblfsh.client.BblfshClient
 object ExtractUASTsUDF extends CustomUDF {
 
   val name = "extractUASTs"
-  val function = udf[Array[Byte], String, Array[Byte]](extractUASTs)
 
-  /** Function that will be executed when calling `extractUASTs` also with the language. */
-  val functionMoreArgs = udf[Array[Byte], String, Array[Byte], String](extractUASTsWithLang)
+  def function(session: SparkSession): UserDefinedFunction = {
+    val config = Bblfsh.getConfig(session.sparkContext)
+    val configB = session.sparkContext.broadcast(config)
+    udf[Array[Byte], String, Array[Byte]]((path, content) =>
+      extractUASTs(path, content, configB.value))
+  }
+
+  def functionWithLang(session: SparkSession): UserDefinedFunction = {
+    val config = Bblfsh.getConfig(session.sparkContext)
+    val configB = session.sparkContext.broadcast(config)
+    udf[Array[Byte], String, Array[Byte], String]((path, content, lang) =>
+      extractUASTsWithLang(path, content, lang, configB.value))
+  }
 
   /** Languages whose UAST will not be retrieved. */
   val excludedLangs = Set("markdown", "text")
@@ -31,10 +44,11 @@ object ExtractUASTsUDF extends CustomUDF {
     *
     * @param path    File path
     * @param content File content
+    * @param config  bblfsh config
     * @return Byte array with the UAST
     */
-  def extractUASTs(path: String, content: Array[Byte]): Array[Byte] = {
-    extractUAST(path, content, "")
+  def extractUASTs(path: String, content: Array[Byte], config: Bblfsh.Config): Array[Byte] = {
+    extractUAST(path, content, "", config)
   }
 
   /**
@@ -44,10 +58,14 @@ object ExtractUASTsUDF extends CustomUDF {
     * @param path    File path
     * @param content File content
     * @param lang    File language
+    * @param config  Bblfsh config
     * @return Byte array with the UAST
     */
-  def extractUASTsWithLang(path: String, content: Array[Byte], lang: String): Array[Byte] = {
-    extractUAST(path, content, lang)
+  def extractUASTsWithLang(path: String,
+                           content: Array[Byte],
+                           lang: String, config:
+                           Bblfsh.Config): Array[Byte] = {
+    extractUAST(path, content, lang, config)
   }
 
   /**
@@ -57,17 +75,19 @@ object ExtractUASTsUDF extends CustomUDF {
     * @param path    File path
     * @param content File content
     * @param lang    File language
+    * @param config  Bblfsh config
     * @return Byte array with the UAST
     */
-  private def extractUAST(path: String, content: Array[Byte], lang: String): Array[Byte] =
+  private def extractUAST(path: String,
+                          content: Array[Byte],
+                          lang: String,
+                          config: Bblfsh.Config): Array[Byte] =
     if (null == content || content.isEmpty) {
       Array.emptyByteArray
     } else if (lang != null && excludedLangs.contains(lang.toLowerCase)) {
       Array.emptyByteArray
     } else {
-      // FIXME: bblfsh host and port are always the default ones, even though there are keys to
-      // retrieve them from the context.
-      val bblfshClient = BblfshClient(bblfshHost, bblfshPort)
+      val bblfshClient = Bblfsh.getClient(config)
       extractUsingBblfsh(bblfshClient, path, content, lang)
     }
 

@@ -35,16 +35,6 @@ package object api {
   private[api] val repositoriesPathKey = "spark.tech.sourced.api.repositories.path"
 
   /**
-    * Key used for the option to specify the host of the bblfsh grpc service.
-    */
-  private[api] val bblfshHostKey = "spark.tech.sourced.bblfsh.grpc.host"
-
-  /**
-    * Key used for the option to specify the port of the bblfsh grpc service.
-    */
-  private[api] val bblfsPortKey = "spark.tech.sourced.bblfsh.grpc.port"
-
-  /**
     * Key used for the option to specify whether files should be deleted after
     * their usage or not.
     */
@@ -68,12 +58,9 @@ package object api {
       * Registers some user defined functions in the [[org.apache.spark.sql.SparkSession]].
       */
     def registerUDFs(): Unit = {
-      ExtractUASTsUDF.bblfshHost = session.sparkContext.getConf.get(bblfshHostKey, "0.0.0.0")
-      ExtractUASTsUDF.bblfshPort = session.sparkContext.getConf.getInt(bblfsPortKey, 9432)
-
       SessionFunctions.UDFtoRegister.foreach(customUDF => session.udf.register(
         customUDF.name,
-        customUDF.function
+        customUDF.function(session)
       ))
     }
 
@@ -235,7 +222,10 @@ package object api {
       */
     def classifyLanguages: DataFrame = {
       checkCols(df, "is_binary", "path", "content")
-      df.withColumn("lang", ClassifyLanguagesUDF.function('is_binary, 'path, 'content))
+      df.withColumn(
+        "lang",
+        ClassifyLanguagesUDF.function(df.sparkSession)('is_binary, 'path, 'content)
+      )
     }
 
     /**
@@ -253,9 +243,12 @@ package object api {
     def extractUASTs(): DataFrame = {
       checkCols(df, "path", "content")
       if (df.columns.contains("lang")) {
-        df.withColumn("uast", ExtractUASTsUDF.functionMoreArgs('path, 'content, 'lang))
+        df.withColumn(
+          "uast",
+          ExtractUASTsUDF.functionWithLang(df.sparkSession)('path, 'content, 'lang)
+        )
       } else {
-        df.withColumn("uast", ExtractUASTsUDF.function('path, 'content))
+        df.withColumn("uast", ExtractUASTsUDF.function(df.sparkSession)('path, 'content))
       }
     }
 

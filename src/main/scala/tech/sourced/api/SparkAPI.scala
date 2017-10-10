@@ -142,25 +142,6 @@ class SparkAPI(session: SparkSession) {
   }
 
   /**
-    * Configures the endpoint used to connect to the bblfsh GRPC server.
-    * Note that setting this will affect the session, so any other uses of the
-    * session outside the SparkAPI instance will also have that config set.
-    *
-    * {{{
-    * api.setBblfshGRPCEndpoint("my.grpc.server", 9432)
-    * }}}
-    *
-    * @param host of the GRPC server (0.0.0.0 by default)
-    * @param port of the GRPC server (9432 by default)
-    * @return instance of the api itself
-    */
-  def setBblfshGRPCEndpoint(host: String, port: Int): SparkAPI = {
-    session.sparkContext.getConf.set(bblfshHostKey, host)
-    session.sparkContext.getConf.set(bblfsPortKey, port.toString)
-    this
-  }
-
-  /**
     * Configures the SparkAPI so it won't cleanup the unpacked siva files after
     * it's done with them to avoid having to unpack them afterwards.
     *
