@@ -1,10 +1,10 @@
 package tech.sourced.api.udf
 
+import gopkg.in.bblfsh.sdk.v1.uast.generated.Node
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.udf
 import tech.sourced.api.util.Bblfsh
-import gopkg.in.bblfsh.sdk.v1.uast.generated.Node
 
 object QueryXPathUDF extends CustomUDF {
 
@@ -37,9 +37,18 @@ object QueryXPathUDF extends CustomUDF {
                  query: String,
                  config: Bblfsh.Config): Seq[Array[Byte]] = {
     val client = Bblfsh.getClient(config)
-    nodes.map(Node.parseFrom)
-      .flatMap(client.filter(_, query).toIterator)
-      .map(_.toByteArray)
+    if (nodes == null) {
+      return null
+    }
+
+    nodes.map(Node.parseFrom).flatMap(n => {
+      val result = client.filter(n, query)
+      if (result == null) {
+        None
+      } else {
+        result.toIterator
+      }
+    }).map(_.toByteArray)
   }
 
 }
