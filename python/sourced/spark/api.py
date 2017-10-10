@@ -96,6 +96,19 @@ class API(object):
                               self.__implicits)
 
 
+    def parse_uast_node(self, data):
+        """
+        Parses a byte array and turns it into an UAST node.
+
+        >>> api.parse_uast_node(row["uast"])
+
+        :param data: binary-encoded uast as a byte array
+        :type data: byte array
+        :rtype: UAST node
+        """
+        return self.__implicits.parseUASTNode(data)
+
+
 def _custom_df_instance(func):
     """
     Wraps the resultant DataFrame of the method call with the class of self.
@@ -574,3 +587,24 @@ class UASTsDataFrame(SourcedDataFrame):
 
     def __init__(self, jdf, session, implicits):
         SourcedDataFrame.__init__(self, jdf, session, implicits)
+
+
+    def query_uast(self, query, query_col='uast', output_col='result'):
+        """
+        Queries the UAST of a file with the given query to get specific nodes.
+
+        >>> rows = uasts_df.query_uast('//*[@roleIdentifier]').collect()
+        >>> rows = uasts_df.query_uast('//*[@roleIdentifier]', 'foo', 'bar')
+
+        :param query: xpath query
+        :type query: str
+        :param query_col: column containing the list of nodes to query
+        :type query_col: str
+        :param output_col: column to place the result of the query
+        :type output_col: str
+        :rtype: UASTsDataFrame
+        """
+        return UASTsDataFrame(self._api_dataframe.queryUAST(query,
+                                       query_col,
+                                       output_col),
+                              self._session, self._implicits)
