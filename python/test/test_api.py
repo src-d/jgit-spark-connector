@@ -74,6 +74,23 @@ class APITestCase(BaseTestCase):
                              REPOSITORY_COMMITS[repo.repository_id])
 
 
+    def test_commits_first(self):
+        df = self.api.repositories.references.filter("name not like 'refs/tags/%'")
+        repo_refs = df.groupBy(df.repository_id).count().collect()
+        repos = {}
+        for repo in repo_refs:
+            repos[repo["repository_id"]] = repo["count"]
+
+        df = self.api.repositories.references.commits.first_reference_commit
+        repo_commits = df.groupBy(df.repository_id) \
+            .count() \
+            .collect()
+
+        self.assertEqual(len(repo_commits), len(REPOSITORIES))
+        for repo in repo_commits:
+            self.assertEqual(repo['count'], repos[repo["repository_id"]])
+
+
     def test_files(self):
         df = self.api.repositories.references.commits.files
         self.assertEqual(df.count(), 91944)

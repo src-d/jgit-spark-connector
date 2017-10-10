@@ -446,6 +446,28 @@ class CommitsDataFrame(SourcedDataFrame):
 
 
     @property
+    def first_reference_commit(self):
+        """
+        Returns a new DataFrame with only the first commit in a reference.
+        Without calling this method, commits may appear multiple times in your DataFrame,
+        because most of your commits will be shared amongst references. Calling this, your
+        DataFrame will only contain the HEAD commit of each reference.
+
+        For the next example, consider we have a master branch with 100 commits and a "foo" branch
+        whose parent is the HEAD of master and has two more commits.
+
+        >>> > commits_df.count()
+        >>> 102
+        >>> > commits_df.first_reference_commit.count()
+        >>> 2
+
+        :rtype: CommitsDataFrame
+        """
+        return CommitsDataFrame(self._api_dataframe.getFirstReferenceCommit(), self._session,
+                                self._implicits)
+
+
+    @property
     def files(self):
         """
         Returns this DataFrame joined with the files DataSource.
