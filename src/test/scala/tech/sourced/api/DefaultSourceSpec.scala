@@ -4,83 +4,92 @@ import org.scalatest._
 
 class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSparkSpec {
 
-  "Default source" should "load correctly" in {
-    val reposDf = ss.read.format("tech.sourced.api")
-      .option("table", "repositories")
-      .load(resourcePath)
+  var api: SparkAPI = _
 
-    reposDf.filter("is_fork=true or is_fork is null").show()
+  override protected def beforeAll(): Unit = {
+    super.beforeAll()
 
-    reposDf.filter("array_contains(urls, 'urlA')").show()
-
-    val referencesDf = ss.read.format("tech.sourced.api")
-      .option("table", "references")
-      .load(resourcePath)
-
-    referencesDf.filter("repository_id = 'ID1'").show()
-
-    val commitsDf = ss.read.format("tech.sourced.api")
-      .option("table", "commits")
-      .load(resourcePath)
-
-    commitsDf.show()
-
-    info("Files/blobs (without commit hash filtered) at HEAD or every ref:\n")
-    val filesDf = ss.read.format("tech.sourced.api")
-      .option("table", "files")
-      .load(resourcePath)
-
-    filesDf.explain(true)
-    filesDf.show()
-
-    assert(filesDf.count() != 0)
+    api = SparkAPI(ss, resourcePath)
   }
 
-  "Additional methods" should "work correctly" in {
-    val spark = ss
+  "Default source" should "get heads of all repositories and count the files" in {
+    val df = api.getRepositories.getHEAD.getCommits.getFirstReferenceCommit.getFiles
+    api.getRepositories.getHEAD.getCommits.getFirstReferenceCommit.show
+    df.show(457)
+    df.count should be(457)
+  }
 
-    import spark.implicits._
+  it should "count all the commit messages from all masters that are not forks" in {
+    val commits = api.getRepositories.filter("is_fork = false").getMaster.getCommits
+    val df = commits.select("message").filter(commits("message").startsWith("a"))
+    df.show(false)
+    df.count should be(7)
+  }
 
-    val reposDf = SparkAPI(spark, resourcePath).getRepositories
-      .filter($"id" === "github.com/mawag/faq-xiyoulinux"
-        || $"id" === "github.com/xiyou-linuxer/faq-xiyoulinux")
-    val refsDf = reposDf.getReferences.getHEAD
+  it should "count all commits messages from all references that are not forks" in {
+    val commits = api.getRepositories.filter("is_fork = false").getReferences.getCommits
+    val df = commits.select("message", "reference_name", "hash").
+      filter(commits("message").startsWith("a"))
+    df.show
+    df.count should be(98)
+  }
 
-    val commitsDf = refsDf.getCommits.select("repository_id", "reference_name", "message", "hash")
-    commitsDf.show()
+  it should "get all files from HEADS that are Ruby" in {
+    val files = api.getRepositories.filter("is_fork = false")
+      .getHEAD
+      .getCommits
+      .getFirstReferenceCommit
+      .getFiles
+      .classifyLanguages
+    val df = files.filter(files("lang") === "Ruby").select("lang", "path")
+    df.show(169, truncate = false)
+    df.count should be(169)
+  }
+
+  it should "not optimize if the conditions on the " +
+    "join are not the expected ones" in {
+    val repos = api.getRepositories
+    val references = ss.read.format("tech.sourced.api").option("table", "references").load()
+    val out = repos.join(references,
+      (references("repository_id") === repos("id"))
+        .and(references("name").startsWith("refs/pull"))
+    ).count()
+
 
     info("Files/blobs with commit hashes:\n")
-    val filesDf = refsDf.getCommits.getFiles.select(
-      "repository_id", "reference_name", "path", "commit_hash", "file_hash"
+    val filesDf = references.getCommits.getFiles.select(
+      "path", "commit_hash", "file_hash"
     )
     filesDf.explain(true)
     filesDf.show()
 
-    val cnt = filesDf.count()
-    info(s"Total $cnt rows")
-    assert(cnt != 0)
+    out should be(37)
   }
 
   "Convenience for getting files" should "work without reading commits" in {
     val spark = ss
     import spark.implicits._
 
-    val filesDf = SparkAPI(spark, resourcePath)
+    val filesDf = api
       .getRepositories.filter($"id" === "github.com/mawag/faq-xiyoulinux")
       .getReferences.getHEAD
       .getFiles
-      .select("repository_id", "name", "path", "commit_hash", "file_hash", "content", "is_binary")
+      .select(
+        "path",
+        "commit_hash",
+        "file_hash",
+        "content",
+        "is_binary"
+      )
 
     val cnt = filesDf.count()
     info(s"Total $cnt rows")
-    assert(cnt != 0)
-
-    filesDf.show()
+    cnt should be(2)
 
     info("UAST for files:\n")
     val filesCols = filesDf.columns.length
-    val uasts = filesDf.classifyLanguages.extractUASTs
-    uasts.show()
+    val uasts = filesDf.classifyLanguages.extractUASTs()
+
     val uastsCols = uasts.columns.length
     assert(uastsCols - 2 == filesCols)
   }
@@ -88,73 +97,53 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
   "Filter by reference from repos dataframe" should "work" in {
     val spark = ss
 
-    val count = SparkAPI(spark, resourcePath)
+    val df = SparkAPI(spark, resourcePath)
       .getRepositories
       .getReference("refs/heads/develop")
-      .count()
 
-    assert(count == 2)
-  }
-
-  "Filter by reference from commits dataframe" should "work" in {
-    val spark = ss
-
-    val count = SparkAPI(spark, resourcePath)
-      .getRepositories
-      .getReferences
-      .getCommits
-      .getReference("refs/heads/develop")
-      .count()
-
-    assert(count == 103)
-  }
-
-  "Filter by reference from references dataframe" should "work" in {
-    val spark = ss
-
-    val count = SparkAPI(spark, resourcePath)
-      .getRepositories
-      .getReferences
-      .getReference("refs/heads/develop")
-      .count()
-
-    assert(count == 2)
+    df.show
+    assert(df.count == 2)
   }
 
   "Filter by HEAD reference" should "return only HEAD references" in {
     val spark = ss
-    val count = SparkAPI(spark, resourcePath).getRepositories.getHEAD
-      .select("name").distinct().count()
-
-    assert(count == 1)
+    val df = SparkAPI(spark, resourcePath).getRepositories.getHEAD
+    df.show
+    assert(df.count == 5)
   }
 
   "Filter by master reference" should "return only master references" in {
     val spark = ss
-    val count = SparkAPI(spark, resourcePath).getRepositories.getMaster
-      .select("name").distinct().count()
+    val df = api.getRepositories.getMaster
 
-    assert(count == 1)
+    df.explain(true)
+    assert(df.count == 5)
+  }
+
+  "Get develop commits" should "return only develop commits" in {
+    val spark = ss
+    val df = api.getRepositories
+      .getReference("refs/heads/develop").getCommits
+      .select("hash", "repository_id")
+
+    df.show(200, truncate = false)
+    assert(df.count == 103)
   }
 
   "Get files after reading commits" should "return the correct files" in {
-    val spark = ss
-    val files = SparkAPI(spark, resourcePath).getRepositories.getReferences.getCommits.getFiles
+    val files = api.getRepositories.getReferences.getCommits.getFiles
 
-    assert(files.count == 1536360)
+    files.show(truncate = false)
+    assert(files.count == 91944)
   }
 
   "Get files without reading commits" should "return the correct files" in {
-    val spark = ss
-    val api = SparkAPI(spark, resourcePath)
     val files = api.getRepositories.getReferences.getFiles
 
-    assert(files.count == 19126)
+    assert(files.count == 91944)
   }
 
   "Get files" should "return the correct files" in {
-    val spark = ss
-    val api = SparkAPI(spark, resourcePath)
     val df = api.getRepositories.getHEAD.getCommits
       .sort("hash").limit(10)
     val rows = df.collect()
@@ -163,34 +152,39 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     val repositories = rows.map(_._1)
     val hashes = rows.map(_._2)
 
-    val files = SparkAPI(spark, resourcePath)
+    df.show(truncate = false)
+
+    val files = api
       .getFiles(repositories.distinct, List("refs/heads/HEAD"), hashes.distinct)
 
-    assert(files.count == 745)
+    assert(files.count == 655)
   }
 
-  "Get files by repository" should "return the correct files" in {
-    val spark = ss
-    val files = SparkAPI(spark, resourcePath)
+  it should "return the correct files if we filter by repository" in {
+    val files = api
       .getFiles(repositoryIds = List("github.com/xiyou-linuxer/faq-xiyoulinux"))
 
-    assert(files.count == 20048)
+    assert(files.count == 2421)
   }
 
-  "Get files by reference" should "return the correct files" in {
-    val spark = ss
-    val files = SparkAPI(spark, resourcePath)
+  it should "return the correct files if we filter by reference" in {
+    val files = api
       .getFiles(referenceNames = List("refs/heads/develop"))
 
-    assert(files.count == 404)
+    assert(files.count == 425)
   }
 
-  "Get files by commit" should "return the correct files" in {
-    val spark = ss
-    val files = SparkAPI(spark, resourcePath)
+  it should "return the correct files if we filter by commit" in {
+    val files = api
       .getFiles(commitHashes = List("fff7062de8474d10a67d417ccea87ba6f58ca81d"))
+    files.explain(true)
 
-    assert(files.count == 86)
+    assert(files.count == 2)
   }
 
+  override protected def afterAll(): Unit = {
+    super.afterAll()
+
+    api = _: SparkAPI
+  }
 }

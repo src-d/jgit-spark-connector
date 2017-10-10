@@ -54,6 +54,9 @@ package object api {
   // start by "spark." to be able to be loaded from the "spark-defaults.conf" file.
 
 
+  /** Local spark directory. */
+  private[api] val localPathKey = "spark.local.dir"
+
   /**
     * Implicit class that adds some functions to the [[org.apache.spark.sql.SparkSession]].
     *
@@ -128,6 +131,11 @@ package object api {
         .drop(refsIdsDf("name")).drop(refsIdsDf("repository_id"))
     }
 
+    def getFirstReferenceCommit: DataFrame = {
+      checkCols(df, "index")
+      df.filter($"index" === 0)
+    }
+
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
       * current dataframe with the files dataframe.
@@ -146,15 +154,16 @@ package object api {
       * @return new DataFrame containing also files data.
       */
     def getFiles: DataFrame = {
-      var filesDf = getDataSource("files", df.sparkSession)
+      val filesDf = getDataSource("files", df.sparkSession)
 
-      if (df.schema.fieldNames.contains("hash")) {
-        val commitsDf = df.drop("tree").distinct()
-        filesDf = filesDf.drop("repository_id", "reference_name")
-        filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
+      if (df.schema.fieldNames.contains("index")) {
+        val commitsDf = df.select("hash")
+        filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash"))
+          .drop($"hash")
+          .distinct()
       } else {
-        checkCols(df, "reference_name")
-        filesDf.join(df, filesDf("reference_name") === df("name")).drop($"name")
+        checkCols(df, "name")
+        df.getCommits.getFiles
       }
     }
 
@@ -278,7 +287,7 @@ package object api {
     /**
       * List of custom functions to be registered.
       */
-    val UDFtoRegister = List[CustomUDF](ClassifyLanguagesUDF, ExtractUASTsUDF)
+    val UDFtoRegister: List[CustomUDF] = List(ClassifyLanguagesUDF, ExtractUASTsUDF)
   }
 
 }

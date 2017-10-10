@@ -37,6 +37,9 @@ import scala.collection.JavaConversions.asScalaBuffer
   */
 class SparkAPI(session: SparkSession) {
 
+  session.registerUDFs()
+  session.experimental.extraOptimizations = Seq(SquashGitRelationJoin)
+
   /**
     * Returns a DataFrame with the data about the repositories found at
     * the specified repositories path in the form of siva files.
@@ -50,7 +53,7 @@ class SparkAPI(session: SparkSession) {
     *
     * @return DataFrame
     */
-  def getRepositories(): DataFrame = getDataSource("repositories", session)
+  def getRepositories: DataFrame = getDataSource("repositories", session)
 
   /**
     * Retrieves the files of a list of repositories, reference names and commit hashes.
@@ -91,26 +94,8 @@ class SparkAPI(session: SparkSession) {
   def getFiles(repositoryIds: Seq[String] = Seq(),
                referenceNames: Seq[String] = Seq(),
                commitHashes: Seq[String] = Seq()): DataFrame = {
-    val df = getRepositories()
+    val df = getRepositories
     import df.sparkSession.implicits._
-
-    checkCols(df, "id")
-
-    var filesDf = getDataSource("files", df.sparkSession)
-
-    if (repositoryIds.nonEmpty) {
-      filesDf = filesDf.filter($"repository_id".isin(repositoryIds: _*))
-    }
-
-    if (referenceNames.nonEmpty) {
-      filesDf = filesDf.filter($"reference_name".isin(referenceNames: _*))
-    }
-
-    if (commitHashes.nonEmpty) {
-      filesDf = filesDf.filter($"commit_hash".isin(commitHashes: _*))
-    }
-
-    filesDf = filesDf.drop("repository_id", "reference_name").distinct
 
     var reposDf = df
     if (repositoryIds.nonEmpty) {
@@ -123,13 +108,13 @@ class SparkAPI(session: SparkSession) {
     }
 
     var commitsDf = refsDf.getCommits
-    if (commitHashes.nonEmpty) {
-      commitsDf = commitsDf.filter($"hash".isin(commitHashes: _*))
+    commitsDf = if (commitHashes.nonEmpty) {
+      commitsDf.filter($"hash".isin(commitHashes: _*))
+    } else {
+      commitsDf.getFirstReferenceCommit
     }
 
-    commitsDf.drop("tree").distinct()
-
-    filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash")).drop($"hash")
+    commitsDf.getFiles
   }
 
   /**
@@ -186,7 +171,7 @@ class SparkAPI(session: SparkSession) {
     */
   def setBblfshGRPCEndpoint(host: String, port: Int): SparkAPI = {
     session.sparkContext.getConf.set(bblfshHostKey, host)
-    session.sparkContext.getConf.set(bblfsPortKey, port.toString())
+    session.sparkContext.getConf.set(bblfsPortKey, port.toString)
     this
   }
 
@@ -206,7 +191,7 @@ class SparkAPI(session: SparkSession) {
     * @return instance of the api itself
     */
   def skipCleanup(skip: Boolean): SparkAPI = {
-    session.sparkContext.getConf.set(skipCleanupKey, skip.toString())
+    session.sparkContext.getConf.set(skipCleanupKey, skip.toString)
     this
   }
 
@@ -231,7 +216,6 @@ object SparkAPI {
     * @return SparkAPI instance
     */
   def apply(session: SparkSession, repositoriesPath: String): SparkAPI = {
-    session.registerUDFs()
     new SparkAPI(session)
       .setRepositoriesPath(repositoriesPath)
   }

@@ -1,12 +1,12 @@
 package tech.sourced.api.util
 
-import org.apache.spark.sql.sources._
-
+import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.types.StringType
 import org.scalatest.{FlatSpec, Matchers}
 
-class ColumnFilterSpec extends FlatSpec with Matchers {
+class FilterSpec extends FlatSpec with Matchers {
   "CompiledFilters" should "filter properly depending of his type" in {
-    val eq = new EqualFilter("test", "a")
+    val eq = EqualFilter(Attr("test", ""), "a")
 
     eq.matchingCases should be(Map("test" -> Seq("a")))
 
@@ -15,7 +15,10 @@ class ColumnFilterSpec extends FlatSpec with Matchers {
     eq.eval(Map("test" -> "b")) should be(Some(false))
     eq.eval(Map("test2" -> "b")) should be(None)
 
-    val or = new OrFilter(new EqualFilter("test", "a"), new EqualFilter("test", "b"))
+    val or = OrFilter(
+      EqualFilter(Attr("test", ""), "a"),
+      EqualFilter(Attr("test", ""), "b")
+    )
 
     or.matchingCases should be(Map("test" -> Seq("a", "b")))
 
@@ -24,7 +27,7 @@ class ColumnFilterSpec extends FlatSpec with Matchers {
     or.eval(Map("test" -> "c")) should be(Some(false))
     or.eval(Map("test2" -> "b")) should be(None)
 
-    val orTwo = new OrFilter(new EqualFilter("test", "a"), new EqualFilter("test2", "b"))
+    val orTwo = OrFilter(EqualFilter(Attr("test", ""), "a"), EqualFilter(Attr("test2", ""), "b"))
 
     orTwo.matchingCases should be(Map("test" -> Seq("a"), "test2" -> Seq("b")))
 
@@ -34,7 +37,7 @@ class ColumnFilterSpec extends FlatSpec with Matchers {
     orTwo.eval(Map("test2" -> "b")) should be(Some(true))
     orTwo.eval(Map("test3" -> "b")) should be(None)
 
-    val and = new AndFilter(new EqualFilter("test", "a"), new EqualFilter("test2", "b"))
+    val and = AndFilter(EqualFilter(Attr("test", ""), "a"), EqualFilter(Attr("test2", ""), "b"))
 
     and.matchingCases should be(Map("test" -> Seq("a"), "test2" -> Seq("b")))
 
@@ -45,7 +48,7 @@ class ColumnFilterSpec extends FlatSpec with Matchers {
     and.eval(Map("test2" -> "b")) should be(Some(false))
     and.eval(Map("test3" -> "b")) should be(None)
 
-    val notEq = NotFilter(new EqualFilter("test", "a"))
+    val notEq = NotFilter(EqualFilter(Attr("test", ""), "a"))
 
     notEq.matchingCases should be(Map())
 
@@ -54,7 +57,7 @@ class ColumnFilterSpec extends FlatSpec with Matchers {
     notEq.eval(Map("test" -> "b", "test2" -> "a")) should be(Some(true))
     notEq.eval(Map("test2" -> "a")) should be(None)
 
-    val in = new InFilter("test", Array("a", "b", "c"))
+    val in = InFilter(Attr("test", ""), Array("a", "b", "c"))
 
     in.matchingCases should be(Map("test" -> Seq("a", "b", "c")))
 
@@ -65,17 +68,17 @@ class ColumnFilterSpec extends FlatSpec with Matchers {
   }
 
   "ColumnFilter" should "process correctly columns" in {
-    val f = ColumnFilter.compileFilter(Or(
+    val f = Filter.compile(Or(
       Or(
-        EqualTo("test", "val"),
-        IsNull("test")
+        EqualTo(AttributeReference("test", StringType)(), Literal("val")),
+        IsNull(AttributeReference("test", StringType)())
       ),
-      EqualTo("test2", "val2")
+      EqualTo(AttributeReference("test2", StringType)(), Literal("val2"))
     ))
 
     f.matchingCases should be(Map("test" -> Seq("val", null), "test2" -> Seq("val2")))
 
-    f.toString should be("((test = val OR test = null) OR test2 = val2)")
+    f.toString should be("((test = 'val' OR test = 'null') OR test2 = 'val2')")
 
     f.eval(Map("test2" -> "val2")) should be(Some(true))
     f.eval(Map("test2" -> "val1")) should be(Some(false))
@@ -87,7 +90,7 @@ class ColumnFilterSpec extends FlatSpec with Matchers {
   }
 
   "ColumnFilter" should "handle correctly unsupported filters" in {
-    val f = ColumnFilter.compileFilter(StringStartsWith("test", "a"))
+    val f = Filter.compile(StartsWith(AttributeReference("test", StringType)(), Literal("a")))
 
     f.matchingCases should be(Map())
     f.eval(Map("test" -> "a")) should be(None)
