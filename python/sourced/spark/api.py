@@ -22,7 +22,7 @@ class API(object):
     def __init__(self, session, repos_path):
         self.session = session
         self.__jsparkSession = session._jsparkSession
-        self.session.conf.set('tech.sourced.api.repositories.path', repos_path)
+        self.session.conf.set('spark.tech.sourced.api.repositories.path', repos_path)
         self.__jvm = self.session.sparkContext._gateway.jvm
         java_import(self.__jvm, 'tech.sourced.api.SparkAPI')
         java_import(self.__jvm, 'tech.sourced.api.package$')
