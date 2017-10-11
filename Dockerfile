@@ -28,3 +28,9 @@ COPY ./python /opt/python-spark-api/
 RUN echo "local" > /opt/python-spark-api/version.txt
 RUN pip install -e /opt/python-spark-api/
 
+# Install spark progress bar plugin
+RUN pip install jupyter-spark
+RUN jupyter serverextension enable --py jupyter_spark
+RUN jupyter nbextension install --py jupyter_spark
+RUN jupyter nbextension enable --py jupyter_spark
+RUN jupyter nbextension enable --py widgetsnbextension
