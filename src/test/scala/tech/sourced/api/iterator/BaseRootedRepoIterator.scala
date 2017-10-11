@@ -1,5 +1,6 @@
 package tech.sourced.api.iterator
 
+import org.apache.spark.UtilsWrapper
 import org.apache.spark.input.PortableDataStream
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Row
