@@ -1,6 +1,7 @@
 package tech.sourced.api.provider
 
 import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.spark.UtilsWrapper
 import org.eclipse.jgit.lib.ObjectId
 import org.scalatest.{FlatSpec, Matchers}
 import tech.sourced.api.{BaseSivaSpec, BaseSparkSpec}
@@ -37,17 +38,6 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec wi
     }).collect()
 
     refs.length should be(56)
-  }
-
-  "RepositoryProvider" should "fail with different local paths" in {
-    val _ = RepositoryProvider("/tmp")
-
-    val ex: RuntimeException = intercept[RuntimeException] {
-      RepositoryProvider("/tmp/two")
-    }
-
-    ex.getMessage should be("actual provider instance is not intended to be used " +
-      "with the localPath provided: /tmp/two")
   }
 
   "RepositoryProvider" should "not delete siva file with skipCleanup = true" in {

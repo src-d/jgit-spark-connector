@@ -112,7 +112,7 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     *
     * @param conf      HDFS configuration
     * @param path      Remote repository path
-    * @param localPath Local path
+    * @param localPath local path where rooted repositories are downloaded from the remote FS
     * @return Repository
     */
   private[provider] def genRepository(conf: Configuration,
@@ -175,18 +175,13 @@ object RepositoryProvider {
     * already created.
     *
     * @constructor
-    * @param localPath   local path where repositories are stored
+    * @param localPath   local path where rooted repositories are downloaded from the remote FS
     * @param skipCleanup skip cleanup after some operations
     * @return a new repository provider or an already existing one if there is one
     */
   def apply(localPath: String, skipCleanup: Boolean = false): RepositoryProvider = {
     if (provider == null) {
       provider = new RepositoryProvider(localPath, skipCleanup = skipCleanup)
-    }
-
-    if (provider.localPath != localPath) {
-      throw new RuntimeException(s"actual provider instance is not intended " +
-        s"to be used with the localPath provided: $localPath")
     }
 
     provider
