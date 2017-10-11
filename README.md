@@ -25,7 +25,11 @@ $ ./bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-
 
 Run [bblfsh daemon](https://github.com/bblfsh/bblfshd):
 
-    docker run --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.0.0
+    docker create --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.0.0
+
+Then, execute the container:
+
+    docker start bblfshd
 
 Install bblfsh drivers:
 
@@ -64,7 +68,11 @@ $ $SPARK_HOME/bin/spark-shell
 
 If you want to be able to use the UAST extraction features spark-api provides, you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can do it easily with docker
 
-    docker run --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.0.0
+    docker create --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.0.0
+
+Now, execute the container:
+
+    docker start bblfshd
 
 Then you need to install bblfsh drivers to parse different languages, you should do this the first time you run the [bblfsh daemon](https://github.com/bblfsh/bblfshd):
 
@@ -73,7 +81,6 @@ Then you need to install bblfsh drivers to parse different languages, you should
 You should be able to see the installed drivers running:
 
     docker exec -it bblfshd bblfshctl driver list
-
 
 # Examples of API usage
 
