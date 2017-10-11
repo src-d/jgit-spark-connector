@@ -1,5 +1,6 @@
 package tech.sourced.api.iterator
 
+import org.apache.spark.UtilsWrapper
 import org.apache.spark.input.PortableDataStream
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Row
@@ -14,7 +15,8 @@ trait BaseRootedRepoIterator extends Suite with BaseSparkSpec with BaseSivaSpec 
 
   lazy val pds: PortableDataStream = rdd.filter(pds => pds.getPath()
     .contains("fff7062de8474d10a67d417ccea87ba6f58ca81d.siva")).first()
-  lazy val repo: Repository = RepositoryProvider("/tmp").get(pds)
+  lazy val repo: Repository =
+    RepositoryProvider(UtilsWrapper.getLocalDir(ss.sparkContext.getConf)).get(pds)
 
   def testIterator(iterator: (Repository) => Iterator[Row],
                    matcher: (Int, Row) => Unit,
