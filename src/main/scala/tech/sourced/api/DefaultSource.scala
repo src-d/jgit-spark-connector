@@ -1,11 +1,11 @@
 package tech.sourced.api
 
-import org.apache.spark.SparkException
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.{SparkException, UtilsWrapper}
 import tech.sourced.api.iterator._
 import tech.sourced.api.provider.{RepositoryProvider, SivaRDDProvider}
 import tech.sourced.api.util.Filter
@@ -64,7 +64,7 @@ case class GitRelation(sqlContext: SQLContext,
                        tableSource: Option[String] = None)
   extends BaseRelation with CatalystScan {
 
-  private val localPath: String = sqlContext.getConf(localPathKey, "/tmp")
+  private val localPath: String = UtilsWrapper.getLocalDir(sqlContext.sparkContext.getConf)
   private val path: String = sqlContext.getConf(repositoriesPathKey)
   private val skipCleanup: Boolean = sqlContext.sparkContext.getConf
     .getBoolean(skipCleanupKey, defaultValue = false)
