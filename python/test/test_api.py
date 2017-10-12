@@ -1,6 +1,7 @@
-from sourced.spark import API as SparkAPI
+from sourced.spark.api import API as SparkAPI, FilesDataFrame
 from .base import BaseTestCase
 from os import path
+import json
 
 
 REPOSITORIES = ['anongit.kde.org/purpose.git',
@@ -15,6 +16,13 @@ REPOSITORY_COMMITS = {'github.com/xiyou-linuxer/faq-xiyoulinux': 927,
                       'github.com/mawag/faq-xiyoulinux': 135,
                       'anongit.kde.org/scratch/apol/purpose.git': 197,
                       'anongit.kde.org/purpose.git': 1973}
+
+
+PYTHON_FILES = [
+    ("hash1", False, "foo.py", bytearray("with open('somefile.txt') as f: contents=f.read()",'utf8'))
+]
+
+FILE_COLUMNS = ["file_hash", "is_binary", "path", "content"]
 
 
 class APITestCase(BaseTestCase):
@@ -36,11 +44,11 @@ class APITestCase(BaseTestCase):
         refs = df.select(df.name).distinct().collect()
         self.assertEquals(len(refs), 44)
 
-    
+
     def test_references_head(self):
         df = self.api.repositories.references.head_ref
         hashes = [r.hash for r in df.distinct().sort(df.hash).collect()]
-        self.assertEqual(hashes, ['202ceb4d3efd2294544583a7d4dc92899aa0181f', 
+        self.assertEqual(hashes,['202ceb4d3efd2294544583a7d4dc92899aa0181f', 
                                   '2060ee6252a64337c404a4fb44baf374c0bc7f7a', 
                                   'dbfab055c70379219cbcf422f05316fdf4e1aed3', 
                                   'fff7062de8474d10a67d417ccea87ba6f58ca81d', 
@@ -122,13 +130,13 @@ class APITestCase(BaseTestCase):
         self.assertEqual(row.file_hash, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
         self.assertEqual(row.path, 'spec/database_spec.rb')
         self.assertEqual(row.lang, "Ruby")
-        self.assertEqual(row.uast, b"")
+        self.assertEqual(row.uast, [])
 
         df = self.api.repositories.references.commits.files
         row = df.sort(df.file_hash).limit(1).extract_uasts().first()
         self.assertEqual(row.file_hash, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
         self.assertEqual(row.path, 'spec/database_spec.rb')
-        self.assertEqual(row.uast, b"")
+        self.assertEqual(row.uast, [])
 
 
     def test_api_files(self):
@@ -155,3 +163,38 @@ class APITestCase(BaseTestCase):
     def test_api_files_hash(self):
         files = self.api.files(commit_hashes=['fff7062de8474d10a67d417ccea87ba6f58ca81d'])
         self.assertEqual(files.count(), 2)
+
+
+    def test_uast_query(self):
+        df = self.session.createDataFrame(PYTHON_FILES, FILE_COLUMNS)
+        repos = self.api.repositories
+        df = FilesDataFrame(df._jdf, repos._session, repos._implicits)
+        rows = df.extract_uasts().query_uast('//*[@roleIdentifier and not(@roleIncomplete)]').collect()
+        self.assertEqual(len(rows), 1)
+
+        idents = []
+        for row in rows:
+            for node in row["result"]:
+                node = self.api.parse_uast_node(node)
+                idents.append(node.token())
+
+        self.assertEqual(idents, ["contents", "read", "f", "open", "f"])
+
+
+    def test_uast_query_cols(self):
+        df = self.session.createDataFrame(PYTHON_FILES, FILE_COLUMNS)
+        repos = self.api.repositories
+        df = FilesDataFrame(df._jdf, repos._session, repos._implicits)
+        rows = df.extract_uasts()\
+            .query_uast('//*[@roleIdentifier]')\
+            .query_uast('/*[not(@roleIncomplete)]', 'result', 'result2')\
+            .collect()
+        self.assertEqual(len(rows), 1)
+
+        idents = []
+        for row in rows:
+            for node in row["result2"]:
+                node = self.api.parse_uast_node(node)
+                idents.append(node.token())
+
+        self.assertEqual(idents, ["contents", "read", "f", "open", "f"])

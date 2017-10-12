@@ -1,8 +1,9 @@
 package tech.sourced
 
+import gopkg.in.bblfsh.sdk.v1.uast.generated.Node
 import org.apache.spark.SparkException
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import tech.sourced.api.udf.{ClassifyLanguagesUDF, CustomUDF, ExtractUASTsUDF}
+import tech.sourced.api.udf._
 
 /**
   * Provides the [[tech.sourced.api.SparkAPI]] class, which is the main entry point
@@ -65,6 +66,14 @@ package object api {
     }
 
   }
+
+  /**
+    * Create a new [[Node]] from a binary-encoded node as a byte array.
+    *
+    * @param data binary-encoded node as byte array
+    * @return parsed [[Node]]
+    */
+  def parseUASTNode(data: Array[Byte]): Node = Node.parseFrom(data)
 
   /**
     * Adds some utility methods to the [[org.apache.spark.sql.DataFrame]] class
@@ -252,6 +261,50 @@ package object api {
       }
     }
 
+    /**
+      * Queries a list of UAST nodes with the given query to get specific nodes,
+      * and puts the result in another column.
+      *
+      * {{{
+      * import gopkg.in.bblfsh.sdk.v1.uast.generated.{Node, Role}
+      *
+      * // get all identifiers
+      * var identifiers = uastsDf.queryUAST("//\*[@roleIdentifier and not(@roleIncomplete)]")
+      *   .collect()
+      *   .map(row => row(row.fieldIndex("result")))
+      *   .flatMap(_.asInstanceOf[Seq[Array[Byte]]])
+      *   .map(Node.from)
+      *   .map(_.token)
+      *
+      * // get all identifiers from column "foo" and put them in "bar"
+      * identifiers = uastsDf.queryUAST("//\*[@roleIdentifier and not(@roleIncomplete)]",
+      *                                 "foo", "bar")
+      *   .collect()
+      *   .map(row => row(row.fieldIndex("result")))
+      *   .flatMap(_.asInstanceOf[Seq[Array[Byte]]])
+      *   .map(Node.from)
+      *   .map(_.token)
+      * }}}
+      *
+      * @param query        xpath query
+      * @param queryColumn  column where the list of UAST nodes to query are
+      * @param outputColumn column where the result of the query will be placed
+      * @return [[DataFrame]] with "result" column containing the nodes
+      */
+    def queryUAST(query: String,
+                  queryColumn: String = "uast",
+                  outputColumn: String = "result"): DataFrame = {
+      checkCols(df, "uast", queryColumn)
+      if (df.columns.contains(outputColumn)) {
+        throw new SparkException(s"DataFrame already contains a column named $outputColumn")
+      }
+
+      df.withColumn(
+        outputColumn,
+        QueryXPathUDF(df.sparkSession, query)(df(queryColumn))
+      )
+    }
+
   }
 
   /**
@@ -290,7 +343,11 @@ package object api {
     /**
       * List of custom functions to be registered.
       */
-    val UDFtoRegister: List[CustomUDF] = List(ClassifyLanguagesUDF, ExtractUASTsUDF)
+    val UDFtoRegister: List[CustomUDF] = List(
+      ClassifyLanguagesUDF,
+      ExtractUASTsUDF,
+      QueryXPathUDF
+    )
   }
 
 }
