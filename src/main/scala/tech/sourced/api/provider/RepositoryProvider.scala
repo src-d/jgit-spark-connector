@@ -150,6 +150,8 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
 
         FileUtils.copyInputStreamToFile(e, new File(outPath.toString))
       })
+
+      sr.close()
     }
 
     // After copy create a repository instance using the local path
