@@ -26,7 +26,7 @@ matrix:
       install:
         - make build
         - mkdir -p python/jars
-        - cp target/**/spark-api-uber.jar python/jars
+        - cp target/**/engine-uber.jar python/jars
         - cd python
         - pip install -r requirements.txt
 
@@ -46,7 +46,7 @@ matrix:
       install:
         - make build
         - mkdir -p python/jars
-        - cp target/**/spark-api-uber.jar python/jars
+        - cp target/**/engine-uber.jar python/jars
         - cd python
         - pip install -r requirements.txt
 

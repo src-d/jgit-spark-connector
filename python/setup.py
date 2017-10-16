@@ -16,8 +16,8 @@ with open(README_FILE, 'r') as f:
     README = f.read()
 
 setup(
-    name="sourced-spark-api",
-    description="API to use Spark on top of source code repositories.",
+    name="sourced-engine",
+    description="Engine to use Spark on top of source code repositories.",
     long_description=README,
     version=__version__,
     license="Apache-2.0",
@@ -25,7 +25,7 @@ setup(
     author_email="hello@sourced.tech",
     url="https://github.com/src-d/spark-api/tree/master/python",
     packages=['sourced',
-              'sourced.spark'],
+              'sourced.engine'],
     install_requires=["pyspark>=2.0.0"],
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",

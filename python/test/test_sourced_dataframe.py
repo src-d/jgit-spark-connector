@@ -1,4 +1,4 @@
-from sourced.spark.api import SourcedDataFrame
+from sourced.engine import SourcedDataFrame
 from .base import BaseTestCase
 
 

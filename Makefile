@@ -63,11 +63,11 @@ DEV_PREFIX := dev
 VERSION ?= $(DEV_PREFIX)-$(GIT_COMMIT)$(GIT_DIRTY)
 
 # Docker jupyter image
-JUPYTER_IMAGE ?= srcd/spark-api-jupyter
+JUPYTER_IMAGE ?= srcd/engine-jupyter
 JUPYTER_IMAGE_VERSIONED ?= $(call escape_docker_tag,$(JUPYTER_IMAGE):$(VERSION))
 
 # Docker run jupyter container
-JUPYTER_CONTAINER_NAME = spark-api-jupyter
+JUPYTER_CONTAINER_NAME = engine-jupyter
 JUPYTER_HOST_PORT = 8888
 JUPYTER_CONTAINER_PORT = 8888
 REPOSITORIES_HOST_DIR := $(PWD)/examples/siva-files
