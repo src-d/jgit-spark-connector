@@ -1,6 +1,6 @@
 # source{d} engine [![Build Status](https://travis-ci.org/src-d/spark-api.svg?branch=master)](https://travis-ci.org/src-d/spark-api) [![codecov](https://codecov.io/gh/src-d/spark-api/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/spark-api)
 
-**Spark API** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
+**source{d} engine** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
 
 It is written in Scala and built on top of Apache Spark to enable rapid construction of custom analysis pipelines and processing large number of Git repositories stored in HDFS in [Siva file format](https://github.com/src-d/go-siva). It is accessible both via Scala and Python Spark APIs, and capable of running on large-scale distributed clusters.
 
@@ -66,7 +66,7 @@ $ $SPARK_HOME/bin/spark-shell
 
 ## bblfsh
 
-If you want to be able to use the UAST extraction features engine provides, you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can do it easily with docker
+If you want to be able to use the UAST extraction features source{d} engine provides, you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can do it easily with docker
 
     docker create --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.0.0
 
@@ -88,7 +88,7 @@ You should be able to see the installed drivers running:
 
 ### Local mode
 
-Install python-wrappers is necessary to use engine from pyspark:
+Install python-wrappers is necessary to use source{d} engine from pyspark:
 
 ``` bash
 $ pip install sourced-spark-api
@@ -142,13 +142,13 @@ SparkSession available as 'spark'.
 
 ## Scala API
 
-For the moment, `engine`  can only be installed from [jitpack](https://jitpack.io) (will be available from Maven Central soon), so you should be able to run the `spark-shell` with `engine` as a required dependency in the following way:
+For the moment, `source{d} engine`  can only be installed from [jitpack](https://jitpack.io) (will be available from Maven Central soon), so you should be able to run the `spark-shell` with `source{d} engine` as a required dependency in the following way:
 
 ```bash
 $ spark-shell --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
 ```
 
-To start using engine from the shell you must import everything inside the `tech.sourced.api` package (or, if you prefer, just import `EngineAPI` and `ApiDataFrame` classes):
+To start using source{d} engine from the shell you must import everything inside the `tech.sourced.api` package (or, if you prefer, just import `SparkAPI` and `ApiDataFrame` classes):
 
 ```bash
 scala> import tech.sourced.api._
