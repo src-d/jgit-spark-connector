@@ -1,4 +1,4 @@
-# spark-api [![Build Status](https://travis-ci.org/src-d/spark-api.svg?branch=master)](https://travis-ci.org/src-d/spark-api) [![codecov](https://codecov.io/gh/src-d/spark-api/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/spark-api)
+# source{d} engine [![Build Status](https://travis-ci.org/src-d/spark-api.svg?branch=master)](https://travis-ci.org/src-d/spark-api) [![codecov](https://codecov.io/gh/src-d/spark-api/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/spark-api)
 
 **Spark API** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
 
@@ -66,7 +66,7 @@ $ $SPARK_HOME/bin/spark-shell
 
 ## bblfsh
 
-If you want to be able to use the UAST extraction features spark-api provides, you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can do it easily with docker
+If you want to be able to use the UAST extraction features engine provides, you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can do it easily with docker
 
     docker create --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.0.0
 
@@ -88,20 +88,20 @@ You should be able to see the installed drivers running:
 
 ### Local mode
 
-Install python-wrappers is necessary to use spark-api from pyspark:
+Install python-wrappers is necessary to use engine from pyspark:
 
 ``` bash
 $ pip install sourced-spark-api
 ```
 
-Then you should point to the remote repository where spark-api is hosted and provide the maven coordinates:
+Then you should point to the remote repository where engine is hosted and provide the maven coordinates:
 ```bash
 $ $SPARK_HOME/bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:spark-api:master-SNAPSHOT"
 ```
 
 ### Cluster mode
 
-Install spark-api wrappers as in local mode:
+Install engine wrappers as in local mode:
 ```bash
 $ pip install -e sourced-spark-api
 ```
@@ -142,23 +142,23 @@ SparkSession available as 'spark'.
 
 ## Scala API
 
-For the moment, `spark-api`  can only be installed from [jitpack](https://jitpack.io) (will be available from Maven Central soon), so you should be able to run the `spark-shell` with `spark-api` as a required dependency in the following way:
+For the moment, `engine`  can only be installed from [jitpack](https://jitpack.io) (will be available from Maven Central soon), so you should be able to run the `spark-shell` with `engine` as a required dependency in the following way:
 
 ```bash
 $ spark-shell --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
 ```
 
-To start using spark-api from the shell you must import everything inside the `tech.sourced.api` package (or, if you prefer, just import `SparkAPI` and `ApiDataFrame` classes):
+To start using engine from the shell you must import everything inside the `tech.sourced.api` package (or, if you prefer, just import `EngineAPI` and `ApiDataFrame` classes):
 
 ```bash
 scala> import tech.sourced.api._
 import tech.sourced.api._
 ```
 
-Now, you need to create an instance of `SparkAPI` and give it the spark session and the path of the directory containing the siva files:
+Now, you need to create an instance of `EngineAPI` and give it the spark session and the path of the directory containing the siva files:
 
 ```bash
-scala> val api = SparkAPI(spark, "/path/to/siva-files")
+scala> val api = EngineAPI(spark, "/path/to/siva-files")
 ```
 
 Then, you will be able to perform queries over the repositories:
@@ -178,7 +178,7 @@ scala> api.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
 
 ```
 
-# Playing around with spark-api on Jupyter
+# Playing around with source{d} engine on Jupyter
 
 You can launch our docker container which contains some Notebooks examples just running:
 
@@ -188,7 +188,7 @@ You must have some siva files in local to mount them on the container replacing 
 
 You should have a [bblfsh daemon](https://github.com/bblfsh/bblfshd) container running to link the jupyter container (see Pre-requisites).
 
-When the spark-api-jupyter container starts it will show you an URL that you can open in your browser.
+When the engine-jupyter container starts it will show you an URL that you can open in your browser.
 
 # Development
 
@@ -244,7 +244,7 @@ $ make docker-clean
 
 ## Run tests
 
-spark-api uses [bblfsh](https://github.com/bblfsh) so you need an instance of a bblfsh server running:
+source{d} engine uses [bblfsh](https://github.com/bblfsh) so you need an instance of a bblfsh server running:
 
 ```bash
 $ make docker-bblfsh
@@ -268,4 +268,4 @@ There is no windows support in enry-java right now, so all the language detectio
 
 # License
 
-Apache License Version 2.0, see [LICENSE](https://github.com/src-d/spark-api/blob/master/LICENSE)
+Apache License Version 2.0, see [LICENSE](LICENSE)

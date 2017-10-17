@@ -4,3 +4,4 @@ target/*
 project/target/*
 project/project/*
 .idea
+.docsrv-resources
