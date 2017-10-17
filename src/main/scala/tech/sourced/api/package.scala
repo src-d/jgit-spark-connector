@@ -305,6 +305,29 @@ package object api {
       )
     }
 
+    /**
+      * Extracts the tokens in all nodes of a given column and puts the list of retrieved
+      * tokens in a new column.
+      *
+      * {{{
+      * val tokensDf = uastDf.queryUAST("//\*[@roleIdentifier and not(@roleIncomplete)]")
+      *     .extractTokens()
+      * }}}
+      *
+      * @param queryColumn  column where the UAST nodes are.
+      * @param outputColumn column to put the result
+      * @return new [[DataFrame]] with the extracted tokens
+      */
+    def extractTokens(queryColumn: String = "result",
+                      outputColumn: String = "tokens"): DataFrame = {
+      checkCols(df, queryColumn)
+      if (df.columns.contains(outputColumn)) {
+        throw new SparkException(s"DataFrame already contains a column named $outputColumn")
+      }
+
+      df.withColumn(outputColumn, ExtractTokensUDF()(df(queryColumn)))
+    }
+
   }
 
   /**

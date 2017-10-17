@@ -184,4 +184,27 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     ))
   }
 
+  "ExtractTokensUDF" should "extract the tokens in a column" in {
+    val spark = ss
+    import spark.implicits._
+
+    val identifiers = fileSeq.take(1).toDF(fileColumns: _*)
+      .classifyLanguages
+      .extractUASTs()
+      .queryUAST("//*[@roleIdentifier and not(@roleIncomplete)]")
+      .extractTokens()
+      .collect()
+      .map(row => row(row.fieldIndex("tokens")))
+      .flatMap(_.asInstanceOf[Seq[String]])
+
+    identifiers.length should be(5)
+    identifiers should equal(Seq(
+      "contents",
+      "read",
+      "f",
+      "open",
+      "f"
+    ))
+  }
+
 }

@@ -198,3 +198,13 @@ class APITestCase(BaseTestCase):
                 idents.append(node.token())
 
         self.assertEqual(idents, ["contents", "read", "f", "open", "f"])
+
+
+    def test_extract_tokens(self):
+        df = self.session.createDataFrame(PYTHON_FILES, FILE_COLUMNS)
+        repos = self.api.repositories
+        df = FilesDataFrame(df._jdf, repos._session, repos._implicits)
+        row = df.extract_uasts().query_uast('//*[@roleIdentifier and not(@roleIncomplete)]')\
+            .extract_tokens().first()
+
+        self.assertEqual(row["tokens"], ["contents", "read", "f", "open", "f"])
