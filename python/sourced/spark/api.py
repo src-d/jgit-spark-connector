@@ -604,3 +604,20 @@ class UASTsDataFrame(SourcedDataFrame):
                                        query_col,
                                        output_col),
                               self._session, self._implicits)
+
+
+    def extract_tokens(self, input_col='result', output_col='tokens'):
+        """
+        Extracts the tokens from UAST nodes.
+
+        >>> rows = uasts_df.query_uast('//*[@roleIdentifier]').extract_tokens().collect()
+        >>> rows = uasts_df.query_uast('//*[@roleIdentifier]', output_col='foo').extract_tokens('foo', 'bar')
+
+        :param input_col: column containing the list of nodes to extract tokens from
+        :type input_col: str
+        :param output_col: column to place the resultant tokens
+        :type output_col: str
+        :rtype: UASTsDataFrame
+        """
+        return UASTsDataFrame(self._api_dataframe.extractTokens(input_col, output_col),
+                              self._session, self._implicits)
