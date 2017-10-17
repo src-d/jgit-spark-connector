@@ -5,10 +5,10 @@ The combined usage of both, `classify_languages()` and `extract_uasts()` methods
 To do that, you just have to call  `extract_uasts()` on a Dataframe where previously, `classify_languages()` was used.
 
 ```bash
-$ pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
->>> from sourced.spark import API as SparkAPI
->>> api = SparkAPI(spark, '/path/to/siva-files')
->>> api.repositories.references.head_ref.files.classify_languages().extract_uasts().select("path", "lang", "uast").show()
+$ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+>>> from sourced.engine import Engine
+>>> engine = Engine(spark, '/path/to/siva-files')
+>>> engine.repositories.references.head_ref.files.classify_languages().extract_uasts().select("path", "lang", "uast").show()
 
 +--------------------+--------+--------------------+
 |                path|    lang|                uast|

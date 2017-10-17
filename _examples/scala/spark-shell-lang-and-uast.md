@@ -5,13 +5,13 @@ The combined usage of both, `classifyLanguages` and `extractUASTs` methods, has 
 To do that, you just have to call  `extractUASTs` on a Dataframe where previously, `classifyLanguages` was used.
 
 ```bash
-$ spark-shell --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
-scala> import tech.sourced.api._
-import tech.sourced.api._
+$ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+scala> import tech.sourced.engine._
+import tech.sourced.engine._
 
-scala> val api = SparkAPI(spark, "/path/to/siva-files")
+scala> val engine = Engine(spark, "/path/to/siva-files")
 
-scala> api.getRepositories.getHEAD.getFiles.classifyLanguages.extractUASTs.select('repository_id, 'path, 'lang, 'uast).show
+scala> engine.getRepositories.getHEAD.getFiles.classifyLanguages.extractUASTs.select('repository_id, 'path, 'lang, 'uast).show
 
 +--------------------+--------------------+--------+--------------------+
 |       repository_id|                path|    lang|                uast|

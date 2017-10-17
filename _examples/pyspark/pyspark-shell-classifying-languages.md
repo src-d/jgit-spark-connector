@@ -2,13 +2,13 @@
 
 This example uses the pyspark-shell to show how to classify files by their language with `classify_languages()`.
 
-Making use of the `api` object, it retrieves repositories to get all files from the `HEAD` references from them. After that, a call to `classify_languages()` function detects the language for each file to show them in the aggregated column `lang` beside the selected columns `file_hash` and `path`.
+Making use of the `engine` object, it retrieves repositories to get all files from the `HEAD` references from them. After that, a call to `classify_languages()` function detects the language for each file to show them in the aggregated column `lang` beside the selected columns `file_hash` and `path`.
 
 ```bash
-$ pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
->>> from sourced.spark import API as SparkAPI
->>> api = SparkAPI(spark, '/path/to/siva-files')
->>> api.repositories.references.head_ref.files.classify_languages().select("file_hash", "path", "lang").show()
+$ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+>>> from sourced.engine import Engine
+>>> engine = Engine(spark, '/path/to/siva-files')
+>>> engine.repositories.references.head_ref.files.classify_languages().select("file_hash", "path", "lang").show()
 +--------------------+--------------------+--------+
 |           file_hash|                path|    lang|
 +--------------------+--------------------+--------+

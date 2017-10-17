@@ -5,24 +5,24 @@ The next example showed,  just try to show the simple usage of the useful method
 It can help you to follow the aggregated or pruned information that your transformations make on the data you are handling.
 
 ```bash
-$ pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
->>> from sourced.spark import API as SparkAPI
->>> api = SparkAPI(spark, '/path/to/siva-files')
+$ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+>>> from sourced.engine import Engine
+>>> engine = Engine(spark, '/path/to/siva-files')
 
->>> api.repositories.printSchema()
+>>> engine.repositories.printSchema()
 root
  |-- id: string (nullable = true)
  |-- urls: array (nullable = true)
  |    |-- element: string (containsNull = false)
  |-- is_fork: boolean (nullable = true)
 
->>> api.repositories.references.printSchema()
+>>> engine.repositories.references.printSchema()
 root
  |-- repository_id: string (nullable = true)
  |-- name: string (nullable = true)
  |-- hash: string (nullable = true)
 
->>> api.repositories.references.files.printSchema()
+>>> engine.repositories.references.files.printSchema()
 root
  |-- file_hash: string (nullable = true)
  |-- content: binary (nullable = true)
@@ -32,7 +32,7 @@ root
  |-- repository_id: string (nullable = true)
  |-- name: string (nullable = true)
 
->>> api.repositories.references.commits.printSchema()
+>>> engine.repositories.references.commits.printSchema()
 root
  |-- repository_id: string (nullable = true)
  |-- reference_name: string (nullable = true)

@@ -1,16 +1,16 @@
 ## Basic example
 
-In this example, the pyspark-shell is used to show a simple usage of the spark-api.
+In this example, the pyspark-shell is used to show a simple usage of the `source{d} Engine`.
 
 First, you can see how to import the package and instantiate and object that provide all the methods to manipulate the data retrieved from repositories.
 
-The `api` object is used to get all the repositories, get the `HEAD` references from the repositories and eventually, get all the files from these references. Then a table is showed selecting the columns `file_hash`, `path` and reference `name`.
+The `engine` object is used to get all the repositories, get the `HEAD` references from the repositories and eventually, get all the files from these references. Then a table is showed selecting the columns `file_hash`, `path` and reference `name`.
 
 ```bash
-$ pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
->>> from sourced.spark import API as SparkAPI
->>> api = SparkAPI(spark, '/path/to/siva-files')
->>> api.repositories.references.head_ref.files.select('file_hash', 'path', 'name').show()
+$ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+>>> from sourced.engine import Engine
+>>> engine = Engine(spark, '/path/to/siva-files')
+>>> engine.repositories.references.head_ref.files.select('file_hash', 'path', 'name').show()
 +--------------------+--------------------+---------------+
 |           file_hash|                path|           name|
 +--------------------+--------------------+---------------+

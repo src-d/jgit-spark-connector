@@ -2,18 +2,18 @@
 
 In the example code below, you can take a look to how the `extractUASTs` method works.
 
-From the `api` object instantiated in the spark-shell, a bunch of files has been got filtering repositories by `id`, retrieving their `HEAD` references and requesting for them. Once we have that files, we can call `extractUASTs` which send the files to a [bblfsh server](https://github.com/bblfsh/server) to get back the UASTs.
+From the `engine` object instantiated in the spark-shell, a bunch of files has been got filtering repositories by `id`, retrieving their `HEAD` references and requesting for them. Once we have that files, we can call `extractUASTs` which send the files to a [bblfsh server](https://github.com/bblfsh/server) to get back the UASTs.
 
 Finally, the reference `name`, file `path` and `uast` is showed on the table.
 
 ```bash
-$ spark-shell --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
-scala> import tech.sourced.api._
-import tech.sourced.api._
+$ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+scala> import tech.sourced.engine._
+import tech.sourced.engine._
 
-scala> val api = SparkAPI(spark, "/path/to/siva-files")
+scala> val engine = Engine(spark, "/path/to/siva-files")
 
-scala> val exampleDf = api.getRepositories.filter('id === "github.com/mingrammer/funmath.git").getHEAD.getFiles.extractUASTs.select('name, 'path, 'uast).where('uast.isNotNull)
+scala> val exampleDf = engine.getRepositories.filter('id === "github.com/mingrammer/funmath.git").getHEAD.getFiles.extractUASTs.select('name, 'path, 'uast).where('uast.isNotNull)
 
 scala> exampleDf.show
 

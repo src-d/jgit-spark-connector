@@ -5,13 +5,13 @@ The next example showed,  just try to show the simple usage of the useful method
 It can help you to follow the aggregated or pruned information that your transformations make on the data you are handling.
 
 ```bash
-$ spark-shell --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
-scala> import tech.sourced.api._
-import tech.sourced.api._
+$ spark-shell --packages com.github.src-d:enginei:master-SNAPSHOT --repositories https://jitpack.io
+scala> import tech.sourced.engine._
+import tech.sourced.engine._
 
-scala> val api = SparkAPI(spark, "/path/to/siva-files")
+scala> val engine = Engine(spark, "/path/to/siva-files")
 
-scala> api.getRepositories.printSchema
+scala> engine.getRepositories.printSchema
 root
  |-- id: string (nullable = true)
  |-- urls: array (nullable = true)
@@ -19,17 +19,17 @@ root
  |-- is_fork: boolean (nullable = true)
 
 
-scala> api.getRepositories.getReference.printSchema
+scala> engine.getRepositories.getReference.printSchema
 getReference   getReferences
 
-scala> api.getRepositories.getReferences.printSchema
+scala> engine.getRepositories.getReferences.printSchema
 root
  |-- repository_id: string (nullable = true)
  |-- name: string (nullable = true)
  |-- hash: string (nullable = true)
 
 
-scala> api.getRepositories.getReferences.getCommits.printSchema
+scala> engine.getRepositories.getReferences.getCommits.printSchema
 root
  |-- repository_id: string (nullable = true)
  |-- reference_name: string (nullable = true)
@@ -52,7 +52,7 @@ root
  |-- committer_date: timestamp (nullable = true)
 
 
-scala> api.getRepositories.getReferences.getFiles.printSchema
+scala> engine.getRepositories.getReferences.getFiles.printSchema
 root
  |-- file_hash: string (nullable = true)
  |-- content: binary (nullable = true)

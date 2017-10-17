@@ -1,6 +1,6 @@
-# source{d} engine [![Build Status](https://travis-ci.org/src-d/spark-api.svg?branch=master)](https://travis-ci.org/src-d/spark-api) [![codecov](https://codecov.io/gh/src-d/spark-api/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/spark-api)
+# source{d} Engine [![Build Status](https://travis-ci.org/src-d/engine.svg?branch=master)](https://travis-ci.org/src-d/spark-api) [![codecov](https://codecov.io/gh/src-d/engine/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/spark-api)
 
-**source{d} engine** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
+**source{d} Engine** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
 
 It is written in Scala and built on top of Apache Spark to enable rapid construction of custom analysis pipelines and processing large number of Git repositories stored in HDFS in [Siva file format](https://github.com/src-d/go-siva). It is accessible both via Scala and Python Spark APIs, and capable of running on large-scale distributed clusters.
 
@@ -17,10 +17,10 @@ Current implementation combines:
 ```bash
 $ wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz"
 $ tar -xzf spark-2.2.0-bin-hadoop2.7.tgz; cd spark-2.2.0-bin-hadoop2.7
-$ ./bin/spark-shell --packages "com.github.src-d:spark-api:master-SNAPSHOT" --repositories "https://jitpack.io"
+$ ./bin/spark-shell --packages "com.github.src-d:engine:master-SNAPSHOT" --repositories "https://jitpack.io"
 
 # or
-$ ./bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:spark-api:master-SNAPSHOT"
+$ ./bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:engine:master-SNAPSHOT"
 ```
 
 Run [bblfsh daemon](https://github.com/bblfsh/bblfshd):
@@ -82,7 +82,7 @@ You should be able to see the installed drivers running:
 
     docker exec -it bblfshd bblfshctl driver list
 
-# Examples of API usage
+# Examples of source{d} Engine usage
 
 ## pyspark
 
@@ -91,26 +91,26 @@ You should be able to see the installed drivers running:
 Install python-wrappers is necessary to use source{d} engine from pyspark:
 
 ``` bash
-$ pip install sourced-spark-api
+$ pip install sourced-engine
 ```
 
-Then you should point to the remote repository where engine is hosted and provide the maven coordinates:
+Then you should point to the remote repository where `source{d} Engine` is hosted and provide the maven coordinates:
 ```bash
-$ $SPARK_HOME/bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:spark-api:master-SNAPSHOT"
+$ $SPARK_HOME/bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:engine:master-SNAPSHOT"
 ```
 
 ### Cluster mode
 
-Install engine wrappers as in local mode:
+Install `source{d} Engine` wrappers as in local mode:
 ```bash
-$ pip install -e sourced-spark-api
+$ pip install -e sourced-engine
 ```
 
 Then you should package and compress with `zip`  the python wrappers to provide pyspark with it. It's required to distribute the code among the nodes of the cluster.
 
 ```bash
-$ zip <path-to-installed-package> ./spark-api.zip
-$ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./spark-api.zip
+$ zip <path-to-installed-package> ./sourced-engine.zip
+$ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./sourced-engine.zip
 ```
 
 ### pyspark API usage
@@ -118,19 +118,19 @@ $ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./spark-api.zip
 Run pyspark as explained before to start using spark-api:
 
 ```bash
-$ $SPARK_HOME/bin/pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
+$ $SPARK_HOME/bin/pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
 Welcome to
 
    spark version 2.2.0
 
 Using Python version 3.6.2 (default, Jul 20 2017 03:52:27)
 SparkSession available as 'spark'.
->>> from sourced.spark import API as SparkAPI
+>>> from sourced.engine import Engine
 >>> from pyspark.sql import SparkSession
 >>>
 >>> spark = SparkSession.builder.appName("test").master("local[*]").getOrCreate()
->>> api = SparkAPI(spark, '/path/to/siva/files')
->>> api.repositories.filter("id = 'github.com/mawag/faq-xiyoulinux'").references.filter("name = 'refs/heads/HEAD'").show()
+>>> engine = Engine(spark, '/path/to/siva/files')
+>>> engine.repositories.filter("id = 'github.com/mawag/faq-xiyoulinux'").references.filter("name = 'refs/heads/HEAD'").show()
 +--------------------+---------------+--------------------+
 |       repository_id|           name|                hash|
 +--------------------+---------------+--------------------+
@@ -140,31 +140,31 @@ SparkSession available as 'spark'.
 
 ```
 
-## Scala API
+## Scala API usage
 
 For the moment, `source{d} engine`  can only be installed from [jitpack](https://jitpack.io) (will be available from Maven Central soon), so you should be able to run the `spark-shell` with `source{d} engine` as a required dependency in the following way:
 
 ```bash
-$ spark-shell --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
+$ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
 ```
 
-To start using source{d} engine from the shell you must import everything inside the `tech.sourced.api` package (or, if you prefer, just import `SparkAPI` and `ApiDataFrame` classes):
+To start using source{d} engine from the shell you must import everything inside the `tech.sourced.engine` package (or, if you prefer, just import `Engine` and `EngineDataFrame` classes):
 
 ```bash
-scala> import tech.sourced.api._
-import tech.sourced.api._
+scala> import tech.sourced.engine._
+import tech.sourced.engine._
 ```
 
-Now, you need to create an instance of `EngineAPI` and give it the spark session and the path of the directory containing the siva files:
+Now, you need to create an instance of `Engine` and give it the spark session and the path of the directory containing the siva files:
 
 ```bash
-scala> val api = EngineAPI(spark, "/path/to/siva-files")
+scala> val engine = Engine(spark, "/path/to/siva-files")
 ```
 
 Then, you will be able to perform queries over the repositories:
 
 ```bash
-scala> api.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
+scala> engine.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
      | getReferences.filter('name === "refs/heads/HEAD").
      | getCommits.filter('message.contains("Initial")).
      | select('repository_id, 'hash, 'message).
@@ -178,17 +178,17 @@ scala> api.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
 
 ```
 
-# Playing around with source{d} engine on Jupyter
+# Playing around with source{d} Engine on Jupyter
 
 You can launch our docker container which contains some Notebooks examples just running:
 
-    docker run --name spark-api-jupyter --rm -it -p 8888:8888 -v $(pwd)/path/to/siva-files:/repositories --link bblfsh:bblfsh srcd/spark-api-jupyter
+    docker run --name engine-jupyter --rm -it -p 8888:8888 -v $(pwd)/path/to/siva-files:/repositories --link bblfsh:bblfsh srcd/engine-jupyter
 
-You must have some siva files in local to mount them on the container replacing the path `$(pwd)/path/to/siva-files`. You can get some siva-files from the project [here](https://github.com/src-d/spark-api/tree/master/examples/siva-files).
+You must have some siva files in local to mount them on the container replacing the path `$(pwd)/path/to/siva-files`. You can get some siva-files from the project [here](https://github.com/src-d/engine/tree/master/examples/siva-files).
 
 You should have a [bblfsh daemon](https://github.com/bblfsh/bblfshd) container running to link the jupyter container (see Pre-requisites).
 
-When the engine-jupyter container starts it will show you an URL that you can open in your browser.
+When the `engine-jupyter` container starts it will show you an URL that you can open in your browser.
 
 # Development
 
@@ -200,7 +200,7 @@ Build the fatjar is needed to build the docker image that contains the jupyter s
 $ make build
 ```
 
-It leaves the fatjar in `target/scala-2.11/spark-api-uber.jar`
+It leaves the fatjar in `target/scala-2.11/engine-uber.jar`
 
 ## Build and run docker to get a Jupyter server
 

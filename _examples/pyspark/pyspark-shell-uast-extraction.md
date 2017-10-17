@@ -2,15 +2,15 @@
 
 In the example code below, you can take a look to how the `extract_uasts()` method works.
 
-From the `api` object instantiated in the spark-shell, a bunch of files are retrieving from the `HEAD` references from all the repositories and requesting for them. Once we have that files, we can call `extract_uasts()` which send the files to a [bblfsh server](https://github.com/bblfsh/server) to get back the UASTs.
+From the `engine` object instantiated in the spark-shell, a bunch of files are retrieving from the `HEAD` references from all the repositories and requesting for them. Once we have that files, we can call `extract_uasts()` which send the files to a [bblfsh server](https://github.com/bblfsh/server) to get back the UASTs.
 
 Finally, the reference `name`, file `path` and `uast` is showed on the table.
 
 ```bash
-$ pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
->>> from sourced.spark import API as SparkAPI
->>> api = SparkAPI(spark, '/path/to/siva-files')
->>> api.repositories.references.head_ref.files.extract_uasts().select("name", "path", "uast").show()
+$ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+>>> from sourced.engine import Engine
+>>> engine = Engine(spark, '/path/to/siva-files')
+>>> engine.repositories.references.head_ref.files.extract_uasts().select("name", "path", "uast").show()
 
 +---------------+--------------------+--------------------+
 |           name|                path|                uast|
