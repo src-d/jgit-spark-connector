@@ -17,9 +17,11 @@ class API(object):
     :type session: pyspark.sql.SparkSession
     :param repos_path: path to the folder where siva files are stored
     :type repos_path: str
+    :param skip_cleanup: don't delete unpacked siva files after using them
+    :type skip_cleanup: bool
     """
 
-    def __init__(self, session, repos_path):
+    def __init__(self, session, repos_path, skip_cleanup=False):
         self.session = session
         self.__jsparkSession = session._jsparkSession
         self.session.conf.set('spark.tech.sourced.api.repositories.path', repos_path)
@@ -27,6 +29,8 @@ class API(object):
         java_import(self.__jvm, 'tech.sourced.api.SparkAPI')
         java_import(self.__jvm, 'tech.sourced.api.package$')
         self.__api = self.__jvm.tech.sourced.api.SparkAPI.apply(self.__jsparkSession, repos_path)
+        if skip_cleanup:
+            self.__api.skipCleanup(True)
         self.__implicits = getattr(getattr(self.__jvm.tech.sourced.api, 'package$'), 'MODULE$')
 
 
