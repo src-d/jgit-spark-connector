@@ -4,39 +4,38 @@ The combined usage of both, `classifyLanguages` and `extractUASTs` methods, has 
 
 To do that, you just have to call  `extractUASTs` on a Dataframe where previously, `classifyLanguages` was used.
 
-```bash
+```scala
 $ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
 scala> import tech.sourced.engine._
 import tech.sourced.engine._
 
 scala> val engine = Engine(spark, "/path/to/siva-files")
 
-scala> engine.getRepositories.getHEAD.getFiles.classifyLanguages.extractUASTs.select('repository_id, 'path, 'lang, 'uast).show
-
-+--------------------+--------------------+--------+--------------------+
-|       repository_id|                path|    lang|                uast|
-+--------------------+--------------------+--------+--------------------+
-|github.com/mingra...|          .gitignore|    null|                  []|
-|github.com/mingra...|         .travis.yml|    YAML|                  []|
-|github.com/mingra...|             LICENSE|    Text|                  []|
-|github.com/mingra...|           README.md|Markdown|                  []|
-|github.com/mingra...|          abs/abs.py|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|differentiation/s...|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|euclidean/distanc...|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|factorial/factori...|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|factorial/factori...|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|fibonacci/fibonac...|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|fibonacci/fibonac...|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|fibonacci/fibonac...|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|          gcd/gcd.py|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|gcd/gcd_optimal_e...|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|          lcm/lcm.py|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|lcm/lcm_optimal_e...|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|   prime/is_prime.py|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|prime/is_prime_im...|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...|prime/is_prime_op...|  Python|[0A 06 4D 6F 64 7...|
-|github.com/mingra...| prime/next_prime.py|  Python|[0A 06 4D 6F 64 7...|
-+--------------------+--------------------+--------+--------------------+
+scala> engine.getRepositories.getHEAD.getFiles.classifyLanguages.extractUASTs.select('file_hash, 'path, 'lang, 'uast).show
++--------------------+--------------------+--------+-------------+
+|           file_hash|                path|    lang|         uast|
++--------------------+--------------------+--------+-------------+
+|ff4fa0794274a7ffb...|fibonacci/fibonac...|  Python|[[B@62f37a44]|
+|7268016814b8ab7bc...|          gcd/gcd.py|  Python|[[B@7c0368da]|
+|25dbfff34dcc8d252...|           README.md|Markdown|           []|
+|b2675a52ed6bfdfa9...|prime/is_prime_op...|  Python|[[B@7fa8bfe4]|
+|63bd495dce1d53092...|factorial/factori...|  Python|[[B@3cad2dd4]|
+|bf17d9730e43f5697...|         .travis.yml|    YAML|           []|
+|a697a655a7bfd6ba1...|   prime/is_prime.py|  Python|[[B@45f5415f]|
+|76052f368f4c9c8de...|pythagorean_tripl...|  Python|[[B@22d7a483]|
+|3be2253ba2e871d3b...|prime/is_prime_op...|  Python|[[B@18ba78a2]|
+|1ec7f95f8be7bf4f3...|prime/is_prime_op...|  Python|[[B@4dac25ec]|
+|7268016814b8ab7bc...|          gcd/gcd.py|  Python|[[B@223c6abf]|
+|793b6e21f2eebe900...|gcd/gcd_optimal_e...|  Python|[[B@3dd021c7]|
+|4d3617f27e277e4b5...|differentiation/s...|  Python|[[B@76e431b7]|
+|4d3617f27e277e4b5...|differentiation/s...|  Python|[[B@5a4bf9c2]|
+|6d7c6cb29abb52fc2...|          gcd/gcd.py|  Python|[[B@1be309a6]|
+|8ab978a56c5dcb239...|factorial/factori...|  Python|[[B@2781dd04]|
+|e35a52f431feac4b7...|          abs/abs.py|  Python|[[B@70bf39ca]|
+|b2675a52ed6bfdfa9...|prime/is_prime_op...|  Python|[[B@753f5bf6]|
+|51bdeff4494d60bb7...|euclidean/distanc...|  Python|[[B@7612c2ce]|
+|6d7c6cb29abb52fc2...|          gcd/gcd.py|  Python|[[B@5f5248f5]|
++--------------------+--------------------+--------+-------------+
 only showing top 20 rows
 
 ```

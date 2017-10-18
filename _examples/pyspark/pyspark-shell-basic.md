@@ -4,37 +4,37 @@ In this example, the pyspark-shell is used to show a simple usage of the `source
 
 First, you can see how to import the package and instantiate and object that provide all the methods to manipulate the data retrieved from repositories.
 
-The `engine` object is used to get all the repositories, get the `HEAD` references from the repositories and eventually, get all the files from these references. Then a table is showed selecting the columns `file_hash`, `path` and reference `name`.
+The `engine` object is used to get all the repositories, get the `HEAD` references from the repositories and eventually, get all the files from these references. Then a table is showed selecting the columns `file_hash`, `path` and `content`.
 
-```bash
+```python
 $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
 >>> from sourced.engine import Engine
 >>> engine = Engine(spark, '/path/to/siva-files')
->>> engine.repositories.references.head_ref.files.select('file_hash', 'path', 'name').show()
-+--------------------+--------------------+---------------+
-|           file_hash|                path|           name|
-+--------------------+--------------------+---------------+
-|bdbf905450bc30b51...|            Rakefile|refs/heads/HEAD|
-|fee334944ecfdb0a2...|model_plugins/Rak...|refs/heads/HEAD|
-|e69de29bb2d1d6434...|model_plugins/acc...|refs/heads/HEAD|
-|1147a1711b11a32d7...|model_plugins/acc...|refs/heads/HEAD|
-|e69de29bb2d1d6434...|model_plugins/acc...|refs/heads/HEAD|
-|fcb93890e049dac4a...|model_plugins/acc...|refs/heads/HEAD|
-|f7157b33e0bf58f65...|model_plugins/acc...|refs/heads/HEAD|
-|ec1782aa450914a33...|model_plugins/acc...|refs/heads/HEAD|
-|42900ddf5dfccf25c...|model_plugins/acc...|refs/heads/HEAD|
-|d452a6eb34ce195c8...|model_plugins/acc...|refs/heads/HEAD|
-|e69de29bb2d1d6434...|model_plugins/aut...|refs/heads/HEAD|
-|1147a1711b11a32d7...|model_plugins/aut...|refs/heads/HEAD|
-|8eb073459693cba66...|model_plugins/aut...|refs/heads/HEAD|
-|291e140054f63737a...|model_plugins/aut...|refs/heads/HEAD|
-|db32a46ea544164a4...|model_plugins/aut...|refs/heads/HEAD|
-|107f0ec8025e626d6...|model_plugins/aut...|refs/heads/HEAD|
-|42900ddf5dfccf25c...|model_plugins/aut...|refs/heads/HEAD|
-|2dc8d738c6ae57567...|model_plugins/aut...|refs/heads/HEAD|
-|e69de29bb2d1d6434...|model_plugins/deq...|refs/heads/HEAD|
-|1147a1711b11a32d7...|model_plugins/deq...|refs/heads/HEAD|
-+--------------------+--------------------+---------------+
+>>> engine.repositories.references.head_ref.files.select('file_hash', 'path', 'content').show()
++--------------------+--------------------+--------------------+
+|           file_hash|                path|             content|
++--------------------+--------------------+--------------------+
+|ff4fa0794274a7ffb...|fibonacci/fibonac...|[64 65 66 20 66 6...|
+|7268016814b8ab7bc...|          gcd/gcd.py|[69 6D 70 6F 72 7...|
+|25dbfff34dcc8d252...|           README.md|[23 20 66 75 6E 6...|
+|b2675a52ed6bfdfa9...|prime/is_prime_op...|[69 6D 70 6F 72 7...|
+|63bd495dce1d53092...|factorial/factori...|[69 6D 70 6F 72 7...|
+|bf17d9730e43f5697...|         .travis.yml|[6C 61 6E 67 75 6...|
+|a697a655a7bfd6ba1...|   prime/is_prime.py|[64 65 66 20 69 7...|
+|76052f368f4c9c8de...|pythagorean_tripl...|[66 72 6F 6D 20 7...|
+|3be2253ba2e871d3b...|prime/is_prime_op...|[69 6D 70 6F 72 7...|
+|1ec7f95f8be7bf4f3...|prime/is_prime_op...|[69 6D 70 6F 72 7...|
+|7268016814b8ab7bc...|          gcd/gcd.py|[69 6D 70 6F 72 7...|
+|793b6e21f2eebe900...|gcd/gcd_optimal_e...|[69 6D 70 6F 72 7...|
+|4d3617f27e277e4b5...|differentiation/s...|[66 72 6F 6D 20 7...|
+|4d3617f27e277e4b5...|differentiation/s...|[66 72 6F 6D 20 7...|
+|6d7c6cb29abb52fc2...|          gcd/gcd.py|[64 65 66 20 67 6...|
+|8ab978a56c5dcb239...|factorial/factori...|[64 65 66 20 66 6...|
+|e35a52f431feac4b7...|          abs/abs.py|[69 6D 70 6F 72 7...|
+|b2675a52ed6bfdfa9...|prime/is_prime_op...|[69 6D 70 6F 72 7...|
+|51bdeff4494d60bb7...|euclidean/distanc...|[69 6D 70 6F 72 7...|
+|6d7c6cb29abb52fc2...|          gcd/gcd.py|[64 65 66 20 67 6...|
++--------------------+--------------------+--------------------+
 only showing top 20 rows
 
 ```

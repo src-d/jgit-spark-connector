@@ -4,7 +4,7 @@ The next example showed,  just try to show the simple usage of the useful method
 
 It can help you to follow the aggregated or pruned information that your transformations make on the data you are handling.
 
-```bash
+```scala
 $ spark-shell --packages com.github.src-d:enginei:master-SNAPSHOT --repositories https://jitpack.io
 scala> import tech.sourced.engine._
 import tech.sourced.engine._
@@ -13,29 +13,26 @@ scala> val engine = Engine(spark, "/path/to/siva-files")
 
 scala> engine.getRepositories.printSchema
 root
- |-- id: string (nullable = true)
- |-- urls: array (nullable = true)
+ |-- id: string (nullable = false)
+ |-- urls: array (nullable = false)
  |    |-- element: string (containsNull = false)
  |-- is_fork: boolean (nullable = true)
 
 
-scala> engine.getRepositories.getReference.printSchema
-getReference   getReferences
-
 scala> engine.getRepositories.getReferences.printSchema
 root
- |-- repository_id: string (nullable = true)
- |-- name: string (nullable = true)
- |-- hash: string (nullable = true)
+ |-- repository_id: string (nullable = false)
+ |-- name: string (nullable = false)
+ |-- hash: string (nullable = false)
 
 
 scala> engine.getRepositories.getReferences.getCommits.printSchema
 root
- |-- repository_id: string (nullable = true)
- |-- reference_name: string (nullable = true)
- |-- index: integer (nullable = true)
- |-- hash: string (nullable = true)
- |-- message: string (nullable = true)
+ |-- repository_id: string (nullable = false)
+ |-- reference_name: string (nullable = false)
+ |-- index: integer (nullable = false)
+ |-- hash: string (nullable = false)
+ |-- message: string (nullable = false)
  |-- parents: array (nullable = true)
  |    |-- element: string (containsNull = false)
  |-- tree: map (nullable = true)
@@ -43,7 +40,7 @@ root
  |    |-- value: string (valueContainsNull = false)
  |-- blobs: array (nullable = true)
  |    |-- element: string (containsNull = false)
- |-- parents_count: integer (nullable = true)
+ |-- parents_count: integer (nullable = false)
  |-- author_email: string (nullable = true)
  |-- author_name: string (nullable = true)
  |-- author_date: timestamp (nullable = true)
@@ -54,12 +51,33 @@ root
 
 scala> engine.getRepositories.getReferences.getFiles.printSchema
 root
- |-- file_hash: string (nullable = true)
+ |-- file_hash: string (nullable = false)
  |-- content: binary (nullable = true)
- |-- commit_hash: string (nullable = true)
+ |-- commit_hash: string (nullable = false)
  |-- is_binary: boolean (nullable = false)
  |-- path: string (nullable = true)
- |-- repository_id: string (nullable = true)
- |-- name: string (nullable = true)
+
+
+scala> engine.getRepositories.getReferences.getFiles.classifyLanguages.printSchema
+root
+ |-- file_hash: string (nullable = false)
+ |-- content: binary (nullable = true)
+ |-- commit_hash: string (nullable = false)
+ |-- is_binary: boolean (nullable = false)
+ |-- path: string (nullable = true)
+ |-- lang: string (nullable = true)
+
+
+scala> engine.getRepositories.getReferences.getFiles.classifyLanguages.extractUASTs.printSchema
+root
+ |-- file_hash: string (nullable = false)
+ |-- content: binary (nullable = true)
+ |-- commit_hash: string (nullable = false)
+ |-- is_binary: boolean (nullable = false)
+ |-- path: string (nullable = true)
+ |-- lang: string (nullable = true)
+ |-- uast: array (nullable = true)
+ |    |-- element: binary (containsNull = true)
+
 
 ```
