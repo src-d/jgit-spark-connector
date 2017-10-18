@@ -120,33 +120,43 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
                                       localPath: String): Repository = {
     val remotePath = new Path(path)
 
-    val localCompletePath =
+    val localUnpackedPath =
       new Path(localPath,
         new Path(RepositoryProvider.temporalLocalFolder,
           new Path(MD5Gen.str(path), remotePath.getName)
         )
       )
 
-    val localSivaPath = new Path(
-      localPath,
-      new Path(RepositoryProvider.temporalSivaFolder, remotePath.getName)
-    )
-    val fs = FileSystem.get(conf)
+    val fs = remotePath.getFileSystem(conf)
 
-    if (!fs.exists(localSivaPath) && !fs.exists(localCompletePath)) {
-      // Copy siva file to local fs
-      log.debug(s"Copy $remotePath to $localSivaPath")
-      fs.copyToLocalFile(remotePath, localSivaPath)
+    val (localSivaPath, isLocalSivaFile) = if (!path.startsWith("file:")) {
+      // if `remotePath` does not exist locally, copy it
+      val localSivaPath = new Path(
+        localPath,
+        new Path(RepositoryProvider.temporalSivaFolder, remotePath.getName)
+      )
+
+      if (!fs.exists(localSivaPath) && !fs.exists(localUnpackedPath)) {
+        // Copy siva file to local fs
+        log.debug(s"Copy $remotePath to $localSivaPath")
+        fs.copyToLocalFile(remotePath, localSivaPath)
+      }
+
+      (localSivaPath, false)
+    } else {
+      // if `remotePath` already exists locally, don't copy anything
+      // just use the given siva file
+      (new Path(path.substring(5)), true)
     }
 
-    if (!fs.exists(localCompletePath)) {
+    if (!fs.exists(localUnpackedPath)) {
       // unpack siva file
-      log.debug(s"Unpack siva file $localSivaPath to $localCompletePath")
+      log.debug(s"Unpack siva file $localSivaPath to $localUnpackedPath")
       val sr = new SivaReader(new File(localSivaPath.toString))
       val index = sr.getIndex.getFilteredIndex.getEntries.asScala
       index.foreach(ie => {
         val e = sr.getEntry(ie)
-        val outPath = Paths.get(localCompletePath.toString, ie.getName)
+        val outPath = Paths.get(localUnpackedPath.toString, ie.getName)
 
         FileUtils.copyInputStreamToFile(e, new File(outPath.toString))
       })
@@ -155,10 +165,10 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     }
 
     // After copy create a repository instance using the local path
-    val repo = new RepositoryBuilder().setGitDir(new File(localCompletePath.toString)).build()
+    val repo = new RepositoryBuilder().setGitDir(new File(localUnpackedPath.toString)).build()
 
     // delete siva file
-    if (!skipCleanup) {
+    if (!skipCleanup && !isLocalSivaFile) {
       log.debug(s"Delete $localSivaPath")
       FileUtils.deleteQuietly(Paths.get(localSivaPath.toString).toFile)
     }
