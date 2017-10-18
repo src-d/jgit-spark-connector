@@ -1,6 +1,6 @@
 # source{d} engine [![Build Status](https://travis-ci.org/src-d/spark-api.svg?branch=master)](https://travis-ci.org/src-d/spark-api) [![codecov](https://codecov.io/gh/src-d/spark-api/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/spark-api)
 
-**Spark API** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
+**source{d} engine** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
 
 It is written in Scala and built on top of Apache Spark to enable rapid construction of custom analysis pipelines and processing large number of Git repositories stored in HDFS in [Siva file format](https://github.com/src-d/go-siva). It is accessible both via Scala and Python Spark APIs, and capable of running on large-scale distributed clusters.
 
