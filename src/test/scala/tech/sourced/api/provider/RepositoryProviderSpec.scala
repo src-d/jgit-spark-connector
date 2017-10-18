@@ -1,7 +1,6 @@
 package tech.sourced.api.provider
 
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.UtilsWrapper
 import org.eclipse.jgit.lib.ObjectId
 import org.scalatest.{FlatSpec, Matchers}
 import tech.sourced.api.{BaseSivaSpec, BaseSparkSpec}
@@ -44,10 +43,11 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec wi
     val prov = SivaRDDProvider(ss.sparkContext)
     val sivaRDD = prov.get(resourcePath)
     val sivaFilesExist = sivaRDD.map(pds => {
-      val _ = RepositoryProvider("/tmp", skipCleanup = true)
-        .genRepository(pds.getConfiguration, pds.getPath(), "/tmp")
+      val provider = RepositoryProvider("/tmp", skipCleanup = true)
+      val _ = provider.genRepository(pds.getConfiguration, pds.getPath(), "/tmp")
       val localSivaPath = new Path("/tmp",
         new Path(RepositoryProvider.temporalSivaFolder, pds.getPath()))
+      provider.close(pds.getPath())
       FileSystem.get(pds.getConfiguration).exists(localSivaPath)
     }).collect()
 
@@ -61,8 +61,9 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec wi
     val sivaRDD = prov.get(resourcePath)
 
     val sivaFilesExist = sivaRDD.map(pds => {
-      val _ = new RepositoryProvider("/tmp/two")
-        .genRepository(pds.getConfiguration, pds.getPath(), "/tmp/two")
+      val provider = new RepositoryProvider("/tmp/two")
+      val _ = provider.genRepository(pds.getConfiguration, pds.getPath(), "/tmp/two")
+      provider.close(pds.getPath())
       val localSivaPath = new Path("/tmp/two",
         new Path(RepositoryProvider.temporalSivaFolder, new Path(pds.getPath()).getName))
       FileSystem.get(pds.getConfiguration).exists(localSivaPath)
