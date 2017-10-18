@@ -6,7 +6,7 @@ From the `engine` object instantiated in the spark-shell, a bunch of files are r
 
 Finally, the `file_hash` , `path` and `uast` is showed on the table.
 
-```python
+```
 $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
 >>> from sourced.engine import Engine
 >>> engine = Engine(spark, '/path/to/siva-files')

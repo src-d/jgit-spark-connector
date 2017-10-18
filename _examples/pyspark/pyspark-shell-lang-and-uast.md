@@ -4,7 +4,7 @@ The combined usage of both, `classify_languages()` and `extract_uasts()` methods
 
 To do that, you just have to call  `extract_uasts()` on a Dataframe where previously, `classify_languages()` was used.
 
-```python
+```
 $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
 >>> from sourced.engine import Engine
 >>> engine = Engine(spark, '/path/to/siva-files')

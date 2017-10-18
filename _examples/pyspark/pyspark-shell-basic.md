@@ -6,7 +6,7 @@ First, you can see how to import the package and instantiate and object that pro
 
 The `engine` object is used to get all the repositories, get the `HEAD` references from the repositories and eventually, get all the files from these references. Then a table is showed selecting the columns `file_hash`, `path` and `content`.
 
-```python
+```
 $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
 >>> from sourced.engine import Engine
 >>> engine = Engine(spark, '/path/to/siva-files')

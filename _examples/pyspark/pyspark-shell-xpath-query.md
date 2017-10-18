@@ -8,7 +8,7 @@ Then we can use the method `query_uast()` to get a result for the query we are f
 
 Finally, `extract_tokens()` method will generate a column `tokens` based on the previous generated column `result`.
 
-```python
+```
 $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
 >>> from sourced.engine import Engine
 >>> engine = Engine(spark, '/path/to/siva-files')

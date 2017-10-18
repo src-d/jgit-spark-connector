@@ -8,7 +8,7 @@ Then we can use the method `queryUAST` to get a result for the query we are form
 
 Finally, `extractTokens` method will generate a column `tokens` based on the previous generated column `result`.
 
-```scala
+```
 $ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
 scala> import tech.sourced.engine._
 import tech.sourced.engine._

@@ -4,7 +4,7 @@ The combined usage of both, `classifyLanguages` and `extractUASTs` methods, has 
 
 To do that, you just have to call  `extractUASTs` on a Dataframe where previously, `classifyLanguages` was used.
 
-```scala
+```
 $ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
 scala> import tech.sourced.engine._
 import tech.sourced.engine._

@@ -6,7 +6,7 @@ From the `engine` object instantiated in the spark-shell, a bunch of files has b
 
 Finally, the `file_hash`, file `path` and `uast` is showed on the table.
 
-```scala
+```
 $ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
 scala> import tech.sourced.engine._
 import tech.sourced.engine._

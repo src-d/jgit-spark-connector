@@ -4,7 +4,7 @@ The next example showed,  just try to show the simple usage of the useful method
 
 It can help you to follow the aggregated or pruned information that your transformations make on the data you are handling.
 
-```scala
+```
 $ spark-shell --packages com.github.src-d:enginei:master-SNAPSHOT --repositories https://jitpack.io
 scala> import tech.sourced.engine._
 import tech.sourced.engine._

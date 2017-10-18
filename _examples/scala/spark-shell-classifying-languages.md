@@ -4,7 +4,7 @@ This example uses the spark-shell to show how to classify files by their languag
 
 Making use of the `engine` object, it filters repositories by `id` to get all files from the `HEAD` references from them. After that, a call to `classifyLanguages` function detects the language for each file to show them in the aggregated column `lang` beside the selected columns `file_hash` and `path`.
 
-```scala
+```
 $ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
 scala> import tech.sourced.engine._
 import tech.sourced.engine._
