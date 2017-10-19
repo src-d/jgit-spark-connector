@@ -182,7 +182,7 @@ scala> engine.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
 
 You can launch our docker container which contains some Notebooks examples just running:
 
-    docker run --name engine-jupyter --rm -it -p 8888:8888 -v $(pwd)/path/to/siva-files:/repositories --link bblfsh:bblfsh srcd/engine-jupyter
+    docker run --name engine-jupyter --rm -it -p 8888:8888 -v $(pwd)/path/to/siva-files:/repositories --link bblfshd:bblfshd srcd/engine-jupyter
 
 You must have some siva files in local to mount them on the container replacing the path `$(pwd)/path/to/siva-files`. You can get some siva-files from the project [here](https://github.com/src-d/engine/tree/master/examples/siva-files).
 
