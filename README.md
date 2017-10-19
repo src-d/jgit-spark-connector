@@ -1,4 +1,4 @@
-# source{d} Engine [![Build Status](https://travis-ci.org/src-d/engine.svg?branch=master)](https://travis-ci.org/src-d/spark-api) [![codecov](https://codecov.io/gh/src-d/engine/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/spark-api)
+# source{d} Engine [![Build Status](https://travis-ci.org/src-d/spark-api.svg?branch=master)](https://travis-ci.org/src-d/spark-api) [![codecov](https://codecov.io/gh/src-d/spark-api/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/spark-api)
 
 **source{d} Engine** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
 
@@ -115,7 +115,7 @@ $ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./sourced-engine.
 
 ### pyspark API usage
 
-Run pyspark as explained before to start using spark-api:
+Run pyspark as explained before to start using the engine:
 
 ```bash
 $ $SPARK_HOME/bin/pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
