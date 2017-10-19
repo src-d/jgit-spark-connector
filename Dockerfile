@@ -2,10 +2,10 @@ FROM jupyter/all-spark-notebook
 
 RUN mkdir -p /opt/
 
-# spark-api jar location
+# engine jar location
 ENV SPARK_DRIVER_EXTRA_CLASSPATH spark.driver.extraClassPath
 ENV SPARK_EXECUTOR_EXTRA_CLASSPATH spark.executor.extraClassPath
-ENV SRCD_JAR /opt/jars/spark-api-uber.jar
+ENV SRCD_JAR /opt/jars/engine-uber.jar
 
 # bblfsh endpoint variables
 ENV SPARK_BBLFSH_HOST spark.tech.sourced.bblfsh.grpc.host
@@ -21,12 +21,12 @@ RUN echo "$SPARK_DRIVER_EXTRA_CLASSPATH $SRCD_JAR\n$SPARK_EXECUTOR_EXTRA_CLASSPA
 RUN echo "$SPARK_BBLFSH_HOST $BBLFSH_HOST\n$SPARK_BBLFSH_PORT $BBLFSH_PORT"\
 	>> /usr/local/spark/conf/spark-defaults.conf
 
-COPY ./target/scala-2.11/spark-api-uber.jar /opt/jars/
+COPY ./target/scala-2.11/engine-uber.jar /opt/jars/
 COPY ./examples/notebooks/* /home/$NB_USER/
-COPY ./python /opt/python-spark-api/
+COPY ./python /opt/python-engine/
 
-RUN echo "local" > /opt/python-spark-api/version.txt
-RUN pip install -e /opt/python-spark-api/
+RUN echo "local" > /opt/python-engine/version.txt
+RUN pip install -e /opt/python-engine/
 
 # Install spark progress bar plugin
 RUN pip install jupyter-spark

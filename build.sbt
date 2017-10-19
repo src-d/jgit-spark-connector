@@ -4,11 +4,11 @@ import sbt.Keys.{libraryDependencies, resolvers}
 lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
-      organization := "tech.spark.api",
+      organization := "tech.sourced",
       scalaVersion := "2.11.11",
       version := "0.1.0-SNAPSHOT"
     )),
-    name := "spark-api",
+    name := "engine",
     libraryDependencies += scalaTest % Test,
     libraryDependencies += scoverage % Test,
     libraryDependencies += sparkSql % Provided,

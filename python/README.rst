@@ -1,4 +1,4 @@
-source{d} Spark API
+source{d} Engine
 ----------------------------
 
-Python wrapper of the source{d} Spark API to perform analysis on top of source code.
+Python wrapper of the source{d} Engine to perform analysis on top of source code.
