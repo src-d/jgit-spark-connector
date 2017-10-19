@@ -4,36 +4,41 @@ The combined usage of both, `classify_languages()` and `extract_uasts()` methods
 
 To do that, you just have to call  `extract_uasts()` on a Dataframe where previously, `classify_languages()` was used.
 
-```bash
-$ pyspark --packages com.github.src-d:spark-api:master-SNAPSHOT --repositories https://jitpack.io
->>> from sourced.spark import API as SparkAPI
->>> api = SparkAPI(spark, '/path/to/siva-files')
->>> api.repositories.references.head_ref.files.classify_languages().extract_uasts().select("path", "lang", "uast").show()
+Launch pyspark-shell:
+```sh
+$ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+```
 
-+--------------------+--------+--------------------+
-|                path|    lang|                uast|
-+--------------------+--------+--------------------+
-|          .gitignore|    null|                  []|
-|         .travis.yml|    YAML|                  []|
-|             LICENSE|    Text|                  []|
-|           README.md|Markdown|                  []|
-|          abs/abs.py|  Python|[0A 06 4D 6F 64 7...|
-|differentiation/s...|  Python|[0A 06 4D 6F 64 7...|
-|euclidean/distanc...|  Python|[0A 06 4D 6F 64 7...|
-|factorial/factori...|  Python|[0A 06 4D 6F 64 7...|
-|factorial/factori...|  Python|[0A 06 4D 6F 64 7...|
-|fibonacci/fibonac...|  Python|[0A 06 4D 6F 64 7...|
-|fibonacci/fibonac...|  Python|[0A 06 4D 6F 64 7...|
-|fibonacci/fibonac...|  Python|[0A 06 4D 6F 64 7...|
-|          gcd/gcd.py|  Python|[0A 06 4D 6F 64 7...|
-|gcd/gcd_optimal_e...|  Python|[0A 06 4D 6F 64 7...|
-|          lcm/lcm.py|  Python|[0A 06 4D 6F 64 7...|
-|lcm/lcm_optimal_e...|  Python|[0A 06 4D 6F 64 7...|
-|   prime/is_prime.py|  Python|[0A 06 4D 6F 64 7...|
-|prime/is_prime_im...|  Python|[0A 06 4D 6F 64 7...|
-|prime/is_prime_op...|  Python|[0A 06 4D 6F 64 7...|
-| prime/next_prime.py|  Python|[0A 06 4D 6F 64 7...|
-+--------------------+--------+--------------------+
+Code:
+```python
+from sourced.engine import Engine
+engine = Engine(spark, '/path/to/siva-files') engine.repositories.references.head_ref.files.classify_languages().extract_uasts().select("path", "lang", "uast").show()
+
+''' Output:
++--------------------+--------+-------------+
+|                path|    lang|         uast|
++--------------------+--------+-------------+
+|fibonacci/fibonac...|  Python|[[B@759dfd4e]|
+|          gcd/gcd.py|  Python| [[B@36ea40c]|
+|           README.md|Markdown|           []|
+|prime/is_prime_op...|  Python|[[B@2da632d5]|
+|factorial/factori...|  Python|  [[B@37e738]|
+|         .travis.yml|    YAML|           []|
+|   prime/is_prime.py|  Python|[[B@1ada1dfd]|
+|pythagorean_tripl...|  Python|[[B@6ce2846e]|
+|prime/is_prime_op...|  Python|[[B@704e33bd]|
+|prime/is_prime_op...|  Python|[[B@4fff14ab]|
+|          gcd/gcd.py|  Python| [[B@580cd5c]|
+|gcd/gcd_optimal_e...|  Python|[[B@7db9e876]|
+|differentiation/s...|  Python|[[B@7c6befa7]|
+|differentiation/s...|  Python|[[B@4b06f6cd]|
+|          gcd/gcd.py|  Python|[[B@486f38dc]|
+|factorial/factori...|  Python|[[B@7a2783ff]|
+|          abs/abs.py|  Python|[[B@59124dcb]|
+|prime/is_prime_op...|  Python|[[B@25de68ba]|
+|euclidean/distanc...|  Python|[[B@14c61d05]|
+|          gcd/gcd.py|  Python|[[B@52b84c19]|
++--------------------+--------+-------------+
 only showing top 20 rows
-
+'''
 ```
