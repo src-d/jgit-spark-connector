@@ -32,4 +32,4 @@ Here you can find a list of annotated *source{d} Engine* examples:
 
 ### jupyter notebooks
 
-- [Basic example](notebooks/Basic%2BExample.ipynb)
+- [Basic example](notebooks/Example.ipynb)
