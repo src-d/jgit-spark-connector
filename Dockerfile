@@ -20,7 +20,7 @@ ENV JVM_EXTRA_ARGS -Xcheck:jni
 USER root
 
 RUN echo "$SPARK_DRIVER_EXTRA_CLASSPATH $SRCD_JAR\n$SPARK_EXECUTOR_EXTRA_CLASSPATH $SRCD_JAR"\
-          > /usr/local/spark/conf/spark-defaults.conf
+          >> /usr/local/spark/conf/spark-defaults.conf
 
 RUN echo "$SPARK_BBLFSH_HOST $BBLFSH_HOST\n$SPARK_BBLFSH_PORT $BBLFSH_PORT"\
 	>> /usr/local/spark/conf/spark-defaults.conf
