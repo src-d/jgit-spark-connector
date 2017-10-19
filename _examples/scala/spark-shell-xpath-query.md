@@ -8,15 +8,19 @@ Then we can use the method `queryUAST` to get a result for the query we are form
 
 Finally, `extractTokens` method will generate a column `tokens` based on the previous generated column `result`.
 
-```
+Launch spark-shell:
+```sh
 $ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
-scala> import tech.sourced.engine._
+```
+
+Code:
+```scala
 import tech.sourced.engine._
 
-scala> val engine = Engine(spark, "/path/to/siva-files")
-engine: tech.sourced.engine.Engine = tech.sourced.engine.Engine@7e18b9e6
+val engine = Engine(spark, "/path/to/siva-files")
+engine.getRepositories.getHEAD.getFiles.classifyLanguages.where('lang === "Python").extractUASTs.queryUAST("//*[@roleIdentifier]", "uast", "result").extractTokens("result", "tokens").select('path, 'lang, 'uast, 'tokens).show
 
-scala> engine.getRepositories.getHEAD.getFiles.classifyLanguages.where('lang === "Python").extractUASTs.queryUAST("//*[@roleIdentifier]", "uast", "result").extractTokens("result", "tokens").select('path, 'lang, 'uast, 'tokens).show
+/* Output:
 +--------------------+------+-------------+--------------------+
 |                path|  lang|         uast|              tokens|
 +--------------------+------+-------------+--------------------+
@@ -42,5 +46,5 @@ scala> engine.getRepositories.getHEAD.getFiles.classifyLanguages.where('lang ===
 |factorial/factori...|Python|[[B@754ce81c]|[factorial, n, in...|
 +--------------------+------+-------------+--------------------+
 only showing top 20 rows
-
+*/
 ```

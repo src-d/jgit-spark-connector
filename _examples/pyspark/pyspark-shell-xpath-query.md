@@ -8,12 +8,19 @@ Then we can use the method `query_uast()` to get a result for the query we are f
 
 Finally, `extract_tokens()` method will generate a column `tokens` based on the previous generated column `result`.
 
-```
+Launch pyspark-shell:
+```sh
 $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
->>> from sourced.engine import Engine
->>> engine = Engine(spark, '/path/to/siva-files')
+```
 
->>> engine.repositories.references.head_ref.files.classify_languages().where('lang = "Python"').extract_uasts().query_uast('//*[@roleIdentifier]').extract_tokens('result', 'tokens').select('file_hash', 'path', 'lang', 'uast', 'tokens').show()
+Code:
+```python
+from sourced.engine import Engine
+engine = Engine(spark, '/path/to/siva-files')
+
+engine.repositories.references.head_ref.files.classify_languages().where('lang = "Python"').extract_uasts().query_uast('//*[@roleIdentifier]').extract_tokens('result', 'tokens').select('file_hash', 'path', 'lang', 'uast', 'tokens').show()
+
+''' Output:
 +--------------------+--------------------+------+-------------+--------------------+
 |           file_hash|                path|  lang|         uast|              tokens|
 +--------------------+--------------------+------+-------------+--------------------+
@@ -39,5 +46,5 @@ $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories http
 |8ab978a56c5dcb239...|factorial/factori...|Python|[[B@297dca19]|[factorial, n, in...|
 +--------------------+--------------------+------+-------------+--------------------+
 only showing top 20 rows
-
+'''
 ```

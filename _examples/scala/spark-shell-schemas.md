@@ -4,29 +4,35 @@ The next example showed,  just try to show the simple usage of the useful method
 
 It can help you to follow the aggregated or pruned information that your transformations make on the data you are handling.
 
-```
+Launch spark-shell:
+```sh
 $ spark-shell --packages com.github.src-d:enginei:master-SNAPSHOT --repositories https://jitpack.io
-scala> import tech.sourced.engine._
+```
+
+Code:
+```scala
 import tech.sourced.engine._
 
-scala> val engine = Engine(spark, "/path/to/siva-files")
-
-scala> engine.getRepositories.printSchema
+val engine = Engine(spark, "/path/to/siva-files")
+engine.getRepositories.printSchema
+/* Output:
 root
  |-- id: string (nullable = false)
  |-- urls: array (nullable = false)
  |    |-- element: string (containsNull = false)
  |-- is_fork: boolean (nullable = true)
+*/
 
-
-scala> engine.getRepositories.getReferences.printSchema
+engine.getRepositories.getReferences.printSchema
+/* Output:
 root
  |-- repository_id: string (nullable = false)
  |-- name: string (nullable = false)
  |-- hash: string (nullable = false)
+*/
 
-
-scala> engine.getRepositories.getReferences.getCommits.printSchema
+engine.getRepositories.getReferences.getCommits.printSchema
+/* Output:
 root
  |-- repository_id: string (nullable = false)
  |-- reference_name: string (nullable = false)
@@ -47,18 +53,20 @@ root
  |-- committer_email: string (nullable = true)
  |-- committer_name: string (nullable = true)
  |-- committer_date: timestamp (nullable = true)
+*/
 
-
-scala> engine.getRepositories.getReferences.getFiles.printSchema
+engine.getRepositories.getReferences.getFiles.printSchema
+/* Output:
 root
  |-- file_hash: string (nullable = false)
  |-- content: binary (nullable = true)
  |-- commit_hash: string (nullable = false)
  |-- is_binary: boolean (nullable = false)
  |-- path: string (nullable = true)
+*/
 
-
-scala> engine.getRepositories.getReferences.getFiles.classifyLanguages.printSchema
+engine.getRepositories.getReferences.getFiles.classifyLanguages.printSchema
+/* Output:
 root
  |-- file_hash: string (nullable = false)
  |-- content: binary (nullable = true)
@@ -66,9 +74,10 @@ root
  |-- is_binary: boolean (nullable = false)
  |-- path: string (nullable = true)
  |-- lang: string (nullable = true)
+*/
 
-
-scala> engine.getRepositories.getReferences.getFiles.classifyLanguages.extractUASTs.printSchema
+engine.getRepositories.getReferences.getFiles.classifyLanguages.extractUASTs.printSchema
+/* Output:
 root
  |-- file_hash: string (nullable = false)
  |-- content: binary (nullable = true)
@@ -78,6 +87,5 @@ root
  |-- lang: string (nullable = true)
  |-- uast: array (nullable = true)
  |    |-- element: binary (containsNull = true)
-
-
+*/
 ```

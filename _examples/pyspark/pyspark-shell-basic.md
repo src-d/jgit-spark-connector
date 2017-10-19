@@ -6,11 +6,18 @@ First, you can see how to import the package and instantiate and object that pro
 
 The `engine` object is used to get all the repositories, get the `HEAD` references from the repositories and eventually, get all the files from these references. Then a table is showed selecting the columns `file_hash`, `path` and `content`.
 
-```
+Launch pyspark-shell:
+```sh
 $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
->>> from sourced.engine import Engine
->>> engine = Engine(spark, '/path/to/siva-files')
->>> engine.repositories.references.head_ref.files.select('file_hash', 'path', 'content').show()
+```
+
+Code
+```python
+from sourced.engine import Engine
+engine = Engine(spark, '/path/to/siva-files')
+engine.repositories.references.head_ref.files.select('file_hash', 'path', 'content').show()
+
+''' Output:
 +--------------------+--------------------+--------------------+
 |           file_hash|                path|             content|
 +--------------------+--------------------+--------------------+
@@ -36,5 +43,5 @@ $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories http
 |6d7c6cb29abb52fc2...|          gcd/gcd.py|[64 65 66 20 67 6...|
 +--------------------+--------------------+--------------------+
 only showing top 20 rows
-
+'''
 ```

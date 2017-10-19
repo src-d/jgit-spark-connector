@@ -4,14 +4,19 @@ This example uses the spark-shell to show how to classify files by their languag
 
 Making use of the `engine` object, it filters repositories by `id` to get all files from the `HEAD` references from them. After that, a call to `classifyLanguages` function detects the language for each file to show them in the aggregated column `lang` beside the selected columns `file_hash` and `path`.
 
-```
+Launch spark-shell:
+```sh
 $ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
-scala> import tech.sourced.engine._
+```
+
+Code:
+```scala
 import tech.sourced.engine._
 
-scala> val engine = Engine(spark, "/path/to/siva-files")
+val engine = Engine(spark, "/path/to/siva-files")
+engine.getRepositories.filter('id === "github.com/mingrammer/funmath.git").getHEAD.getFiles.classifyLanguages.select('file_hash, 'path, 'lang).show
 
-scala> engine.getRepositories.filter('id === "github.com/mingrammer/funmath.git").getHEAD.getFiles.classifyLanguages.select('file_hash, 'path, 'lang).show
+/* Output:
 +--------------------+--------------------+--------+
 |           file_hash|                path|    lang|
 +--------------------+--------------------+--------+
@@ -37,5 +42,5 @@ scala> engine.getRepositories.filter('id === "github.com/mingrammer/funmath.git"
 |6d7c6cb29abb52fc2...|          gcd/gcd.py|  Python|
 +--------------------+--------------------+--------+
 only showing top 20 rows
-
+*/
 ```

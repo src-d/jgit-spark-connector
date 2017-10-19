@@ -4,11 +4,17 @@ The combined usage of both, `classify_languages()` and `extract_uasts()` methods
 
 To do that, you just have to call  `extract_uasts()` on a Dataframe where previously, `classify_languages()` was used.
 
-```
+Launch pyspark-shell:
+```sh
 $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
->>> from sourced.engine import Engine
->>> engine = Engine(spark, '/path/to/siva-files')
->>> engine.repositories.references.head_ref.files.classify_languages().extract_uasts().select("path", "lang", "uast").show()
+```
+
+Code:
+```python
+from sourced.engine import Engine
+engine = Engine(spark, '/path/to/siva-files') engine.repositories.references.head_ref.files.classify_languages().extract_uasts().select("path", "lang", "uast").show()
+
+''' Output:
 +--------------------+--------+-------------+
 |                path|    lang|         uast|
 +--------------------+--------+-------------+
@@ -34,5 +40,5 @@ $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories http
 |          gcd/gcd.py|  Python|[[B@52b84c19]|
 +--------------------+--------+-------------+
 only showing top 20 rows
-
+'''
 ```

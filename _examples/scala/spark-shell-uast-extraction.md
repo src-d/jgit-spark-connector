@@ -6,18 +6,20 @@ From the `engine` object instantiated in the spark-shell, a bunch of files has b
 
 Finally, the `file_hash`, file `path` and `uast` is showed on the table.
 
-```
+Launch spark-shell:
+```sh
 $ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
-scala> import tech.sourced.engine._
+```
+
+```scala
 import tech.sourced.engine._
 
-scala> val engine = Engine(spark, "/path/to/siva-files")
+val engine = Engine(spark, "/path/to/siva-files")
+val exampleDf = engine.getRepositories.filter('id === "github.com/mingrammer/funmath.git").getHEAD.getFiles.extractUASTs.select('file_hash, 'path, 'uast)
 
-scala> val exampleDf = engine.getRepositories.filter('id === "github.com/mingrammer/funmath.git").getHEAD.getFiles.extractUASTs.select('file_hash, 'path, 'uast)
+exampleDf.show
 
-scala> exampleDf.show
-
-scala> exampleDf.show
+/* Output:
 +--------------------+--------------------+-------------+
 |           file_hash|                path|         uast|
 +--------------------+--------------------+-------------+
@@ -43,5 +45,5 @@ scala> exampleDf.show
 |6d7c6cb29abb52fc2...|          gcd/gcd.py|[[B@5b52d5af]|
 +--------------------+--------------------+-------------+
 only showing top 20 rows
-
+*/
 ```

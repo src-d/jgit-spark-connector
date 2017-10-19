@@ -6,11 +6,18 @@ From the `engine` object instantiated in the spark-shell, a bunch of files are r
 
 Finally, the `file_hash` , `path` and `uast` is showed on the table.
 
-```
+Launch pyspark-shell:
+```sh
 $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
->>> from sourced.engine import Engine
->>> engine = Engine(spark, '/path/to/siva-files')
->>> engine.repositories.references.head_ref.files.extract_uasts().select("file_hash", "path", "uast").show()
+```
+
+Code:
+```python
+from sourced.engine import Engine
+engine = Engine(spark, '/path/to/siva-files')
+engine.repositories.references.head_ref.files.extract_uasts().select("file_hash", "path", "uast").show()
+
+''' Output:
 +--------------------+--------------------+-------------+
 |           file_hash|                path|         uast|
 +--------------------+--------------------+-------------+
@@ -36,5 +43,5 @@ $ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories http
 |6d7c6cb29abb52fc2...|          gcd/gcd.py|[[B@4c1c08aa]|
 +--------------------+--------------------+-------------+
 only showing top 20 rows
-
+'''
 ```

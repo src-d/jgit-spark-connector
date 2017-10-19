@@ -4,14 +4,19 @@ The combined usage of both, `classifyLanguages` and `extractUASTs` methods, has 
 
 To do that, you just have to call  `extractUASTs` on a Dataframe where previously, `classifyLanguages` was used.
 
-```
+Launch spark-shell:
+```sh
 $ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
-scala> import tech.sourced.engine._
+```
+
+Code:
+```scala
 import tech.sourced.engine._
 
-scala> val engine = Engine(spark, "/path/to/siva-files")
+val engine = Engine(spark, "/path/to/siva-files")
+engine.getRepositories.getHEAD.getFiles.classifyLanguages.extractUASTs.select('file_hash, 'path, 'lang, 'uast).show
 
-scala> engine.getRepositories.getHEAD.getFiles.classifyLanguages.extractUASTs.select('file_hash, 'path, 'lang, 'uast).show
+/* Output:
 +--------------------+--------------------+--------+-------------+
 |           file_hash|                path|    lang|         uast|
 +--------------------+--------------------+--------+-------------+
@@ -37,5 +42,5 @@ scala> engine.getRepositories.getHEAD.getFiles.classifyLanguages.extractUASTs.se
 |6d7c6cb29abb52fc2...|          gcd/gcd.py|  Python|[[B@5f5248f5]|
 +--------------------+--------------------+--------+-------------+
 only showing top 20 rows
-
+*/
 ```
