@@ -8,7 +8,7 @@ object Dependencies {
   lazy val fixNettyForGrpc = "io.netty" % "netty-all" % "4.1.11.Final"
   lazy val jgit = "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r"
   lazy val siva = "com.github.src-d" % "siva-java" % "master-SNAPSHOT"
-  lazy val bblfsh = "org.bblfsh" % "bblfsh-client" % "1.2.1"
+  lazy val bblfsh = "org.bblfsh" % "bblfsh-client" % "1.2.2"
   lazy val enry = "tech.sourced" % "enry-java" % "1.5.1"
   lazy val commonsIO = "commons-io" % "commons-io" % "2.5"
 }
