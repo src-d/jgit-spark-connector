@@ -5,9 +5,6 @@ language: scala
 
 scala:
    - 2.11.11
-jdk:
-  - jdk8
-  - openjdk8
 
 cache:
   directories:
@@ -20,25 +17,43 @@ services:
 matrix:
   fast_finish: true
   include:
+    - jdk: jdk8
+
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
+        - openssl aes-256-cbc -K $encrypted_8a9ac81f2640_key -iv $encrypted_8a9ac81f2640_iv -in key.asc.enc -out key.asc -d
+        - gpg --no-default-keyring --primary-keyring ./project/.gnupg/pubring.gpg --secret-keyring ./project/.gnupg/secring.gpg --keyring ./project/.gnupg/pubring.gpg --fingerprint --import key.asc
+        - cp target/**/engine-uber.jar "engine-$TRAVIS_TAG.jar"
+
+      deploy:
+        - provider: script
+          script: make docker-push && make maven-release
+          skip_cleanup: true
+          on:
+            tags: true
+        - provider: releases
+          api_key:
+            secure: $GITHUB_TOKEN
+          file_glob: true
+          file: "*.jar"
+          skip_cleanup: true
+          on:
+            tags: true
+
+    - jdk: openjdk8
+
     - language: python
       python: 2.7
 
       install:
         - make build
         - mkdir -p python/jars
-        - cp target/**/engine-uber.jar python/jars
+        - cp target/engine-uber.jar python/jars
         - cd python
         - pip install -r requirements.txt
 
       script:
         - python -m unittest discover -v
-
-      after_success:
-        - echo "" # noop to avoid executing the one from the main build
-
-      deploy:
-       - provider: script
-         script: echo "" # noop to avoid executing the one from the main build
 
     - language: python
       python: 3.6
@@ -46,15 +61,12 @@ matrix:
       install:
         - make build
         - mkdir -p python/jars
-        - cp target/**/engine-uber.jar python/jars
+        - cp target/engine-uber.jar python/jars
         - cd python
         - pip install -r requirements.txt
 
       script:
         - python -m unittest discover -v
-
-      after_success:
-        - echo "" # noop to avoid executing the one from the main build
 
       before_deploy:
         - echo "$TRAVIS_TAG" | cut -c 2- > version.txt
@@ -66,9 +78,6 @@ matrix:
           skip_cleanup: true
           on:
             tags: true
-        - provider: script
-          script: echo "" # noop to avoid executing the one from the main build
-
 
 before_script:
   - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
@@ -76,13 +85,3 @@ before_script:
 script:
   - make travis-test
   - make build
-
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
-
-deploy:
-  provider: script
-  script: make docker-push
-  skip_cleanup: true
-  on:
-    tags: true

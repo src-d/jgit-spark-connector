@@ -153,3 +153,7 @@ docker-push: docker-build
 		$(DOCKER_PUSH) $(call unescape_docker_tag,$(JUPYTER_IMAGE):latest); \
 	fi;
 
+maven-release:
+	$(SBT) publishLocal && \
+	$(SBT) publishSigned && \
+	$(SBT) sonatypeRelease
