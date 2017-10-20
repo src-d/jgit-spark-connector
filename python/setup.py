@@ -23,7 +23,7 @@ setup(
     license="Apache-2.0",
     author="source{d}",
     author_email="hello@sourced.tech",
-    url="https://github.com/src-d/spark-api/tree/master/python",
+    url="https://github.com/src-d/engine/tree/master/python",
     packages=['sourced',
               'sourced.engine'],
     install_requires=["pyspark>=2.0.0"],
