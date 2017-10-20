@@ -28,5 +28,5 @@ RUN echo "local" > /opt/python-engine/version.txt \
     && jupyter nbextension enable --py widgetsnbextension
 
 # Separate the config file in a different RUN creation as this may change more often
-RUN echo "$SPARK_DRIVER_EXTRA_CLASSPATH $SRCD_JAR\n$SPARK_EXECUTOR_EXTRA_CLASSPATH $SRCD_JAR" > /usr/local/spark/conf/spark-defaults.conf \
+RUN echo "$SPARK_DRIVER_EXTRA_CLASSPATH $SRCD_JAR\n$SPARK_EXECUTOR_EXTRA_CLASSPATH $SRCD_JAR" >> /usr/local/spark/conf/spark-defaults.conf \
     && echo "$SPARK_BBLFSH_HOST $BBLFSH_HOST\n$SPARK_BBLFSH_PORT $BBLFSH_PORT" >> /usr/local/spark/conf/spark-defaults.conf \
