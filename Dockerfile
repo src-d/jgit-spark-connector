@@ -15,22 +15,18 @@ ENV BBLFSH_PORT 9432
 
 USER root
 
-RUN echo "$SPARK_DRIVER_EXTRA_CLASSPATH $SRCD_JAR\n$SPARK_EXECUTOR_EXTRA_CLASSPATH $SRCD_JAR"\
-          > /usr/local/spark/conf/spark-defaults.conf
-
-RUN echo "$SPARK_BBLFSH_HOST $BBLFSH_HOST\n$SPARK_BBLFSH_PORT $BBLFSH_PORT"\
-	>> /usr/local/spark/conf/spark-defaults.conf
-
 COPY ./target/scala-2.11/engine-uber.jar /opt/jars/
 COPY ./examples/notebooks/* /home/$NB_USER/
 COPY ./python /opt/python-engine/
 
-RUN echo "local" > /opt/python-engine/version.txt
-RUN pip install -e /opt/python-engine/
+RUN echo "local" > /opt/python-engine/version.txt \
+    && pip install -e /opt/python-engine/ \
+    && pip install jupyter-spark \
+    && jupyter serverextension enable --py jupyter_spark \
+    && jupyter nbextension install --py jupyter_spark \
+    && jupyter nbextension enable --py jupyter_spark \
+    && jupyter nbextension enable --py widgetsnbextension
 
-# Install spark progress bar plugin
-RUN pip install jupyter-spark
-RUN jupyter serverextension enable --py jupyter_spark
-RUN jupyter nbextension install --py jupyter_spark
-RUN jupyter nbextension enable --py jupyter_spark
-RUN jupyter nbextension enable --py widgetsnbextension
+# Separate the config file in a different RUN creation as this may change more often
+RUN echo "$SPARK_DRIVER_EXTRA_CLASSPATH $SRCD_JAR\n$SPARK_EXECUTOR_EXTRA_CLASSPATH $SRCD_JAR" >> /usr/local/spark/conf/spark-defaults.conf \
+    && echo "$SPARK_BBLFSH_HOST $BBLFSH_HOST\n$SPARK_BBLFSH_PORT $BBLFSH_PORT" >> /usr/local/spark/conf/spark-defaults.conf \
