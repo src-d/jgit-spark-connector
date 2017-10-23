@@ -1,6 +1,6 @@
 # Exclude all directories and files except those used by Dockerfile to build the image
 *
-!target/scala-2.11/engine-uber.jar
+!target/engine-uber.jar
 !examples/
 !python/
 

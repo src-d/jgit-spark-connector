@@ -23,7 +23,7 @@ matrix:
         - bash <(curl -s https://codecov.io/bash)
         - openssl aes-256-cbc -K $encrypted_8a9ac81f2640_key -iv $encrypted_8a9ac81f2640_iv -in key.asc.enc -out key.asc -d
         - gpg --no-default-keyring --primary-keyring ./project/.gnupg/pubring.gpg --secret-keyring ./project/.gnupg/secring.gpg --keyring ./project/.gnupg/pubring.gpg --fingerprint --import key.asc
-        - cp target/**/engine-uber.jar "engine-$TRAVIS_TAG.jar"
+        - cp target/engine-uber.jar "engine-$TRAVIS_TAG.jar"
 
       deploy:
         - provider: script
