@@ -6,7 +6,7 @@ lazy val root = (project in file(".")).
     inThisBuild(List(
       organization := "tech.sourced",
       scalaVersion := "2.11.11",
-      version := "0.1.0-SNAPSHOT"
+      version := "0.1.1-SNAPSHOT"
     )),
     name := "engine",
     libraryDependencies += scalaTest % Test,

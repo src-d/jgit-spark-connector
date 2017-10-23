@@ -15,9 +15,10 @@ ENV BBLFSH_PORT 9432
 
 USER root
 
-COPY ./target/scala-2.11/engine-uber.jar /opt/jars/
-COPY ./examples/notebooks/* /home/$NB_USER/
 COPY ./python /opt/python-engine/
+COPY ./examples/notebooks/* /home/$NB_USER/
+ADD ./target/engine-uber.jar /opt/jars/
+
 
 RUN echo "local" > /opt/python-engine/version.txt \
     && pip install -e /opt/python-engine/ \
