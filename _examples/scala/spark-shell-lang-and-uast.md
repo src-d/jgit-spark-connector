@@ -6,7 +6,7 @@ To do that, you just have to call  `extractUASTs` on a Dataframe where previousl
 
 Launch spark-shell:
 ```sh
-$ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ spark-shell --packages "tech.sourced:engine:0.1.2"
 ```
 
 Code:

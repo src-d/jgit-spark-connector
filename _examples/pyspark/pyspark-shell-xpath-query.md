@@ -10,7 +10,7 @@ Finally, `extract_tokens()` method will generate a column `tokens` based on the 
 
 Launch pyspark-shell:
 ```sh
-$ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ pyspark --packages "tech.sourced:engine:0.1.2"
 ```
 
 Code:

@@ -6,7 +6,7 @@ It can help you to follow the aggregated or pruned information that your transfo
 
 Launch pyspark-shell:
 ```sh
-$ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ pyspark --packages "tech.sourced:engine:0.1.2"
 ```
 
 Code:

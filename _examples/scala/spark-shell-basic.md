@@ -8,7 +8,7 @@ The `engine` object is used to filter repositories by `id`, get the `HEAD` refer
 
 Launch spark-shell:
 ```sh
-$ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ spark-shell --packages "tech.sourced:engine:0.1.2"
 ```
 
 Code:

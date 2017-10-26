@@ -8,7 +8,7 @@ Finally, the `file_hash`, file `path` and `uast` is showed on the table.
 
 Launch spark-shell:
 ```sh
-$ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ spark-shell --packages "tech.sourced:engine:0.1.2"
 ```
 
 ```scala

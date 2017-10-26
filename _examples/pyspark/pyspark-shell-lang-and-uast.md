@@ -6,7 +6,7 @@ To do that, you just have to call  `extract_uasts()` on a Dataframe where previo
 
 Launch pyspark-shell:
 ```sh
-$ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ pyspark --packages "tech.sourced:engine:0.1.2"
 ```
 
 Code:

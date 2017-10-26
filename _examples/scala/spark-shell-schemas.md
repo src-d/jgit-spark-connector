@@ -6,7 +6,7 @@ It can help you to follow the aggregated or pruned information that your transfo
 
 Launch spark-shell:
 ```sh
-$ spark-shell --packages com.github.src-d:enginei:master-SNAPSHOT --repositories https://jitpack.io
+$ spark-shell --packages "tech.sourced:engine:0.1.2"
 ```
 
 Code:

@@ -6,7 +6,7 @@ Making use of the `engine` object, it retrieves repositories to get all files fr
 
 Launch pyspark-shell:
 ```sh
-$ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ pyspark --packages "tech.sourced:engine:0.1.2"
 ```
 
 Code:
