@@ -4,9 +4,9 @@ This example uses the pyspark-shell to show how to classify files by their langu
 
 Making use of the `engine` object, it retrieves repositories to get all files from the `HEAD` references from them. After that, a call to `classify_languages()` function detects the language for each file to show them in the aggregated column `lang` beside the selected columns `file_hash` and `path`.
 
-Launch pyspark-shell:
+Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ pyspark --packages "tech.sourced:engine:[version]"
 ```
 
 Code:

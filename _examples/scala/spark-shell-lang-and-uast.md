@@ -4,9 +4,9 @@ The combined usage of both, `classifyLanguages` and `extractUASTs` methods, has 
 
 To do that, you just have to call  `extractUASTs` on a Dataframe where previously, `classifyLanguages` was used.
 
-Launch spark-shell:
+Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
 Code:

@@ -6,9 +6,9 @@ First, you can see how to import the package and instantiate and object that pro
 
 The `engine` object is used to filter repositories by `id`, get the `HEAD` references from the repositories and look for the commits in that references which contain the word `Initial` in their messages. Then a table is showed selecting the columns `repository_id`, `hash` and `message`.
 
-Launch spark-shell:
+Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
 Code:

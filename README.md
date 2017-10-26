@@ -14,13 +14,15 @@ Current implementation combines:
 
 # Quick-start
 
+Look for the latest [***source{d} engine*** version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced), and then replace in the command where `[version]` is showed:
+
 ```bash
 $ wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz"
 $ tar -xzf spark-2.2.0-bin-hadoop2.7.tgz; cd spark-2.2.0-bin-hadoop2.7
-$ ./bin/spark-shell --packages "com.github.src-d:engine:master-SNAPSHOT" --repositories "https://jitpack.io"
+$ ./bin/spark-shell --packages "tech.sourced:engine:[version]"
 
 # or
-$ ./bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:engine:master-SNAPSHOT"
+$ ./bin/pyspark --packages "tech.sourced:engine:[version]"
 ```
 
 Run [bblfsh daemon](https://github.com/bblfsh/bblfshd):
@@ -84,6 +86,24 @@ You should be able to see the installed drivers running:
 
 # Examples of source{d} Engine usage
 
+***source{d} Engine*** is available on [maven central](https://search.maven.org/#search%7Cga%7C1%7Ctech.sourced.engine). To add it to your project as a dependency,
+
+For projects managed by [maven](https://maven.apache.org/) add the following to your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>tech.sourced</groupId>
+    <artifactId>engine</artifactId>
+    <version>[version]</version>
+</dependency>
+```
+
+For [sbt](http://www.scala-sbt.org/) managed projects add the dependency:
+
+    libraryDependencies += "tech.sourced" % "engine" % "[version]"
+
+In both cases, replace `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced)
+
 ## pyspark
 
 ### Local mode
@@ -94,10 +114,11 @@ Install python-wrappers is necessary to use source{d} engine from pyspark:
 $ pip install sourced-engine
 ```
 
-Then you should point to the remote repository where `source{d} Engine` is hosted and provide the maven coordinates:
+Then you should provide the `source{d} Engine`'s maven coordinates to the pyspark's shell:
 ```bash
-$ $SPARK_HOME/bin/pyspark --repositories "https://jitpack.io"  --packages "com.github.src-d:engine:master-SNAPSHOT"
+$ $SPARK_HOME/bin/pyspark --packages "tech.sourced:engine:[version]"
 ```
+Replace `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced)
 
 ### Cluster mode
 
@@ -115,10 +136,10 @@ $ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./sourced-engine.
 
 ### pyspark API usage
 
-Run pyspark as explained before to start using the engine:
+Run pyspark as explained before to start using the engine, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 
 ```bash
-$ $SPARK_HOME/bin/pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ $SPARK_HOME/bin/pyspark --packages "tech.sourced:engine:[version]"
 Welcome to
 
    spark version 2.2.0
@@ -126,29 +147,25 @@ Welcome to
 Using Python version 3.6.2 (default, Jul 20 2017 03:52:27)
 SparkSession available as 'spark'.
 >>> from sourced.engine import Engine
->>> from pyspark.sql import SparkSession
->>>
->>> spark = SparkSession.builder.appName("test").master("local[*]").getOrCreate()
 >>> engine = Engine(spark, '/path/to/siva/files')
->>> engine.repositories.filter("id = 'github.com/mawag/faq-xiyoulinux'").references.filter("name = 'refs/heads/HEAD'").show()
+>>> engine.repositories.filter('id = "github.com/mingrammer/funmath.git"').references.filter("name = 'refs/heads/HEAD'").show()
 +--------------------+---------------+--------------------+
 |       repository_id|           name|                hash|
 +--------------------+---------------+--------------------+
-|github.com/mawag/...|refs/heads/HEAD|fff7062de8474d10a...|
+|github.com/mingra...|refs/heads/HEAD|290440b64a73f5c7e...|
 +--------------------+---------------+--------------------+
-
 
 ```
 
 ## Scala API usage
 
-For the moment, `source{d} engine`  can only be installed from [jitpack](https://jitpack.io) (will be available from Maven Central soon), so you should be able to run the `spark-shell` with `source{d} engine` as a required dependency in the following way:
+You must provide ***source{d} Engine***  as a dependency in the following way, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 
 ```bash
-$ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
-To start using source{d} engine from the shell you must import everything inside the `tech.sourced.engine` package (or, if you prefer, just import `Engine` and `EngineDataFrame` classes):
+To start using ***source{d} Engine*** from the shell you must import everything inside the `tech.sourced.engine` package (or, if you prefer, just import `Engine` and `EngineDataFrame` classes):
 
 ```bash
 scala> import tech.sourced.engine._

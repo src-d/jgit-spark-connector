@@ -6,9 +6,9 @@ From the `engine` object instantiated in the spark-shell, a bunch of files are r
 
 Finally, the `file_hash` , `path` and `uast` is showed on the table.
 
-Launch pyspark-shell:
+Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ pyspark --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ pyspark --packages "tech.sourced:engine:[version]"
 ```
 
 Code:

@@ -8,9 +8,9 @@ Then we can use the method `queryUAST` to get a result for the query we are form
 
 Finally, `extractTokens` method will generate a column `tokens` based on the previous generated column `result`.
 
-Launch spark-shell:
+Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ spark-shell --packages com.github.src-d:engine:master-SNAPSHOT --repositories https://jitpack.io
+$ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
 Code:
