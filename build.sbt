@@ -21,8 +21,6 @@ lazy val root = (project in file(".")).
     libraryDependencies += commonsIO % Compile,
     libraryDependencies += enry % Compile,
 
-    resolvers += "jitpack" at "https://jitpack.io",
-
     test in assembly := {},
     assemblyJarName in assembly := s"${name.value}-uber.jar"
   )
