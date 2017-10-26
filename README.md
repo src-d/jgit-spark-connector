@@ -264,7 +264,7 @@ $ python -m unittest discover -v
 
 ### Windows support
 
-There is no windows support in enry-java right now, so all the language detection features have no windows support.
+There is no windows support in enry-java or bblfsh's client-scala right now, so all the language detection and UAST features are not available for the windows platform.
 
 # License
 
