@@ -4,9 +4,9 @@ The next example showed,  just try to show the simple usage of the useful method
 
 It can help you to follow the aggregated or pruned information that your transformations make on the data you are handling.
 
-Launch spark-shell:
+Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ spark-shell --packages "tech.sourced:engine:0.1.2"
+$ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
 Code:

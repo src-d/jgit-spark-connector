@@ -14,13 +14,15 @@ Current implementation combines:
 
 # Quick-start
 
+Look for the latest [***source{d} engine*** version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced), and then replace in the command where `[version]` is showed:
+
 ```bash
 $ wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz"
 $ tar -xzf spark-2.2.0-bin-hadoop2.7.tgz; cd spark-2.2.0-bin-hadoop2.7
-$ ./bin/spark-shell --packages "tech.sourced:engine:0.1.2"
+$ ./bin/spark-shell --packages "tech.sourced:engine:[version]"
 
 # or
-$ ./bin/pyspark --packages "tech.sourced:engine:0.1.2"
+$ ./bin/pyspark --packages "tech.sourced:engine:[version]"
 ```
 
 Run [bblfsh daemon](https://github.com/bblfsh/bblfshd):
@@ -92,13 +94,15 @@ For projects managed by [maven](https://maven.apache.org/) add the following to 
 <dependency>
     <groupId>tech.sourced</groupId>
     <artifactId>engine</artifactId>
-    <version>0.1.2</version>
+    <version>[version]</version>
 </dependency>
 ```
 
 For [sbt](http://www.scala-sbt.org/) managed projects add the dependency:
 
-    libraryDependencies += "tech.sourced" % "engine" % "0.1.2"
+    libraryDependencies += "tech.sourced" % "engine" % "[version]"
+
+In both cases, replace `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced)
 
 ## pyspark
 
@@ -112,8 +116,9 @@ $ pip install sourced-engine
 
 Then you should provide the `source{d} Engine`'s maven coordinates to the pyspark's shell:
 ```bash
-$ $SPARK_HOME/bin/pyspark --packages "tech.sourced:engine:0.1.2"
+$ $SPARK_HOME/bin/pyspark --packages "tech.sourced:engine:[version]"
 ```
+Replace `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced)
 
 ### Cluster mode
 
@@ -131,10 +136,10 @@ $ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./sourced-engine.
 
 ### pyspark API usage
 
-Run pyspark as explained before to start using the engine:
+Run pyspark as explained before to start using the engine, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 
 ```bash
-$ $SPARK_HOME/bin/pyspark --packages "tech.sourced:engine:0.1.2"
+$ $SPARK_HOME/bin/pyspark --packages "tech.sourced:engine:[version]"
 Welcome to
 
    spark version 2.2.0
@@ -154,10 +159,10 @@ SparkSession available as 'spark'.
 
 ## Scala API usage
 
-You must provide ***source{d} Engine***  as a dependency in the following way:
+You must provide ***source{d} Engine***  as a dependency in the following way, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 
 ```bash
-$ spark-shell --packages "tech.sourced:engine:0.1.2"
+$ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
 To start using ***source{d} Engine*** from the shell you must import everything inside the `tech.sourced.engine` package (or, if you prefer, just import `Engine` and `EngineDataFrame` classes):

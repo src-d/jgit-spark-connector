@@ -6,9 +6,9 @@ From the `engine` object instantiated in the spark-shell, a bunch of files has b
 
 Finally, the `file_hash`, file `path` and `uast` is showed on the table.
 
-Launch spark-shell:
+Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ spark-shell --packages "tech.sourced:engine:0.1.2"
+$ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
 ```scala

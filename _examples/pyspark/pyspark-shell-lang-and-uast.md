@@ -4,9 +4,9 @@ The combined usage of both, `classify_languages()` and `extract_uasts()` methods
 
 To do that, you just have to call  `extract_uasts()` on a Dataframe where previously, `classify_languages()` was used.
 
-Launch pyspark-shell:
+Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ pyspark --packages "tech.sourced:engine:0.1.2"
+$ pyspark --packages "tech.sourced:engine:[version]"
 ```
 
 Code:
