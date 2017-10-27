@@ -10,4 +10,11 @@ project/project/*
 .#*
 .project
 .settings
+.classpath
 key.asc
+*~
+.spark-dist
+spark
+spark-*.tgz
+metastore_db
+
