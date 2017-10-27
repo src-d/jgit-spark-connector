@@ -157,7 +157,7 @@ class Engine(session: SparkSession) {
     * @return instance of the engine itself
     */
   def skipCleanup(skip: Boolean): Engine = {
-    session.sparkContext.getConf.set(skipCleanupKey, skip.toString)
+    session.conf.set(skipCleanupKey, skip)
     this
   }
 

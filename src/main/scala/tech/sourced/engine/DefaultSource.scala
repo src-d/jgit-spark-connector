@@ -66,8 +66,8 @@ case class GitRelation(sqlContext: SQLContext,
 
   private val localPath: String = UtilsWrapper.getLocalDir(sqlContext.sparkContext.getConf)
   private val path: String = sqlContext.getConf(repositoriesPathKey)
-  private val skipCleanup: Boolean = sqlContext.sparkContext.getConf
-    .getBoolean(skipCleanupKey, defaultValue = false)
+  private val skipCleanup: Boolean = sqlContext.sparkSession.conf.
+    get(skipCleanupKey, default = "false").toBoolean
 
   override def unhandledFilters(filters: Array[Filter]): Array[Filter] = {
     super.unhandledFilters(filters)
