@@ -1,29 +1,27 @@
+import java.nio.file.{Files, StandardCopyOption}
+
 import Dependencies.{scalaTest, _}
-import sbt.Keys.{libraryDependencies, resolvers}
+import sbt.Keys.libraryDependencies
 
-lazy val root = (project in file(".")).
-  settings(
-    inThisBuild(List(
-      organization := "tech.sourced",
-      scalaVersion := "2.11.11",
-      version := "0.1.3"
-    )),
-    name := "engine",
-    libraryDependencies += scalaTest % Test,
-    libraryDependencies += scoverage % Test,
-    libraryDependencies += sparkSql % Provided,
-    libraryDependencies += newerHadoopClient % Provided, //due to newer v. of guava in bblfsh
-    // grpc for bblfsh/client-scala needs to be newer then in Spark
-    libraryDependencies += fixNettyForGrpc,
-    libraryDependencies += jgit % Compile,
-    libraryDependencies += siva % Compile,
-    libraryDependencies += bblfsh % Compile,
-    libraryDependencies += commonsIO % Compile,
-    libraryDependencies += enry % Compile,
+organization := "tech.sourced"
+scalaVersion := "2.11.11"
+version := "0.1.3"
+name := "engine"
 
-    test in assembly := {},
-    assemblyJarName in assembly := s"${name.value}-uber.jar"
-  )
+libraryDependencies += scalaTest % Test
+libraryDependencies += scoverage % Test
+libraryDependencies += sparkSql % Provided
+libraryDependencies += newerHadoopClient % Provided //due to newer v. of guava in bblfsh
+// grpc for bblfsh/client-scala needs to be newer then in Spark
+libraryDependencies += fixNettyForGrpc
+libraryDependencies += jgit % Compile
+libraryDependencies += siva % Compile
+libraryDependencies += bblfsh % Compile
+libraryDependencies += commonsIO % Compile
+libraryDependencies += enry % Compile
+
+test in assembly := {}
+assemblyJarName in assembly := s"${name.value}-${version.value}.jar"
 
 parallelExecution in Test := false
 logBuffered in Test := false
@@ -82,6 +80,21 @@ useGpg := false
 pgpSecretRing := baseDirectory.value / "project" / ".gnupg" / "secring.gpg"
 pgpPublicRing := baseDirectory.value / "project" / ".gnupg" / "pubring.gpg"
 pgpPassphrase := Some(SONATYPE_PASSPHRASE.toArray)
+
+publishArtifact in(Compile, packageBin) := false
+
+assembly := {
+  val file = assembly.value
+  val dest = new java.io.File(file.getParent, s"${name.value}-uber.jar")
+  Files.copy(
+    new java.io.File(file.getAbsolutePath).toPath,
+    dest.toPath,
+    StandardCopyOption.REPLACE_EXISTING
+  )
+  file
+}
+
+addArtifact(artifact in(Compile, assembly), assembly)
 
 isSnapshot := version.value endsWith "SNAPSHOT"
 
