@@ -44,10 +44,6 @@ package object engine {
   // The keys repositoriesPathKey, bblfshHostKey, bblfshPortKey and skipCleanupKey must
   // start by "spark." to be able to be loaded from the "spark-defaults.conf" file.
 
-
-  /** Local spark directory. */
-  private[engine] val localPathKey = "spark.local.dir"
-
   /**
     * Implicit class that adds some functions to the [[org.apache.spark.sql.SparkSession]].
     *
