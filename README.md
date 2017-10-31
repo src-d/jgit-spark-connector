@@ -276,7 +276,7 @@ To run tests for python wrapper:
 
 ```bash
 $ cd python
-$ python -m unittest discover -v
+$ make test
 ```
 
 ### Windows support

@@ -47,26 +47,22 @@ matrix:
 
       install:
         - make build
-        - mkdir -p python/jars
-        - cp target/engine-uber.jar python/jars
         - cd python
         - pip install -r requirements.txt
 
       script:
-        - python -m unittest discover -v
+        - make test
 
     - language: python
       python: 3.6
 
       install:
         - make build
-        - mkdir -p python/jars
-        - cp target/engine-uber.jar python/jars
         - cd python
         - pip install -r requirements.txt
 
       script:
-        - python -m unittest discover -v
+        - make test
 
       before_deploy:
         - echo "$TRAVIS_TAG" | cut -c 2- > version.txt
