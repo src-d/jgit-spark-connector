@@ -1,4 +1,4 @@
-# source{d} Engine [![Build Status](https://travis-ci.org/src-d/engine.svg?branch=master)](https://travis-ci.org/src-d/engine) [![codecov](https://codecov.io/gh/src-d/engine/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/engine)
+# source{d} Engine [![Build Status](https://travis-ci.org/src-d/engine.svg?branch=master)](https://travis-ci.org/src-d/engine) [![codecov](https://codecov.io/gh/src-d/engine/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/engine) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine/badge.svg)](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine)
 
 **source{d} Engine** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
 
