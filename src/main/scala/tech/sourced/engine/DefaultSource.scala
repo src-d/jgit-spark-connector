@@ -4,7 +4,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.sql.{Row, SQLContext, SparkSession}
 import org.apache.spark.{SparkException, UtilsWrapper}
 import tech.sourced.engine.iterator._
 import tech.sourced.engine.provider.{RepositoryProvider, SivaRDDProvider}
@@ -15,10 +15,10 @@ import tech.sourced.engine.util.Filter
   */
 class DefaultSource extends RelationProvider with DataSourceRegister {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def shortName: String = "git"
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def createRelation(sqlContext: SQLContext,
                               parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(
@@ -34,7 +34,7 @@ class DefaultSource extends RelationProvider with DataSourceRegister {
       case other => throw new SparkException(s"table '$other' is not supported")
     }
 
-    GitRelation(sqlContext, schema, tableSource = Some(table))
+    GitRelation(sqlContext.sparkSession, schema, tableSource = Some(table))
   }
 
 }
@@ -53,28 +53,32 @@ object DefaultSource {
   * Also, the [[GitOptimizer]] might merge some table sources into one by squashing joins, so the
   * result will be the resultant table chained with the previous one using chained iterators.
   *
-  * @param sqlContext     Spark SQL Context
+  * @param session             Spark session
   * @param schema         schema of the relation
   * @param joinConditions join conditions, if any
   * @param tableSource    source table if any
   */
-case class GitRelation(sqlContext: SQLContext,
+case class GitRelation(session: SparkSession,
                        schema: StructType,
                        joinConditions: Option[Expression] = None,
                        tableSource: Option[String] = None)
   extends BaseRelation with CatalystScan {
 
-  private val localPath: String = UtilsWrapper.getLocalDir(sqlContext.sparkContext.getConf)
-  private val path: String = sqlContext.getConf(repositoriesPathKey)
-  private val skipCleanup: Boolean = sqlContext.sparkSession.conf.
+  private val localPath: String = UtilsWrapper.getLocalDir(session.sparkContext.getConf)
+  private val path: String = session.conf.get(repositoriesPathKey)
+  private val skipCleanup: Boolean = session.conf.
     get(skipCleanupKey, default = "false").toBoolean
+
+  // this is needed to be overriden to extend BaseRelataion,
+  // though is not much usefull since we have the SparkSession
+  override def sqlContext: SQLContext = session.sqlContext
 
   override def unhandledFilters(filters: Array[Filter]): Array[Filter] = {
     super.unhandledFilters(filters)
   }
 
   override def buildScan(requiredColumns: Seq[Attribute], filters: Seq[Expression]): RDD[Row] = {
-    val sc = sqlContext.sparkContext
+    val sc = session.sparkContext
     val sivaRDD = SivaRDDProvider(sc).get(path)
 
     val requiredCols = sc.broadcast(requiredColumns.map(_.name).toArray)

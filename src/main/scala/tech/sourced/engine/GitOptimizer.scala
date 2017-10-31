@@ -1,7 +1,7 @@
 package tech.sourced.engine
 
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.plans.{Inner, JoinType}
@@ -16,7 +16,7 @@ import org.apache.spark.sql.types._
   * iterator.
   */
 object SquashGitRelationJoin extends Rule[LogicalPlan] {
-  /** @inheritdoc */
+  /** @inheritdoc*/
   def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
     // Joins are only applicable per repository, so we can push down completely
     // the join into the datasource
@@ -27,10 +27,10 @@ object SquashGitRelationJoin extends Rule[LogicalPlan] {
       }
 
       jd match {
-        case JoinData(filters, joinConditions, projectExprs, attributes, Some(sqlc), _) =>
+        case JoinData(filters, joinConditions, projectExprs, attributes, Some(session), _) =>
           val relation = LogicalRelation(
             GitRelation(
-              sqlc,
+              session,
               GitOptimizer.attributesToSchema(attributes), joinConditions
             ),
             attributes,
@@ -64,14 +64,14 @@ object SquashGitRelationJoin extends Rule[LogicalPlan] {
   * @param joinCondition      all the join conditions mixed with ANDs
   * @param projectExpressions expressions for the projection
   * @param attributes         list of attributes
-  * @param sqlContext         SQL context
+  * @param session            SparkSession
   * @param valid              if the data is valid or not
   */
 case class JoinData(filterExpression: Option[Expression] = None,
                     joinCondition: Option[Expression] = None,
                     projectExpressions: Seq[NamedExpression] = Nil,
                     attributes: Seq[AttributeReference] = Nil,
-                    sqlContext: Option[SQLContext] = None,
+                    session: Option[SparkSession] = None,
                     valid: Boolean = false)
 
 /**
@@ -144,7 +144,7 @@ object GitOptimizer extends Logging {
         JoinData(Some(cond), valid = true)
       case Project(namedExpressions, _) =>
         JoinData(None, projectExpressions = namedExpressions, valid = true)
-      case LogicalRelation(GitRelation(sqlc, _, joinCondition, schemaSource), out, _) =>
+      case LogicalRelation(GitRelation(session, _, joinCondition, schemaSource), out, _) =>
 
         // Add metadata to attributes
         val processedOut = schemaSource match {
@@ -160,7 +160,7 @@ object GitOptimizer extends Logging {
           valid = true,
           joinCondition = joinCondition,
           attributes = processedOut,
-          sqlContext = Some(sqlc)
+          session = Some(session)
         )
       case other =>
         logWarning(s"Join cannot be optimized. Invalid node: $other")
@@ -191,8 +191,8 @@ object GitOptimizer extends Logging {
         And
       )
 
-      // get just one sqlContext if any
-      val sqlcOpt = (jd1.sqlContext, jd2.sqlContext) match {
+      // get just one SparkSession if any
+      val sessionOpt = (jd1.session, jd2.session) match {
         case (Some(l), _) => Some(l)
         case (_, Some(r)) => Some(r)
         case _ => None
@@ -203,7 +203,7 @@ object GitOptimizer extends Logging {
         joinConditionOpt,
         jd1.projectExpressions ++ jd2.projectExpressions,
         jd1.attributes ++ jd2.attributes,
-        sqlcOpt,
+        sessionOpt,
         jd1.valid && jd2.valid
       )
     })
