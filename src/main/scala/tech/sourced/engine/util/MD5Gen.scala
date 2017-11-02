@@ -7,8 +7,6 @@ import javax.xml.bind.annotation.adapters.HexBinaryAdapter
   * Convenience wrapper around java [[java.security.MessageDigest]] for easier md5 hashing.
   */
 object MD5Gen {
-  private val md = MessageDigest.getInstance("MD5")
-
   private val ba = new HexBinaryAdapter()
 
   /**
@@ -17,9 +15,8 @@ object MD5Gen {
     * @param s string to hash
     * @return hashed string
     */
-  def str(s: String): String = {
-    md.reset()
-    ba.marshal(md.digest(s.getBytes()))
+  def str(s: String): String = synchronized {
+    ba.marshal(MessageDigest.getInstance("MD5").digest(s.getBytes()))
   }
 }
 
