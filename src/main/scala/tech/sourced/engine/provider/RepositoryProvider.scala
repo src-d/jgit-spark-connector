@@ -2,12 +2,11 @@ package tech.sourced.engine.provider
 
 import java.io.File
 import java.nio.file.Paths
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.Path
 import org.apache.spark.input.PortableDataStream
 import org.apache.spark.internal.Logging
 import org.eclipse.jgit.lib.{Repository, RepositoryBuilder}
@@ -16,6 +15,7 @@ import tech.sourced.siva.SivaReader
 
 import scala.collection.JavaConverters._
 import scala.collection.concurrent
+import scala.collection.concurrent.TrieMap
 
 /**
   * Generates repositories from siva files at the given local path and keeps a reference count
@@ -28,15 +28,19 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
 
   /**
     * Map to keep track of all the repository instances open.
+    * The getOrElseUpdate method implementation of this Map instance
+    * must be thread-safe.
     */
   private val repositories: concurrent.Map[String, Repository] =
-    new ConcurrentHashMap[String, Repository]().asScala
+    new TrieMap[String, Repository]()
 
   /**
     * Map to keep track of the reference count of all repositories.
+    * The getOrElseUpdate method implementation of this Map instance
+    * must be thread-safe.
     */
   private val repoRefCounts: concurrent.Map[String, AtomicInteger] =
-    new ConcurrentHashMap[String, AtomicInteger]().asScala
+    new TrieMap[String, AtomicInteger]()
 
   /**
     * Thread-safe method to get a repository given an HDFS configuration and its path.
@@ -46,19 +50,9 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     * @param path Repository path
     * @return Repository
     */
-  def get(conf: Configuration, path: String): Repository = synchronized {
+  def get(conf: Configuration, path: String): Repository = {
     this.incrCounter(path)
-    repositories.get(path) match {
-      case Some(repo) => {
-        repo.incrementOpen()
-        repo
-      }
-      case None => {
-        val repo = genRepository(conf, path, localPath)
-        repositories.put(path, repo)
-        repo
-      }
-    }
+    repositories.getOrElseUpdate(path, genRepository(conf, path, localPath))
   }
 
   /**
@@ -66,12 +60,8 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     *
     * @param path Repository path
     */
-  private def incrCounter(path: String): Unit = {
-    repoRefCounts.get(path) match {
-      case Some(counter) => counter.incrementAndGet()
-      case None => repoRefCounts.put(path, new AtomicInteger(1))
-    }
-  }
+  private def incrCounter(path: String): Unit =
+    repoRefCounts.getOrElseUpdate(path, new AtomicInteger(0)).incrementAndGet()
 
   /**
     * Returns a repository corresponding to the given [[PortableDataStream]].
