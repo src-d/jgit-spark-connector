@@ -78,13 +78,12 @@ case class GitRelation(session: SparkSession,
   }
 
   override def buildScan(requiredColumns: Seq[Attribute], filters: Seq[Expression]): RDD[Row] = {
-    val sc = session.sparkContext
-    val sivaRDD = SivaRDDProvider(sc).get(path)
+    val sivaRDD = SivaRDDProvider(session.sparkContext).get(path)
 
-    val requiredCols = sc.broadcast(requiredColumns.map(_.name).toArray)
-    val reposLocalPath = sc.broadcast(localPath)
-    val sources = sc.broadcast(GitRelation.getSources(tableSource, schema))
-    val filtersBySource = sc.broadcast(GitRelation.getFiltersBySource(filters))
+    val requiredCols = session.sparkContext.broadcast(requiredColumns.map(_.name).toArray)
+    val reposLocalPath = session.sparkContext.broadcast(localPath)
+    val sources = session.sparkContext.broadcast(GitRelation.getSources(tableSource, schema))
+    val filtersBySource = session.sparkContext.broadcast(GitRelation.getFiltersBySource(filters))
 
     sivaRDD.flatMap(pds => {
       val provider = RepositoryProvider(reposLocalPath.value, skipCleanup)
