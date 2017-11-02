@@ -28,12 +28,16 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
 
   /**
     * Map to keep track of all the repository instances open.
+    * The getOrElseUpdate method implementation of this Map instance
+    * must be thread-safe.
     */
   private val repositories: concurrent.Map[String, Repository] =
     new TrieMap[String, Repository]()
 
   /**
     * Map to keep track of the reference count of all repositories.
+    * The getOrElseUpdate method implementation of this Map instance
+    * must be thread-safe.
     */
   private val repoRefCounts: concurrent.Map[String, AtomicInteger] =
     new TrieMap[String, AtomicInteger]()
