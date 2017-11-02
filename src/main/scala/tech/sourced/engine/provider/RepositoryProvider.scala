@@ -2,7 +2,6 @@ package tech.sourced.engine.provider
 
 import java.io.File
 import java.nio.file.Paths
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.commons.io.FileUtils
@@ -16,6 +15,7 @@ import tech.sourced.siva.SivaReader
 
 import scala.collection.JavaConverters._
 import scala.collection.concurrent
+import scala.collection.concurrent.TrieMap
 
 /**
   * Generates repositories from siva files at the given local path and keeps a reference count
@@ -30,13 +30,13 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     * Map to keep track of all the repository instances open.
     */
   private val repositories: concurrent.Map[String, Repository] =
-    new ConcurrentHashMap[String, Repository]().asScala
+    new TrieMap[String, Repository]()
 
   /**
     * Map to keep track of the reference count of all repositories.
     */
   private val repoRefCounts: concurrent.Map[String, AtomicInteger] =
-    new ConcurrentHashMap[String, AtomicInteger]().asScala
+    new TrieMap[String, AtomicInteger]()
 
   /**
     * Thread-safe method to get a repository given an HDFS configuration and its path.
