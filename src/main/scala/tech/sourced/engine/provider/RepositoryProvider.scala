@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.Path
 import org.apache.spark.input.PortableDataStream
 import org.apache.spark.internal.Logging
 import org.eclipse.jgit.lib.{Repository, RepositoryBuilder}
@@ -46,19 +46,9 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     * @param path Repository path
     * @return Repository
     */
-  def get(conf: Configuration, path: String): Repository = synchronized {
+  def get(conf: Configuration, path: String): Repository = {
     this.incrCounter(path)
-    repositories.get(path) match {
-      case Some(repo) => {
-        repo.incrementOpen()
-        repo
-      }
-      case None => {
-        val repo = genRepository(conf, path, localPath)
-        repositories.put(path, repo)
-        repo
-      }
-    }
+    repositories.getOrElseUpdate(path, genRepository(conf, path, localPath))
   }
 
   /**
@@ -66,12 +56,8 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     *
     * @param path Repository path
     */
-  private def incrCounter(path: String): Unit = {
-    repoRefCounts.get(path) match {
-      case Some(counter) => counter.incrementAndGet()
-      case None => repoRefCounts.put(path, new AtomicInteger(1))
-    }
-  }
+  private def incrCounter(path: String): Unit =
+    repoRefCounts.getOrElseUpdate(path, new AtomicInteger(0)).incrementAndGet()
 
   /**
     * Returns a repository corresponding to the given [[PortableDataStream]].
