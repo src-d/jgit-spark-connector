@@ -44,10 +44,10 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec wi
     val sivaRDD = prov.get(resourcePath)
     val sivaFilesExist = sivaRDD.map(pds => {
       val provider = RepositoryProvider("/tmp", skipCleanup = true)
-      val _ = provider.genRepository(pds.getConfiguration, pds.getPath(), "/tmp")
+      val repo = provider.get(pds)
       val localSivaPath = new Path("/tmp",
         new Path(RepositoryProvider.temporalSivaFolder, pds.getPath()))
-      provider.close(pds.getPath())
+      provider.close(pds, repo)
       FileSystem.get(pds.getConfiguration).exists(localSivaPath)
     }).collect()
 
@@ -62,8 +62,8 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec wi
 
     val sivaFilesExist = sivaRDD.map(pds => {
       val provider = new RepositoryProvider("/tmp/two")
-      val _ = provider.genRepository(pds.getConfiguration, pds.getPath(), "/tmp/two")
-      provider.close(pds.getPath())
+      val repo = provider.get(pds)
+      provider.close(pds, repo)
       val localSivaPath = new Path("/tmp/two",
         new Path(RepositoryProvider.temporalSivaFolder, new Path(pds.getPath()).getName))
       FileSystem.get(pds.getConfiguration).exists(localSivaPath)
@@ -81,16 +81,15 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec wi
     // needs to be a fresh instance, since some of the tests may not cleanup
     val provider = new RepositoryProvider("/tmp/cleanup-test-" + System.currentTimeMillis())
 
-    val repo = provider.get(pds)
+    val repo1 = provider.get(pds)
     val fs = FileSystem.get(pds.getConfiguration)
-    provider.get(pds)
+    val repo2 = provider.get(pds)
 
-    provider.close(pds.getPath())
-    repo.getDirectory.toPath
-    fs.exists(new Path(repo.getDirectory.toString)) should be(true)
+    provider.close(pds, repo1)
+    fs.exists(new Path(repo1.getDirectory.toString)) should be(true)
 
-    provider.close(pds.getPath())
-    fs.exists(new Path(repo.getDirectory.toString)) should be(false)
+    provider.close(pds, repo2)
+    fs.exists(new Path(repo2.getDirectory.toString)) should be(false)
   }
 
   "RepositoryProvider with skipCleanup = true"
@@ -105,14 +104,14 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec wi
 
     val repo = provider.get(pds)
     val fs = FileSystem.get(pds.getConfiguration)
-    provider.get(pds)
+    val repo2 = provider.get(pds)
 
-    provider.close(pds.getPath())
+    provider.close(pds, repo)
     repo.getDirectory.toPath
     fs.exists(new Path(repo.getDirectory.toString)) should be(true)
 
-    provider.close(pds.getPath())
-    fs.exists(new Path(repo.getDirectory.toString)) should be(true)
+    provider.close(pds, repo2)
+    fs.exists(new Path(repo2.getDirectory.toString)) should be(true)
   })
 
 }

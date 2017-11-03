@@ -2,12 +2,12 @@ package tech.sourced.engine.provider
 
 import java.io.File
 import java.nio.file.Paths
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.commons.io.FileUtils
+import org.apache.commons.pool2.impl.{DefaultPooledObject, GenericKeyedObjectPool}
+import org.apache.commons.pool2.{BaseKeyedPooledObjectFactory, PooledObject}
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.Path
 import org.apache.spark.input.PortableDataStream
 import org.apache.spark.internal.Logging
 import org.eclipse.jgit.lib.{Repository, RepositoryBuilder}
@@ -15,7 +15,6 @@ import tech.sourced.engine.util.MD5Gen
 import tech.sourced.siva.SivaReader
 
 import scala.collection.JavaConverters._
-import scala.collection.concurrent
 
 /**
   * Generates repositories from siva files at the given local path and keeps a reference count
@@ -24,19 +23,16 @@ import scala.collection.concurrent
   * @param localPath   Local path where siva files are.
   * @param skipCleanup Skip deleting files after they reference count of a repository gets to 0.
   */
-class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false) extends Logging {
+class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false)
+  extends Logging {
+  private val repositoryObjectFactory =
+    new RepositoryObjectFactory(localPath, skipCleanup)
+  private val repositoryPool =
+    new GenericKeyedObjectPool[RepositoryKey, Repository](repositoryObjectFactory)
 
-  /**
-    * Map to keep track of all the repository instances open.
-    */
-  private val repositories: concurrent.Map[String, Repository] =
-    new ConcurrentHashMap[String, Repository]().asScala
-
-  /**
-    * Map to keep track of the reference count of all repositories.
-    */
-  private val repoRefCounts: concurrent.Map[String, AtomicInteger] =
-    new ConcurrentHashMap[String, AtomicInteger]().asScala
+  repositoryPool.setMaxTotalPerKey(5)
+  repositoryPool.setMaxIdlePerKey(4)
+  repositoryPool.setBlockWhenExhausted(true)
 
   /**
     * Thread-safe method to get a repository given an HDFS configuration and its path.
@@ -46,31 +42,12 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     * @param path Repository path
     * @return Repository
     */
-  def get(conf: Configuration, path: String): Repository = synchronized {
-    this.incrCounter(path)
-    repositories.get(path) match {
-      case Some(repo) => {
-        repo.incrementOpen()
-        repo
-      }
-      case None => {
-        val repo = genRepository(conf, path, localPath)
-        repositories.put(path, repo)
-        repo
-      }
-    }
-  }
-
-  /**
-    * Increments the reference count of the repository at the given path by one.
-    *
-    * @param path Repository path
-    */
-  private def incrCounter(path: String): Unit = {
-    repoRefCounts.get(path) match {
-      case Some(counter) => counter.incrementAndGet()
-      case None => repoRefCounts.put(path, new AtomicInteger(1))
-    }
+  def get(conf: Configuration, path: String): Repository = {
+    val key = RepositoryKey(conf, path)
+    logDebug(s"Getting new repository instance. active/idle count: " +
+      s"${repositoryPool.getNumActive(key)}/ " +
+      s"${repositoryPool.getNumIdle(key)}")
+    repositoryPool.borrowObject(key)
   }
 
   /**
@@ -88,24 +65,41 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     * active.
     * This method is thread-safe.
     *
-    * @param path Repository path
+    * @param portableDataStream PortableDataStream with needed data to generate the repository key
+    * @param repo               The previously obtained Repository instance
     */
-  def close(path: String): Unit = synchronized {
-    repositories.get(path).foreach(r => {
-      log.debug(s"Close $path")
-      r.close()
-
-      val counter = repoRefCounts.getOrElse(path, new AtomicInteger(1))
-      if (counter.decrementAndGet() <= 0) {
-        if (!skipCleanup) {
-          log.debug(s"Deleting unpacked files for $path at ${r.getDirectory}")
-          FileUtils.deleteQuietly(r.getDirectory)
-        }
-        repositories.remove(path)
-        repoRefCounts.remove(path)
-      }
-    })
+  def close(portableDataStream: PortableDataStream, repo: Repository): Unit = {
+    val key = RepositoryKey(portableDataStream.getConfiguration, portableDataStream.getPath())
+    logDebug(s"Closing repository. active/idle count: " +
+      s"${repositoryPool.getNumActive(key)}/ " +
+      s"${repositoryPool.getNumIdle(key)}")
+    repositoryPool.returnObject(key, repo)
+    if (repositoryPool.getNumActive == 0) {
+      logDebug("No active elements on the pool, clearing all.")
+      repositoryPool.clear()
+    }
   }
+}
+
+class RepositoryObjectFactory(val localPath: String, val skipCleanup: Boolean)
+  extends BaseKeyedPooledObjectFactory[RepositoryKey, Repository]
+    with Logging {
+
+  override def create(key: RepositoryKey): Repository =
+    genRepository(key.conf, key.path, localPath)
+
+  override def wrap(value: Repository): PooledObject[Repository] =
+    new DefaultPooledObject[Repository](value)
+
+  override def destroyObject(key: RepositoryKey, p: PooledObject[Repository]): Unit = {
+    val r = p.getObject
+    r.close()
+    if (!skipCleanup) {
+      logDebug(s"Deleting unpacked files for ${key.path} at ${r.getDirectory}")
+      FileUtils.deleteQuietly(r.getDirectory)
+    }
+  }
+
 
   /**
     * Generates a repository with the given configuration and paths.
@@ -202,3 +196,5 @@ object RepositoryProvider {
   val temporalLocalFolder = "processing-repositories"
   val temporalSivaFolder = "siva-files"
 }
+
+protected case class RepositoryKey(conf: Configuration, path: String)

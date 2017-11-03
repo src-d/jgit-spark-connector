@@ -128,7 +128,7 @@ case class GitRelation(session: SparkSession,
         case other => throw new SparkException(s"required cols for '$other' is not supported")
       })
 
-      new CleanupIterator(iter.getOrElse(Seq().toIterator), provider.close(pds.getPath()))
+      new CleanupIterator(iter.getOrElse(Seq().toIterator), provider.close(pds, repo))
     })
   }
 }
