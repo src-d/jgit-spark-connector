@@ -17,7 +17,7 @@ Current implementation combines:
 Look for the latest [***source{d} engine*** version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced), and then replace in the command where `[version]` is showed:
 
 ```bash
-$ wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz"
+$ wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz" -O spark-2.2.0-bin-hadoop2.7.tgz
 $ tar -xzf spark-2.2.0-bin-hadoop2.7.tgz; cd spark-2.2.0-bin-hadoop2.7
 $ ./bin/spark-shell --packages "tech.sourced:engine:[version]"
 
@@ -44,7 +44,7 @@ Install bblfsh drivers:
 First, you need to download [Apache Spark](https://spark.apache.org/) somewhere on your machine:
 
 ```bash
-$ cd /tmp && wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz"
+$ cd /tmp && wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz" -O spark-2.2.0-bin-hadoop2.7.tgz
 ```
 The Apache Software Foundation suggests you the better mirror where you can download `Spark` from. If you wish to take a look and find the best option in your case, you can [do it here](https://www.apache.org/dyn/closer.lua/spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz).
 
