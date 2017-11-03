@@ -27,7 +27,7 @@ $ ./bin/pyspark --packages "tech.sourced:engine:[version]"
 
 Run [bblfsh daemon](https://github.com/bblfsh/bblfshd):
 
-    docker create --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.0.0
+    docker create --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.1.2
 
 Then, execute the container:
 
@@ -70,7 +70,7 @@ $ $SPARK_HOME/bin/spark-shell
 
 If you want to be able to use the UAST extraction features source{d} engine provides, you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can do it easily with docker
 
-    docker create --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.0.0
+    docker create --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.1.2
 
 Now, execute the container:
 
