@@ -137,7 +137,7 @@ class Engine(session: SparkSession) {
         s"so siva files can't be read from there")
     }
 
-    session.sqlContext.setConf(repositoriesPathKey, path)
+    session.conf.set(repositoriesPathKey, path)
     this
   }
 
