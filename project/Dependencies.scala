@@ -11,4 +11,6 @@ object Dependencies {
   lazy val bblfsh = "org.bblfsh" % "bblfsh-client" % "1.3.3"
   lazy val enry = "tech.sourced" % "enry-java" % "1.5.1"
   lazy val commonsIO = "commons-io" % "commons-io" % "2.5"
+  lazy val commonsPool = "org.apache.commons" % "commons-pool2" % "2.4.3"
+
 }

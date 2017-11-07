@@ -18,6 +18,7 @@ libraryDependencies += jgit % Compile
 libraryDependencies += siva % Compile
 libraryDependencies += bblfsh % Compile
 libraryDependencies += commonsIO % Compile
+libraryDependencies += commonsPool % Compile
 libraryDependencies += enry % Compile
 
 test in assembly := {}
