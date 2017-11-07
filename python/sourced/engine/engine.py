@@ -28,7 +28,15 @@ class Engine(object):
         self.__jvm = self.session.sparkContext._gateway.jvm
         java_import(self.__jvm, 'tech.sourced.engine.Engine')
         java_import(self.__jvm, 'tech.sourced.engine.package$')
-        self.__engine = self.__jvm.tech.sourced.engine.Engine.apply(self.__jsparkSession, repos_path)
+
+        try:
+            self.__engine = self.__jvm.tech.sourced.engine.Engine.apply(self.__jsparkSession, repos_path)
+        except TypeError as e:
+            if 'JavaPackage' in e.message:
+                raise Exception("package \"tech.sourced:engine:<version>\" cannot be found. Please, provide a jar with the package or install the package using --packages")
+            else:
+                raise e
+
         if skip_cleanup:
             self.__engine.skipCleanup(True)
         self.__implicits = getattr(getattr(self.__jvm.tech.sourced.engine, 'package$'), 'MODULE$')
@@ -117,7 +125,7 @@ def _custom_df_instance(func):
 
 class SourcedDataFrame(DataFrame):
     """
-    Custom source{d} Engine DataFrame that contains some DataFrame overriden methods and 
+    Custom source{d} Engine DataFrame that contains some DataFrame overriden methods and
     utilities. This class should not be used directly, please get your SourcedDataFrames
     using the provided methods.
 
