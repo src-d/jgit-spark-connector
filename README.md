@@ -1,6 +1,6 @@
-# source{d} Engine [![Build Status](https://travis-ci.org/src-d/engine.svg?branch=master)](https://travis-ci.org/src-d/engine) [![codecov](https://codecov.io/gh/src-d/engine/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/engine) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine/badge.svg)](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine)
+# engine [![Build Status](https://travis-ci.org/src-d/engine.svg?branch=master)](https://travis-ci.org/src-d/engine) [![codecov](https://codecov.io/gh/src-d/engine/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/engine) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine/badge.svg)](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine)
 
-**source{d} Engine** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
+**engine** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
 
 It is written in Scala and built on top of Apache Spark to enable rapid construction of custom analysis pipelines and processing large number of Git repositories stored in HDFS in [Siva file format](https://github.com/src-d/go-siva). It is accessible both via Scala and Python Spark APIs, and capable of running on large-scale distributed clusters.
 
@@ -14,7 +14,7 @@ Current implementation combines:
 
 # Quick-start
 
-Look for the latest [***source{d} engine*** version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced), and then replace in the command where `[version]` is showed:
+Look for the latest [**engine** version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced), and then replace in the command where `[version]` is showed:
 
 ```bash
 $ wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz" -O spark-2.2.0-bin-hadoop2.7.tgz
@@ -68,7 +68,7 @@ $ $SPARK_HOME/bin/spark-shell
 
 ## bblfsh
 
-If you want to be able to use the UAST extraction features source{d} engine provides, you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can do it easily with docker
+If you want to be able to use the UAST extraction features **engine** provides, you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can do it easily with docker
 
     docker create --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.1.2
 
@@ -84,9 +84,9 @@ You should be able to see the installed drivers running:
 
     docker exec -it bblfshd bblfshctl driver list
 
-# Examples of source{d} Engine usage
+# Examples of engine usage
 
-***source{d} Engine*** is available on [maven central](https://search.maven.org/#search%7Cga%7C1%7Ctech.sourced.engine). To add it to your project as a dependency,
+**engine** is available on [maven central](https://search.maven.org/#search%7Cga%7C1%7Ctech.sourced.engine). To add it to your project as a dependency,
 
 For projects managed by [maven](https://maven.apache.org/) add the following to your `pom.xml`:
 
@@ -108,13 +108,13 @@ In both cases, replace `[version]` with the [latest engine version](http://searc
 
 ### Local mode
 
-Install python-wrappers is necessary to use source{d} engine from pyspark:
+Install python-wrappers is necessary to use **engine** from pyspark:
 
 ``` bash
 $ pip install sourced-engine
 ```
 
-Then you should provide the `source{d} Engine`'s maven coordinates to the pyspark's shell:
+Then you should provide the **engine's** maven coordinates to the pyspark's shell:
 ```bash
 $ $SPARK_HOME/bin/pyspark --packages "tech.sourced:engine:[version]"
 ```
@@ -122,7 +122,7 @@ Replace `[version]` with the [latest engine version](http://search.maven.org/#se
 
 ### Cluster mode
 
-Install `source{d} Engine` wrappers as in local mode:
+Install **engine** wrappers as in local mode:
 ```bash
 $ pip install -e sourced-engine
 ```
@@ -159,13 +159,13 @@ SparkSession available as 'spark'.
 
 ## Scala API usage
 
-You must provide ***source{d} Engine***  as a dependency in the following way, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
+You must provide **engine** as a dependency in the following way, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 
 ```bash
 $ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
-To start using ***source{d} Engine*** from the shell you must import everything inside the `tech.sourced.engine` package (or, if you prefer, just import `Engine` and `EngineDataFrame` classes):
+To start using **engine** from the shell you must import everything inside the `tech.sourced.engine` package (or, if you prefer, just import `Engine` and `EngineDataFrame` classes):
 
 ```bash
 scala> import tech.sourced.engine._
@@ -195,7 +195,7 @@ scala> engine.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
 
 ```
 
-# Playing around with source{d} Engine on Jupyter
+# Playing around with **engine** on Jupyter
 
 You can launch our docker container which contains some Notebooks examples just running:
 
@@ -261,7 +261,7 @@ $ make docker-clean
 
 ## Run tests
 
-source{d} engine uses [bblfsh](https://github.com/bblfsh) so you need an instance of a bblfsh server running:
+**engine** uses [bblfsh](https://github.com/bblfsh) so you need an instance of a bblfsh server running:
 
 ```bash
 $ make docker-bblfsh
