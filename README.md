@@ -25,7 +25,7 @@ $ ./bin/spark-shell --packages "tech.sourced:engine:[version]"
 $ ./bin/pyspark --packages "tech.sourced:engine:[version]"
 ```
 
-Run [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can start it easily in a container following its [quick start guide](https://github.com/jfontan/bblfshd#quick-start).
+Run [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can start it easily in a container following its [quick start guide](https://github.com/bblfsh/bblfshd#quick-start).
 
 
 # Pre-requisites
