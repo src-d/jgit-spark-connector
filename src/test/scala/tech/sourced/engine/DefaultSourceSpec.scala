@@ -1,5 +1,8 @@
 package tech.sourced.engine
 
+import java.io.File
+import java.nio.file.Files
+
 import org.scalatest._
 
 class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSparkSpec {
@@ -180,6 +183,33 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     files.explain(true)
 
     assert(files.count == 2)
+  }
+
+  "backToSource" should "back to other sources" in {
+    val tmpDir = Files.createTempDirectory("engine-back")
+
+    engine.backToSource(
+      "json",
+      table => Map("path" -> new File(tmpDir.toString, table).getAbsolutePath)
+    )
+
+    val assertExistsBackup = (table: String) => {
+      val f = new File(tmpDir.toString, table)
+      f.exists() should be(true)
+      f.isDirectory should be(true)
+    }
+
+    val assertCount = (table: String) => {
+      val f = new File(tmpDir.toString, table)
+      val df = getDataSource(table, ss)
+      val count = ss.read.json(f.getAbsolutePath).count()
+      count should be(df.count())
+    }
+
+    val tables = Seq("repositories", "references", "commits", "trees")
+
+    tables.foreach(assertExistsBackup)
+    tables.foreach(assertCount)
   }
 
   override protected def afterAll(): Unit = {
