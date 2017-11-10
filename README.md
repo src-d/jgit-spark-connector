@@ -68,13 +68,9 @@ $ $SPARK_HOME/bin/spark-shell
 
 ## bblfsh
 
-If you want to be able to use the UAST extraction features **engine** provides, you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can do it easily with docker
+If you want to be able to use the UAST extraction features **engine** provides, you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can do it easily with docker:
 
-    docker create --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.1.2
-
-Now, execute the container:
-
-    docker start bblfshd
+    docker run --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.1.2
 
 Then you need to install bblfsh drivers to parse different languages, you should do this the first time you run the [bblfsh daemon](https://github.com/bblfsh/bblfshd):
 
