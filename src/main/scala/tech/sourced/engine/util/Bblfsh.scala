@@ -19,7 +19,7 @@ object Bblfsh {
 
   private val defaultPort = 9432
   private val defaultHost = "0.0.0.0"
-  private var client: BblfshClient = null
+  private var client: BblfshClient = _
 
   /**
     * Returns the configuration for babelfish.
@@ -40,7 +40,10 @@ object Bblfsh {
     * @return client
     */
   def getClient(config: Config): BblfshClient = synchronized {
-    if (client == null) client = BblfshClient(config.host, config.port)
+    if (client == null) {
+      client = BblfshClient(config.host, config.port)
+    }
+
     client
   }
 
