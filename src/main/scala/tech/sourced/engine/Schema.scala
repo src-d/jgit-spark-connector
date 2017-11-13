@@ -67,4 +67,12 @@ private[engine] object Schema {
       Nil
   )
 
+  val trees = StructType(
+    StructField("commit_hash", StringType, nullable = false) ::
+      StructField("path", StringType, nullable = false) ::
+      StructField("object_id", StringType, nullable = false) ::
+
+      Nil
+  )
+
 }

@@ -2,7 +2,7 @@ package tech.sourced
 
 import gopkg.in.bblfsh.sdk.v1.uast.generated.Node
 import org.apache.spark.SparkException
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import tech.sourced.engine.udf._
 
 /**
@@ -334,10 +334,22 @@ package object engine {
     * @param session spark session
     * @return dataframe for the given table
     */
-  private[engine] def getDataSource(table: String, session: SparkSession): DataFrame =
-    session.read.format("tech.sourced.engine.DefaultSource")
-      .option("table", table)
-      .load(session.sqlContext.getConf(repositoriesPathKey))
+  private[engine] def getDataSource(table: String, session: SparkSession): DataFrame = {
+    table match {
+      case "trees" =>
+        val rdd = getDataSource("commits", session).select("hash", "tree").rdd.flatMap(row => {
+          val hash = row.getString(row.fieldIndex("hash"))
+          row.getMap[String, String](row.fieldIndex("tree"))
+            .toIterator
+            .map(kv => Row(hash, kv._1, kv._2))
+        })
+        session.createDataFrame(rdd, Schema.trees)
+      case _ =>
+        session.read.format("tech.sourced.engine.DefaultSource")
+          .option("table", table)
+          .load(session.sqlContext.getConf(repositoriesPathKey))
+    }
+  }
 
   /**
     * Ensures the given [[org.apache.spark.sql.DataFrame]] contains some required columns.

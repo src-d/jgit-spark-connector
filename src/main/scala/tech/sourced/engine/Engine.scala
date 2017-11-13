@@ -2,7 +2,7 @@ package tech.sourced.engine
 
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkException
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.collection.JavaConversions.asScalaBuffer
 
@@ -161,6 +161,36 @@ class Engine(session: SparkSession) {
     this
   }
 
+  type Options = Map[String, String]
+  type TableOptionsProvider = (String) => Options
+
+  /**
+    * Backs the data available in the engine to the given data source.
+    *
+    * @param source  data source to export the data to
+    * @param options options for the datasource. Only string options allowed.
+    */
+  def backToSource(source: String,
+                   tableOptionsProvider: TableOptionsProvider,
+                   options: Options = Map()): Unit = {
+    Seq("repositories", "references", "commits", "trees")
+      .map {
+        case table@"commits" =>
+          (table, getDataSource(table, session).drop("tree"))
+        case table =>
+          (table, getDataSource(table, session))
+      }
+      .foreach {
+        case (table, df) =>
+          val writer = df.write.format(source)
+          (options ++ tableOptionsProvider(table))
+            .foldLeft(writer) {
+              case (f, (k, v)) => f.option(k, v)
+            }
+            .save()
+      }
+  }
+
 }
 
 /**
@@ -181,8 +211,8 @@ object Engine {
     * @param repositoriesPath the path to the repositories' siva files
     * @return Engine instance
     */
-  def apply(session: SparkSession, repositoriesPath: String): Engine = {
+  def apply(session: SparkSession, repositoriesPath: String): Engine =
     new Engine(session)
       .setRepositoriesPath(repositoriesPath)
-  }
+
 }
