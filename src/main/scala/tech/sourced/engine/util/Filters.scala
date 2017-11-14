@@ -3,7 +3,7 @@ package tech.sourced.engine.util
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.unsafe.types.UTF8String
 
-object Filter {
+object Filters {
 
   /** Match of an expression filter as a tuple with the column name and the matching values. */
   type Match = (String, Seq[Any])
@@ -128,13 +128,13 @@ case class Attr(name: String, source: String) {
   */
 case class InFilter(attr: Attr, vals: Seq[Any]) extends CompiledFilter {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def toString: String = s"${attr.name} IN (${vals.mkString(", ")})"
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   def eval(cols: Map[String, Any]): Option[Boolean] = cols.get(attr.name).map(vals.contains)
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   def sources: Seq[String] = Seq(attr.source)
 
 }
@@ -157,10 +157,10 @@ class BinaryFilter(val left: CompiledFilter, val right: CompiledFilter) extends 
     */
   def action(l: Option[Boolean], r: Option[Boolean]): Option[Boolean] = None
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   def eval(cols: Map[String, Any]): Option[Boolean] = action(left.eval(cols), right.eval(cols))
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   def sources: Seq[String] = left.sources ++ right.sources
 
 }
@@ -179,13 +179,13 @@ object BinaryFilter {
   */
 case class EqualFilter(attr: Attr, value: Any) extends CompiledFilter {
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def toString: String = s"${attr.name} = '$value'"
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   def eval(cols: Map[String, Any]): Option[Boolean] = cols.get(attr.name).map(_ == value)
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   def sources: Seq[String] = Seq(attr.source)
 
 }
@@ -213,10 +213,10 @@ case class NotFilter(f: CompiledFilter) extends CompiledFilter {
   */
 case class AndFilter(l: CompiledFilter, r: CompiledFilter) extends BinaryFilter(l, r) {
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def toString: String = s"(${l.toString} AND ${r.toString})"
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def action(l: Option[Boolean], r: Option[Boolean]): Option[Boolean] = {
     Seq(l, r) match {
       case seq if seq.flatten.isEmpty => None
@@ -227,7 +227,7 @@ case class AndFilter(l: CompiledFilter, r: CompiledFilter) extends BinaryFilter(
     }
   }
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def filters: Seq[CompiledFilter] = Seq(l, r)
 
 }
@@ -240,14 +240,14 @@ case class AndFilter(l: CompiledFilter, r: CompiledFilter) extends BinaryFilter(
   */
 case class OrFilter(l: CompiledFilter, r: CompiledFilter) extends BinaryFilter(l, r) {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def toString: String = s"(${l.toString} OR ${r.toString})"
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def action(l: Option[Boolean], r: Option[Boolean]): Option[Boolean] =
     Seq(l, r).flatten.reduceLeftOption((lb, rb) => lb || rb)
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def filters: Seq[CompiledFilter] = Seq(l, r)
 
 }
@@ -257,10 +257,10 @@ case class OrFilter(l: CompiledFilter, r: CompiledFilter) extends BinaryFilter(l
   */
 case class UnhandledFilter() extends CompiledFilter {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def eval(cols: Map[String, Any]): Option[Boolean] = None
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   def sources: Seq[String] = Seq()
 
 }

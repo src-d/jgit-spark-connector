@@ -8,17 +8,17 @@ import org.apache.spark.sql.{Row, SQLContext, SparkSession}
 import org.apache.spark.{SparkException, UtilsWrapper}
 import tech.sourced.engine.iterator._
 import tech.sourced.engine.provider.{RepositoryProvider, SivaRDDProvider}
-import tech.sourced.engine.util.Filter
+import tech.sourced.engine.util.Filters
 
 /**
   * Default source to provide new git relations.
   */
 class DefaultSource extends RelationProvider with DataSourceRegister {
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def shortName: String = "git"
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def createRelation(sqlContext: SQLContext,
                               parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(
@@ -53,7 +53,7 @@ object DefaultSource {
   * Also, the [[GitOptimizer]] might merge some table sources into one by squashing joins, so the
   * result will be the resultant table chained with the previous one using chained iterators.
   *
-  * @param session             Spark session
+  * @param session        Spark session
   * @param schema         schema of the relation
   * @param joinConditions join conditions, if any
   * @param tableSource    source table if any
@@ -163,7 +163,7 @@ private object GitRelation {
     * @return compiled and grouped filters
     */
   private def getFiltersBySource(filters: Seq[Expression]) =
-    filters.map(Filter.compile)
+    filters.map(Filters.compile)
       .flatMap(_.filters)
       .map(e => (e.sources.distinct, e))
       .filter(_._1.length == 1)
