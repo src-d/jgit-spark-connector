@@ -8,4 +8,4 @@ This is the index of Engine Improvement Proposals, known as ENIPs.
 
 | Number | Status   | Title                                                                |
 | ------ | -------- |----------------------------------------------------------------------|
-| 0      | Accepted | [ENIP Template](enip-000.md)                                           |
+| 0      | Accepted | [ENIP Template](ENIP-000.md)                                           |
