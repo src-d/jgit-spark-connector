@@ -2,7 +2,7 @@ package tech.sourced.engine
 
 import org.scalatest._
 
-class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSparkSpec {
+class GitDataSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSparkSpec {
 
   var engine: Engine = _
 
@@ -12,7 +12,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     engine = Engine(ss, resourcePath)
   }
 
-  "Default source" should "get heads of all repositories and count the files" in {
+  "Git data source" should "get heads of all repositories and count the files" in {
     val df = engine.getRepositories.getHEAD.getCommits.getFirstReferenceCommit.getFiles
     engine.getRepositories.getHEAD.getCommits.getFirstReferenceCommit.show
     df.show(457)
@@ -49,12 +49,11 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
   it should "not optimize if the conditions on the " +
     "join are not the expected ones" in {
     val repos = engine.getRepositories
-    val references = ss.read.format("tech.sourced.engine").option("table", "references").load()
+    val references = ss.read.format(gitDataSource).option("table", "references").load()
     val out = repos.join(references,
       (references("repository_id") === repos("id"))
         .and(references("name").startsWith("refs/pull"))
     ).count()
-
 
     info("Files/blobs with commit hashes:\n")
     val filesDf = references.getCommits.getFiles.select(
