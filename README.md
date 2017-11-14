@@ -14,15 +14,34 @@ Current implementation combines:
 
 # Quick-start
 
+First, you need to download [Apache Spark](https://spark.apache.org/) somewhere on your machine:
+
+```bash
+$ cd /tmp && wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz" -O spark-2.2.0-bin-hadoop2.7.tgz
+```
+The Apache Software Foundation suggests you the better mirror where you can download `Spark` from. If you wish to take a look and find the best option in your case, you can [do it here](https://www.apache.org/dyn/closer.lua/spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz).
+
+Then you must extract `Spark` from the downloaded tar file:
+
+```bash
+$ tar -C ~/ -xvzf spark-2.2.0-bin-hadoop2.7.tgz
+```
+
+Binaries and scripts to run `Spark` are located in spark-2.2.0-bin-hadoop2.7/bin, so should set `PATH` and `SPARK_HOME` to point to this directory. It's advised to add this to your shell profile:
+
+```bash
+$ export SPARK_HOME=$HOME/spark-2.2.0-bin-hadoop2.7
+$ export PATH=$PATH:$SPARK_HOME/bin
+```
+
 Look for the latest [**engine** version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced), and then replace in the command where `[version]` is showed:
 
 ```bash
-$ wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz" -O spark-2.2.0-bin-hadoop2.7.tgz
-$ tar -xzf spark-2.2.0-bin-hadoop2.7.tgz; cd spark-2.2.0-bin-hadoop2.7
-$ ./bin/spark-shell --packages "tech.sourced:engine:[version]"
+$ spark-shell --packages "tech.sourced:engine:[version]"
 
 # or
-$ ./bin/pyspark --packages "tech.sourced:engine:[version]"
+
+$ pyspark --packages "tech.sourced:engine:[version]"
 ```
 
 Run [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can start it easily in a container following its [quick start guide](https://github.com/bblfsh/bblfshd#quick-start).
