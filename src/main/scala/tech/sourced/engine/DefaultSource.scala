@@ -74,7 +74,11 @@ case class GitRelation(session: SparkSession,
   override def sqlContext: SQLContext = session.sqlContext
 
   override def unhandledFilters(filters: Array[Filter]): Array[Filter] = {
-    super.unhandledFilters(filters)
+    for {
+      filter <- filters
+      if !Filters.isHandled(filter)
+    } yield filter
+    // super.unhandledFilters(filters)
   }
 
   override def buildScan(requiredColumns: Seq[Attribute], filters: Seq[Expression]): RDD[Row] = {

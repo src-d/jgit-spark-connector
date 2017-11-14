@@ -1,6 +1,7 @@
 package tech.sourced.engine.util
 
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.sources.Filter
 import org.apache.spark.unsafe.types.UTF8String
 
 object Filters {
@@ -43,6 +44,22 @@ object Filters {
   private def transformLiteral(value: Any): Any = value match {
     case v: UTF8String => v.toString
     case v => v
+  }
+
+  def isHandled(filter: Filter): Boolean = {
+    import org.apache.spark.sql.sources._
+    filter match {
+
+      case _@(_: EqualTo |
+              _: EqualNullSafe |
+              _: IsNull |
+              _: IsNotNull |
+              _: Not |
+              _: In |
+              _: And |
+              _: Not) => true
+      case _ => false
+    }
   }
 
 }
