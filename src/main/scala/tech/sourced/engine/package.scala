@@ -295,8 +295,7 @@ package object engine {
       }
 
       import org.apache.spark.sql.functions.lit
-      val queryB = df.sparkSession.sparkContext.broadcast(query)
-      df.withColumn(outputColumn, QueryXPathUDF(df(queryColumn), lit(queryB.value)))
+      df.withColumn(outputColumn, QueryXPathUDF(df(queryColumn), lit(query)))
     }
 
     /**
