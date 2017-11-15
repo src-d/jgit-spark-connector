@@ -15,10 +15,10 @@ import tech.sourced.engine.util.Filter
   */
 class DefaultSource extends RelationProvider with DataSourceRegister {
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def shortName: String = "git"
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def createRelation(sqlContext: SQLContext,
                               parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(
@@ -45,6 +45,17 @@ class DefaultSource extends RelationProvider with DataSourceRegister {
 object DefaultSource {
   val tableNameKey = "table"
   val pathKey = "path"
+
+  val tables = Seq("repositories", "references", "commits", "files")
+
+  def register(session: SparkSession): Unit = {
+    tables.foreach(t => {
+      session.read.format(defaultSource)
+        .option(tableNameKey, t)
+        .load(session.sqlContext.getConf(repositoriesPathKey))
+        .createOrReplaceTempView(t)
+    })
+  }
 }
 
 /**
@@ -53,7 +64,7 @@ object DefaultSource {
   * Also, the [[GitOptimizer]] might merge some table sources into one by squashing joins, so the
   * result will be the resultant table chained with the previous one using chained iterators.
   *
-  * @param session             Spark session
+  * @param session        Spark session
   * @param schema         schema of the relation
   * @param joinConditions join conditions, if any
   * @param tableSource    source table if any

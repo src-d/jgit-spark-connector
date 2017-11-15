@@ -35,10 +35,65 @@ import scala.collection.JavaConversions.asScalaBuffer
   * @constructor creates a Engine instance with the given Spark session.
   * @param session Spark session to be used
   */
-class Engine(session: SparkSession) {
+class Engine(session: SparkSession, repositoriesPath: String) {
 
+  this.setRepositoriesPath(repositoriesPath)
   session.registerUDFs()
   session.experimental.extraOptimizations = Seq(SquashGitRelationJoin)
+  DefaultSource.register(session)
+
+  // Options for a DataSource.
+  type Options = Map[String, String]
+
+  /**
+    * Function that will return options for the DataSource based on the received
+    * table name.
+    */
+  type TableOptionsProvider = (String) => Options
+
+  // TODO: tree entries and blobs are not yet supported
+  private val metadataTables = Seq("repositories", "references", "commits")
+
+  /**
+    * Loads the metadata from the given source and will use it to read the data instead
+    * of using the DefaultSource as much as possible.
+    *
+    * @param source               name of the format (e.g. "jdbc", "json", "parquet", ...)
+    * @param tableOptionsProvider function that given a table name will return
+    *                             options for said table.
+    * @param globalOptions        options that will be used regardless of the table name.
+    */
+  def fromMetadataSource(source: String,
+                         tableOptionsProvider: TableOptionsProvider,
+                         globalOptions: Options = Map()): Engine = {
+    metadataTables.foreach(t => {
+      val reader = session.read.format(source)
+      (globalOptions ++ tableOptionsProvider(t))
+        .foldLeft(reader) { case (r, (k, v)) => r.option(k, v) }
+        .load()
+        .createOrReplaceTempView(t)
+    })
+    this
+  }
+
+  /**
+    * Saves all the metadata of the DefaultSource into another data source.
+    *
+    * @param source               name of the format (e.g. "jdbc", "json", "parquet", ...)
+    * @param tableOptionsProvider function that given a table name will return
+    *                             options for said table.
+    * @param globalOptions        options that will be used regardless of the table name.
+    */
+  def backToMetadataSource(source: String,
+                           tableOptionsProvider: TableOptionsProvider,
+                           globalOptions: Options = Map()): Unit = {
+    metadataTables.foreach(t => {
+      val writer = session.table(t).write.format(source)
+      (globalOptions ++ tableOptionsProvider(t))
+        .foldLeft(writer) { case (w, (k, v)) => w.option(k, v) }
+        .save()
+    })
+  }
 
   /**
     * Returns a DataFrame with the data about the repositories found at
@@ -53,7 +108,7 @@ class Engine(session: SparkSession) {
     *
     * @return DataFrame
     */
-  def getRepositories: DataFrame = getDataSource("repositories", session)
+  def getRepositories: DataFrame = session.table("repositories")
 
   /**
     * Retrieves the files of a list of repositories, reference names and commit hashes.
@@ -181,8 +236,6 @@ object Engine {
     * @param repositoriesPath the path to the repositories' siva files
     * @return Engine instance
     */
-  def apply(session: SparkSession, repositoriesPath: String): Engine = {
-    new Engine(session)
-      .setRepositoriesPath(repositoriesPath)
-  }
+  def apply(session: SparkSession, repositoriesPath: String): Engine =
+    new Engine(session, repositoriesPath)
 }

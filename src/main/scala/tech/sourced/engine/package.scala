@@ -41,6 +41,8 @@ package object engine {
     */
   private[engine] val skipCleanupKey = "spark.tech.sourced.engine.cleanup.skip"
 
+  val defaultSource = "tech.sourced.engine"
+
   // The keys repositoriesPathKey, bblfshHostKey, bblfshPortKey and skipCleanupKey must
   // start by "spark." to be able to be loaded from the "spark-defaults.conf" file.
 
@@ -97,7 +99,7 @@ package object engine {
     def getReferences: DataFrame = {
       checkCols(df, "id")
       val reposIdsDf = df.select($"id")
-      getDataSource("references", df.sparkSession)
+      df.sparkSession.table("references")
         .join(reposIdsDf, $"repository_id" === $"id")
         .drop($"id")
     }
@@ -117,7 +119,7 @@ package object engine {
     def getCommits: DataFrame = {
       checkCols(df, "repository_id")
       val refsIdsDf = df.select($"name", $"repository_id")
-      val commitsDf = getDataSource("commits", df.sparkSession)
+      val commitsDf = df.sparkSession.table("commits")
       commitsDf.join(refsIdsDf, refsIdsDf("repository_id") === commitsDf("repository_id") &&
         commitsDf("reference_name") === refsIdsDf("name"))
         .drop(refsIdsDf("name")).drop(refsIdsDf("repository_id"))
@@ -156,7 +158,7 @@ package object engine {
       * @return new DataFrame containing also files data.
       */
     def getFiles: DataFrame = {
-      val filesDf = getDataSource("files", df.sparkSession)
+      val filesDf = df.sparkSession.table("files")
 
       if (df.schema.fieldNames.contains("index")) {
         val commitsDf = df.select("hash")
@@ -325,19 +327,6 @@ package object engine {
     }
 
   }
-
-  /**
-    * Returns a [[org.apache.spark.sql.DataFrame]] for the given table using the provided
-    * [[org.apache.spark.sql.SparkSession]].
-    *
-    * @param table   name of the table
-    * @param session spark session
-    * @return dataframe for the given table
-    */
-  private[engine] def getDataSource(table: String, session: SparkSession): DataFrame =
-    session.read.format("tech.sourced.engine.DefaultSource")
-      .option("table", table)
-      .load(session.sqlContext.getConf(repositoriesPathKey))
 
   /**
     * Ensures the given [[org.apache.spark.sql.DataFrame]] contains some required columns.
