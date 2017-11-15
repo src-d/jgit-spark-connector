@@ -49,7 +49,7 @@ class GitDataSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
   it should "not optimize if the conditions on the " +
     "join are not the expected ones" in {
     val repos = engine.getRepositories
-    val references = ss.read.format(gitDataSource).option("table", "references").load()
+    val references = ss.read.format(defaultSource).option("table", "references").load()
     val out = repos.join(references,
       (references("repository_id") === repos("id"))
         .and(references("name").startsWith("refs/pull"))

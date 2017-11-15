@@ -40,7 +40,7 @@ class Engine(session: SparkSession, repositoriesPath: String) {
   this.setRepositoriesPath(repositoriesPath)
   session.registerUDFs()
   session.experimental.extraOptimizations = Seq(SquashGitRelationJoin)
-  GitDataSource.register(session)
+  DefaultSource.register(session)
 
   // Options for a DataSource.
   type Options = Map[String, String]
@@ -56,9 +56,9 @@ class Engine(session: SparkSession, repositoriesPath: String) {
 
   /**
     * Loads the metadata from the given source and will use it to read the data instead
-    * of using the GitDataSource as much as possible.
+    * of using the DefaultSource as much as possible.
     *
-    * @param source               name of the format (e.g. "jdbc", "json", "csv", ...)
+    * @param source               name of the format (e.g. "jdbc", "json", "parquet", ...)
     * @param tableOptionsProvider function that given a table name will return
     *                             options for said table.
     * @param globalOptions        options that will be used regardless of the table name.
@@ -77,9 +77,9 @@ class Engine(session: SparkSession, repositoriesPath: String) {
   }
 
   /**
-    * Saves all the metadata of the GitDataSource into another data source.
+    * Saves all the metadata of the DefaultSource into another data source.
     *
-    * @param source               name of the format (e.g. "jdbc", "json", "csv", ...)
+    * @param source               name of the format (e.g. "jdbc", "json", "parquet", ...)
     * @param tableOptionsProvider function that given a table name will return
     *                             options for said table.
     * @param globalOptions        options that will be used regardless of the table name.

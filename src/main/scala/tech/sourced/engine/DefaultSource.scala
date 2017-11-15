@@ -13,7 +13,7 @@ import tech.sourced.engine.util.Filter
 /**
   * Default source to provide new git relations.
   */
-class GitDataSource extends RelationProvider with DataSourceRegister {
+class DefaultSource extends RelationProvider with DataSourceRegister {
 
   /** @inheritdoc*/
   override def shortName: String = "git"
@@ -22,7 +22,7 @@ class GitDataSource extends RelationProvider with DataSourceRegister {
   override def createRelation(sqlContext: SQLContext,
                               parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(
-      GitDataSource.tableNameKey,
+      DefaultSource.tableNameKey,
       throw new SparkException("parameter 'table' must be provided")
     )
 
@@ -40,9 +40,9 @@ class GitDataSource extends RelationProvider with DataSourceRegister {
 }
 
 /**
-  * Just contains some useful constants for the GitDataSource class to use.
+  * Just contains some useful constants for the DefaultSource class to use.
   */
-object GitDataSource {
+object DefaultSource {
   val tableNameKey = "table"
   val pathKey = "path"
 
@@ -50,7 +50,7 @@ object GitDataSource {
 
   def register(session: SparkSession): Unit = {
     tables.foreach(t => {
-      session.read.format(gitDataSource)
+      session.read.format(defaultSource)
         .option(tableNameKey, t)
         .load(session.sqlContext.getConf(repositoriesPathKey))
         .createOrReplaceTempView(t)

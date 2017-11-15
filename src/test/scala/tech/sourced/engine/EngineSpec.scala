@@ -51,7 +51,7 @@ class EngineSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSpark
     )
 
     // if fromMetadataSource does not load the metadata, it will use the ones from
-    // the GitDataSource and the result will be wrong
+    // the DefaultSource and the result will be wrong
     ss.table("repositories").createOrReplaceTempView("repos_tmp")
     ss.table("commits").createOrReplaceTempView("repositories")
     ss.table("references").createOrReplaceTempView("commits")

@@ -41,7 +41,7 @@ package object engine {
     */
   private[engine] val skipCleanupKey = "spark.tech.sourced.engine.cleanup.skip"
 
-  val gitDataSource = "tech.sourced.engine.GitDataSource"
+  val defaultSource = "tech.sourced.engine"
 
   // The keys repositoriesPathKey, bblfshHostKey, bblfshPortKey and skipCleanupKey must
   // start by "spark." to be able to be loaded from the "spark-defaults.conf" file.
