@@ -12,56 +12,42 @@ object Bblfsh extends Logging {
 
   case class Config(host: String, port: Int)
 
-  /**
-    *  Languages whose UAST will not be retrieved.
-    */
+  /** Languages whose UAST will not be retrieved. */
   val excludedLangs = Set("markdown", "text")
 
-  /**
-    * Key used for the option to specify the host of the bblfsh grpc service.
-    */
+  /** Key used for the option to specify the host of the bblfsh grpc service. */
   val hostKey = "spark.tech.sourced.bblfsh.grpc.host"
 
-  /**
-    * Key used for the option to specify the port of the bblfsh grpc service.
-    */
+  /** Key used for the option to specify the port of the bblfsh grpc service. */
   val portKey = "spark.tech.sourced.bblfsh.grpc.port"
 
-  private val defaultPort = "9432"
-  private val defaultHost = "0.0.0.0"
+  /** Default bblfsh host. */
+  val defaultHost = "0.0.0.0"
+
+  /** Default bblfsh port. */
+  val defaultPort = 9432
 
   private var config: Config = _
   private var client: BblfshClient = _
-
-  /**
-    * Set the host and port that will be used to connect to the bblfsh server,
-    * retrieving these parameter from the SparkSession configuration.
-    *
-    * @param session
-    */
-  def setConfig(session: SparkSession): Unit = {
-    val port = session.conf.get(portKey, defaultPort).toInt
-    val host = session.conf.get(hostKey, defaultHost)
-    config = Config(host, port)
-  }
 
   /**
     * Returns the configuration for babelfish.
     *
     * @return bblfsh Configuration
     */
-  def getConfig(): Config = {
+  def getConfig(session: SparkSession): Config = {
     if (config == null) {
-      Config(defaultHost, defaultPort.toInt)
-    } else {
-      config
+      val host = session.conf.get(hostKey, Bblfsh.defaultHost)
+      val port = session.conf.get(portKey, Bblfsh.defaultPort.toString).toInt
+      config = Config(host, port)
     }
+
+    config
   }
 
-  private def getClient(): BblfshClient = synchronized {
+  private def getClient(config: Config): BblfshClient = synchronized {
     if (client == null) {
-      val Config(host, port) = getConfig()
-      client = BblfshClient(host, port)
+      client = BblfshClient(config.host, config.port)
     }
 
     client
@@ -77,7 +63,8 @@ object Bblfsh extends Logging {
     */
   def extractUAST(path: String,
                   content: Array[Byte],
-                  lang: String): Seq[Array[Byte]] = {
+                  lang: String,
+                  config: Config): Seq[Array[Byte]] = {
 
     //FIXME(bzz): not everything is UTF-8 encoded :/
 
@@ -86,7 +73,7 @@ object Bblfsh extends Logging {
     if (lang != null && excludedLangs.contains(lang.toLowerCase())) {
       Seq()
     } else {
-      val client = getClient()
+      val client = getClient(config)
       val contentStr = new String(content, StandardCharsets.UTF_8)
       val parsed = client.parse(path, content = contentStr, lang = lang)
       if (parsed.status == Status.OK) {
@@ -99,14 +86,14 @@ object Bblfsh extends Logging {
   }
 
   /**
-    * Filter an UAST node using the given query
+    * Filter an UAST node using the given query.
     *
     * @param node
     * @param query
     * @return
     */
-  def filter(node: Node, query: String): List[Node] = {
-    getClient().filter(node, query)
+  def filter(node: Node, query: String, config: Config): List[Node] = {
+    getClient(config).filter(node, query)
   }
 
 }

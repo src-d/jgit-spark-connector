@@ -4,7 +4,6 @@ import gopkg.in.bblfsh.sdk.v1.uast.generated.Node
 import org.apache.spark.SparkException
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import tech.sourced.engine.udf._
-import tech.sourced.engine.util.Bblfsh
 
 /**
   * Provides the [[tech.sourced.engine.Engine]] class, which is the main entry point
@@ -58,12 +57,10 @@ package object engine {
     def registerUDFs(): Unit = {
       SessionFunctions.UDFtoRegister.foreach(customUDF => session.udf.register(
         customUDF.name,
-        customUDF.function
+        customUDF.function(session)
       ))
     }
 
-    Bblfsh.setConfig(session)
-    session.sparkContext.broadcast(Bblfsh.getConfig())
   }
 
   /**
@@ -84,6 +81,8 @@ package object engine {
   implicit class EngineDataFrame(df: DataFrame) {
 
     import df.sparkSession.implicits._
+
+    implicit val session = df.sparkSession
 
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the

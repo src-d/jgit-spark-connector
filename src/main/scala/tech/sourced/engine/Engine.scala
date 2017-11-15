@@ -185,4 +185,5 @@ object Engine {
     new Engine(session)
       .setRepositoriesPath(repositoriesPath)
   }
+
 }
