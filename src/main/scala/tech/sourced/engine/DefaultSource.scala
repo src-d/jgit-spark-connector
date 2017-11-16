@@ -128,6 +128,7 @@ case class GitRelation(session: SparkSession,
         case other => throw new SparkException(s"required cols for '$other' is not supported")
       })
 
+      // FIXME: when the RDD is persisted to disk the last element of this iterator is closed twice
       new CleanupIterator(iter.getOrElse(Seq().toIterator), provider.close(pds, repo))
     })
   }
