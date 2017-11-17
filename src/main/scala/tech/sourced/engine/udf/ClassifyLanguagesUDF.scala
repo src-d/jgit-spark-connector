@@ -17,6 +17,14 @@ case object ClassifyLanguagesUDF extends CustomUDF {
     function()(isBinary, path, content)
   }
 
+  /**
+    * Gets the language of the given file and returns the guessed language or none.
+    *
+    * @param isBinary whether it's a binary file or not
+    * @param path     file path
+    * @param content  file content
+    * @return `None` if no language could be guessed, `Some(language)` otherwise.
+    */
   private def getLanguage(isBinary: Boolean, path: String, content: Array[Byte]): Option[String] = {
     if (isBinary) {
       None

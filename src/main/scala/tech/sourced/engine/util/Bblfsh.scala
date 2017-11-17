@@ -31,9 +31,10 @@ object Bblfsh extends Logging {
   private var client: BblfshClient = _
 
   /**
-    * Returns the configuration for babelfish.
+    * Returns the configuration for bblfsh.
     *
-    * @return bblfsh Configuration
+    * @param session Spark session
+    * @return bblfsh configuration
     */
   def getConfig(session: SparkSession): Config = {
     if (config == null) {
@@ -59,6 +60,7 @@ object Bblfsh extends Logging {
     * @param path    File path
     * @param content File content
     * @param lang    File language
+    * @param config bblfsh configuration
     * @return List of uast nodes binary-encoded as a byte array
     */
   def extractUAST(path: String,
@@ -88,9 +90,10 @@ object Bblfsh extends Logging {
   /**
     * Filter an UAST node using the given query.
     *
-    * @param node
-    * @param query
-    * @return
+    * @param node An UAST node
+    * @param query XPath expression
+    * @param config bblfsh configuration
+    * @return UAST list of filtered nodes
     */
   def filter(node: Node, query: String, config: Config): List[Node] = {
     getClient(config).filter(node, query)
