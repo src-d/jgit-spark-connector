@@ -58,8 +58,8 @@ class Engine(object):
 
     def blobs(self, repository_ids=[], reference_names=[], commit_hashes=[]):
         """
-        Retrieves the files of a list of repositories, reference names and commit hashes.
-        So the result will be a DataFrame of all the files in the given commits that are
+        Retrieves the blobs of a list of repositories, reference names and commit hashes.
+        So the result will be a DataFrame of all the blobs in the given commits that are
         in the given references that belong to the given repositories.
 
         >>> blobs_df = engine.blobs(repo_ids, ref_names, hashes)

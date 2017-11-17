@@ -13,7 +13,7 @@ Code:
 ```python
 from sourced.engine import Engine
 engine = Engine(spark, '/path/to/siva-files')
-engine.repositories.references.head_ref.files.classify_languages().extract_uasts().select("path", "lang", "uast").show()
+engine.repositories.references.head_ref.commits.tree_entries.blobs.classify_languages().extract_uasts().select("path", "lang", "uast").show()
 
 ''' Output:
 +--------------------+--------+-------------+

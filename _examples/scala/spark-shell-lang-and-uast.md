@@ -14,11 +14,11 @@ Code:
 import tech.sourced.engine._
 
 val engine = Engine(spark, "/path/to/siva-files")
-engine.getRepositories.getHEAD.getFiles.classifyLanguages.extractUASTs.select('file_hash, 'path, 'lang, 'uast).show
+engine.getRepositories.getHEAD.getCommits.getTreeEntries.getBlobs.classifyLanguages.extractUASTs.select('blob_id, 'path, 'lang, 'uast).show
 
 /* Output:
 +--------------------+--------------------+--------+-------------+
-|           file_hash|                path|    lang|         uast|
+|             blob_id|                path|    lang|         uast|
 +--------------------+--------------------+--------+-------------+
 |ff4fa0794274a7ffb...|fibonacci/fibonac...|  Python|[[B@62f37a44]|
 |7268016814b8ab7bc...|          gcd/gcd.py|  Python|[[B@7c0368da]|

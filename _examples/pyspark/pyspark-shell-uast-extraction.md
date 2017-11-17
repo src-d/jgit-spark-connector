@@ -2,9 +2,9 @@
 
 In the example code below, you can take a look to how the `extract_uasts()` method works.
 
-From the `engine` object instantiated in the spark-shell, a bunch of files are retrieving from the `HEAD` references from all the repositories and requesting for them. Once we have that files, we can call `extract_uasts()` which send the files to a [bblfsh server](https://github.com/bblfsh/server) to get back the UASTs.
+From the `engine` object instantiated in the spark-shell, a bunch of blobs are retrieving from the `HEAD` references from all the repositories and requesting for them. Once we have those blobs, we can call `extract_uasts()` which send the blobs to a [bblfsh server](https://github.com/bblfsh/server) to get back the UASTs.
 
-Finally, the `file_hash` , `path` and `uast` is showed on the table.
+Finally, the `blob_id` , `path` and `uast` is showed on the table.
 
 Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
@@ -15,11 +15,11 @@ Code:
 ```python
 from sourced.engine import Engine
 engine = Engine(spark, '/path/to/siva-files')
-engine.repositories.references.head_ref.files.extract_uasts().select("file_hash", "path", "uast").show()
+engine.repositories.references.head_ref.commits.tree_entries.blobs.classify_languages().extract_uasts().select("blob_id", "path", "uast").show()
 
 ''' Output:
 +--------------------+--------------------+-------------+
-|           file_hash|                path|         uast|
+|             blob_id|                path|         uast|
 +--------------------+--------------------+-------------+
 |ff4fa0794274a7ffb...|fibonacci/fibonac...|[[B@43efe672]|
 |7268016814b8ab7bc...|          gcd/gcd.py|[[B@66938491]|

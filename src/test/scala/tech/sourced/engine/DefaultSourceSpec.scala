@@ -65,11 +65,11 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
 
     info("Files/blobs with commit hashes:\n")
-    val filesDf = references.getCommits.getBlobs.select(
+    val blobsDf = references.getCommits.getBlobs.select(
       "path", "commit_hash"
     )
-    filesDf.explain(true)
-    filesDf.show()
+    blobsDf.explain(true)
+    blobsDf.show()
 
     out should be(37)
   }
@@ -103,7 +103,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     val spark = ss
     import spark.implicits._
 
-    val filesDf = engine
+    val blobsDf = engine
       .getRepositories.filter($"id" === "github.com/mawag/faq-xiyoulinux")
       .getReferences.getHEAD
       .getCommits.getBlobs
@@ -115,13 +115,13 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
         "is_binary"
       )
 
-    val cnt = filesDf.count()
+    val cnt = blobsDf.count()
     info(s"Total $cnt rows")
     cnt should be(2)
 
     info("UAST for files:\n")
-    val filesCols = filesDf.columns.length
-    val uasts = filesDf.classifyLanguages.extractUASTs()
+    val filesCols = blobsDf.columns.length
+    val uasts = blobsDf.classifyLanguages.extractUASTs()
 
     val uastsCols = uasts.columns.length
     assert(uastsCols - 2 == filesCols)

@@ -10,7 +10,7 @@ def main():
     session = SparkSession.builder.appName("test").master('local[*]').getOrCreate()
     engine = Engine(session, repos_path)
     rows = engine.repositories.references.head_ref.commits.first_reference_commit\
-        .files.select('path').collect()
+        .tree_entries.select('path').collect()
 
     files = [r['path'] for r in rows]
 
