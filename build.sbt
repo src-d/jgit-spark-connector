@@ -21,6 +21,8 @@ libraryDependencies += commonsIO % Compile
 libraryDependencies += commonsPool % Compile
 libraryDependencies += enry % Compile
 
+testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oUT")
+
 test in assembly := {}
 assemblyJarName in assembly := s"${name.value}-${version.value}.jar"
 
