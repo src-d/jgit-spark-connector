@@ -19,7 +19,7 @@ class ReferenceIterator(finalColumns: Array[String],
                         filters: Seq[CompiledFilter])
   extends RootedRepoIterator[Ref](finalColumns, repo, prevIter, filters) {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[Ref] =
     ReferenceIterator.loadIterator(
       repo,
@@ -30,7 +30,7 @@ class ReferenceIterator(finalColumns: Array[String],
       filters.flatMap(_.matchingCases)
     )
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def mapColumns(ref: Ref): Map[String, () => Any] = {
     val (repoId, refName) = RootedRepo.parseRef(repo, ref.getName)
     Map[String, () => Any](
@@ -68,6 +68,7 @@ object ReferenceIterator {
                    refNameKey: String = "name"): Iterator[Ref] = {
     val referenceNames = filters.flatMap {
       case (k, refNames) if k == refNameKey => refNames.map(_.toString)
+      case ("name", refNames) => refNames.map(_.toString)
       case _ => Seq()
     }
 
@@ -80,7 +81,7 @@ object ReferenceIterator {
 
         if (filterRepos.isEmpty || filterRepos.contains(id)) Array(id) else Array()
       case None =>
-        RepositoryIterator.loadIterator(repo, filters, "repository_id").toArray
+        RepositoryIterator.loadIterator(repo, filters, repoKey).toArray
     }
 
     val out = repo.getAllRefs.asScala.values.filter(ref => {

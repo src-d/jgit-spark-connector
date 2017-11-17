@@ -161,37 +161,42 @@ package object engine {
 
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
-      * current dataframe with the files dataframe.
+      * current dataframe with the tree entries dataframe.
       *
       * {{{
-      * val filesDf = commitsDf.getFiles
+      * val entriesDf = commitsDf.getTreeEntries
       * }}}
       *
-      * It can also be used to directly retrieve the files of a references dataframe, but
-      * take into account that it will only get the first commit for that reference (that is,
-      * the latest state in which the reference is).
-      *
-      * {{{
-      * val filesDf = refsDf.getFiles
-      *
-      * // is equivalent to
-      *
-      * val filesDf = refsDf.getCommits.getFirstReferenceCommit.getFiles
-      * }}}
-      *
-      * @return new DataFrame containing also files data.
+      * @return new DataFrame containing also tree entries data.
       */
-    def getFiles: DataFrame = {
-      val filesDf = getDataSource("files", df.sparkSession)
+    def getTreeEntries: DataFrame = {
+      checkCols(df, "index", "hash") // references also has hash, index makes sure that is commits
+      val commitsDf = df.select("hash")
+      val entriesDf = getDataSource("tree_entries", df.sparkSession)
+      entriesDf.join(commitsDf, entriesDf("commit_hash") === commitsDf("hash"))
+        .drop($"hash")
+    }
 
-      if (df.schema.fieldNames.contains("index")) {
-        val commitsDf = df.select("hash")
-        filesDf.join(commitsDf, filesDf("commit_hash") === commitsDf("hash"))
-          .drop($"hash")
-          .distinct()
+    /**
+      * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
+      * current dataframe with the blobs dataframe. If the current dataframe does not contain
+      * the tree entries data, getTreeEntries will be called automatically.
+      *
+      * {{{
+      * val blobsDf = treeEntriesDf.getBlobs
+      * val blobsDf2 = commitsDf.getBlobs // can be obtained from commits too
+      * }}}
+      *
+      * @return new DataFrame containing also blob data.
+      */
+    def getBlobs: DataFrame = {
+      if (!df.columns.contains("blob")) {
+        df.getTreeEntries.getBlobs
       } else {
-        checkCols(df, "name")
-        df.getCommits.getFirstReferenceCommit.getFiles
+        val treesDf = df.select("path", "blob")
+        val blobsDf = getDataSource("blobs", df.sparkSession)
+        blobsDf.join(treesDf, treesDf("blob") === blobsDf("blob_id"))
+          .drop($"blob")
       }
     }
 

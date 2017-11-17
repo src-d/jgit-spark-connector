@@ -30,7 +30,8 @@ class DefaultSource extends RelationProvider with DataSourceRegister {
       case "repositories" => Schema.repositories
       case "references" => Schema.references
       case "commits" => Schema.commits
-      case "files" => Schema.files
+      case "tree_entries" => Schema.treeEntries
+      case "blobs" => Schema.blobs
       case other => throw new SparkException(s"table '$other' is not supported")
     }
 
@@ -53,7 +54,7 @@ object DefaultSource {
   * Also, the [[GitOptimizer]] might merge some table sources into one by squashing joins, so the
   * result will be the resultant table chained with the previous one using chained iterators.
   *
-  * @param session             Spark session
+  * @param session        Spark session
   * @param schema         schema of the relation
   * @param joinConditions join conditions, if any
   * @param tableSource    source table if any
@@ -69,15 +70,16 @@ case class GitRelation(session: SparkSession,
   private val skipCleanup: Boolean = session.conf.
     get(skipCleanupKey, default = "false").toBoolean
 
-  // this is needed to be overriden to extend BaseRelataion,
-  // though is not much usefull since we have the SparkSession
+  // this needs to be overridden to extend BaseRelataion,
+  // though is not very useful since already we have the SparkSession
   override def sqlContext: SQLContext = session.sqlContext
 
   override def unhandledFilters(filters: Array[Filter]): Array[Filter] = {
     super.unhandledFilters(filters)
   }
 
-  override def buildScan(requiredColumns: Seq[Attribute], filters: Seq[Expression]): RDD[Row] = {
+  override def buildScan(requiredColumns: Seq[Attribute],
+                         filters: Seq[Expression]): RDD[Row] = {
     val sc = session.sparkContext
     val reposRDD = RepositoryRDDProvider(sc).get(path)
 
@@ -117,11 +119,19 @@ case class GitRelation(session: SparkSession,
             filtersBySource.value.getOrElse(k, Seq())
           ))
 
-        case k@"files" =>
-          iter = Some(new BlobIterator(
+        case k@"tree_entries" =>
+          iter = Some(new TreeEntryIterator(
             requiredCols.value,
             repo,
             iter.map(_.asInstanceOf[CommitIterator]).orNull,
+            filtersBySource.value.getOrElse(k, Seq())
+          ))
+
+        case k@"blobs" =>
+          iter = Some(new BlobIterator(
+            requiredCols.value,
+            repo,
+            iter.map(_.asInstanceOf[TreeEntryIterator]).orNull,
             filtersBySource.value.getOrElse(k, Seq())
           ))
 
@@ -182,7 +192,8 @@ object Sources {
     "repositories",
     "references",
     "commits",
-    "files"
+    "tree_entries",
+    "blobs"
   )
 
   /**

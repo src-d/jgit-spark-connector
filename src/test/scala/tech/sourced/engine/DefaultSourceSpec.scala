@@ -13,8 +13,14 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
   }
 
   "Default source" should "get heads of all repositories and count the files" in {
-    val df = engine.getRepositories.getHEAD.getCommits.getFirstReferenceCommit.getFiles
-    engine.getRepositories.getHEAD.getCommits.getFirstReferenceCommit.show
+    val df = engine.getRepositories
+      .getHEAD
+      .getCommits
+      .getFirstReferenceCommit
+      .getTreeEntries
+      .getBlobs
+      .select("commit_hash", "path", "content", "is_binary")
+      .distinct()
     df.show(457)
     df.count should be(457)
   }
@@ -35,14 +41,16 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
   }
 
   it should "get all files from HEADS that are Ruby" in {
-    val files = engine.getRepositories.filter("is_fork = false")
+    val blobs = engine.getRepositories.filter("is_fork = false")
       .getHEAD
       .getCommits
       .getFirstReferenceCommit
-      .getFiles
+      .getTreeEntries
+      .getBlobs
       .classifyLanguages
-    val df = files.filter(files("lang") === "Ruby").select("lang", "path")
-    df.show(169, truncate = false)
+    val df = blobs.filter(blobs("lang") === "Ruby").select("lang", "path")
+    df.explain(true)
+    df.show(453, truncate = false)
     df.count should be(169)
   }
 
@@ -57,8 +65,8 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
 
     info("Files/blobs with commit hashes:\n")
-    val filesDf = references.getCommits.getFiles.select(
-      "path", "commit_hash", "file_hash"
+    val filesDf = references.getCommits.getBlobs.select(
+      "path", "commit_hash"
     )
     filesDf.explain(true)
     filesDf.show()
@@ -73,11 +81,11 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     val filesDf = engine
       .getRepositories.filter($"id" === "github.com/mawag/faq-xiyoulinux")
       .getReferences.getHEAD
-      .getFiles
+      .getCommits.getBlobs
       .select(
         "path",
         "commit_hash",
-        "file_hash",
+        "blob_id",
         "content",
         "is_binary"
       )
@@ -94,7 +102,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     assert(uastsCols - 2 == filesCols)
   }
 
-  "Filter by reference from repos dataframe" should "work" in {
+  it should "filter by reference from repos dataframe" in {
     val spark = ss
 
     val df = Engine(spark, resourcePath)
@@ -131,14 +139,24 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
   }
 
   "Get files after reading commits" should "return the correct files" in {
-    val files = engine.getRepositories.getReferences.getCommits.getFiles
+    val files = engine.getRepositories
+      .getReferences
+      .getCommits
+      .getBlobs
+      .drop("repository_id", "reference_name")
+      .distinct()
 
     files.show(truncate = false)
     assert(files.count == 91944)
   }
 
-  "Get files without reading commits" should "return the correct files" in {
-    val files = engine.getRepositories.getReferences.getFiles
+  "Get files without reading tree entries" should "return the correct files" in {
+    val files = engine.getRepositories
+      .getReferences
+      .getCommits
+      .getBlobs
+      .drop("repository_id", "reference_name")
+      .distinct()
 
     assert(files.count == 3512)
   }
@@ -155,28 +173,38 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     df.show(truncate = false)
 
     val files = engine
-      .getFiles(repositories.distinct, List("refs/heads/HEAD"), hashes.distinct)
+      .getBlobs(repositories.distinct, List("refs/heads/HEAD"), hashes.distinct)
+      .drop("repository_id", "reference_name")
+      .distinct()
+
+    files.explain(true)
 
     assert(files.count == 655)
   }
 
   it should "return the correct files if we filter by repository" in {
     val files = engine
-      .getFiles(repositoryIds = List("github.com/xiyou-linuxer/faq-xiyoulinux"))
+      .getBlobs(repositoryIds = List("github.com/xiyou-linuxer/faq-xiyoulinux"))
+      .drop("repository_id", "reference_name")
+      .distinct()
 
     assert(files.count == 2421)
   }
 
   it should "return the correct files if we filter by reference" in {
     val files = engine
-      .getFiles(referenceNames = List("refs/heads/develop"))
+      .getBlobs(referenceNames = List("refs/heads/develop"))
+      .drop("repository_id", "reference_name")
+      .distinct()
 
     assert(files.count == 425)
   }
 
   it should "return the correct files if we filter by commit" in {
     val files = engine
-      .getFiles(commitHashes = List("fff7062de8474d10a67d417ccea87ba6f58ca81d"))
+      .getBlobs(commitHashes = List("fff7062de8474d10a67d417ccea87ba6f58ca81d"))
+      .drop("repository_id", "reference_name")
+      .distinct()
     files.explain(true)
 
     assert(files.count == 2)

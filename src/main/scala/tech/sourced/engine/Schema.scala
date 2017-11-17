@@ -39,8 +39,6 @@ private[engine] object Schema {
       StructField("hash", StringType, nullable = false) ::
       StructField("message", StringType, nullable = false) ::
       StructField("parents", ArrayType(StringType, containsNull = false)) ::
-      StructField("tree", MapType(StringType, StringType, valueContainsNull = false)) ::
-      StructField("blobs", ArrayType(StringType, containsNull = false)) ::
       StructField("parents_count", IntegerType, nullable = false) ::
 
       StructField("author_email", StringType) ::
@@ -55,15 +53,27 @@ private[engine] object Schema {
   )
 
   /**
-    * Files table schema containing all the files data.
+    * Tree Entries table schema containing all the tree entries data.
     */
-  val files = StructType(
-    StructField("file_hash", StringType, nullable = false) ::
-      StructField("content", BinaryType) ::
-      StructField("commit_hash", StringType, nullable = false) ::
-      StructField("is_binary", BooleanType, nullable = false) ::
-      StructField("path", StringType) ::
+  val treeEntries = StructType(
+    StructField("commit_hash", StringType, nullable = false) ::
+      StructField("repository_id", StringType, nullable = false) ::
+      StructField("reference_name", StringType, nullable = false) ::
+      StructField("path", StringType, nullable = false) ::
+      StructField("blob", StringType, nullable = false) ::
+      Nil
+  )
 
+  /**
+    * Blobs table schema containing all the blobs data.
+    */
+  val blobs = StructType(
+    StructField("blob_id", StringType, nullable = false) ::
+      StructField("commit_hash", StringType, nullable = false) ::
+      StructField("repository_id", StringType, nullable = false) ::
+      StructField("reference_name", StringType, nullable = false) ::
+      StructField("content", BinaryType) ::
+      StructField("is_binary", BooleanType, nullable = false) ::
       Nil
   )
 
