@@ -56,17 +56,17 @@ class Engine(object):
                                      self.session, self.__implicits)
 
 
-    def files(self, repository_ids=[], reference_names=[], commit_hashes=[]):
+    def blobs(self, repository_ids=[], reference_names=[], commit_hashes=[]):
         """
         Retrieves the files of a list of repositories, reference names and commit hashes.
         So the result will be a DataFrame of all the files in the given commits that are
         in the given references that belong to the given repositories.
 
-        >>> files_df = engine.files(repo_ids, ref_names, hashes)
+        >>> blobs_df = engine.blobs(repo_ids, ref_names, hashes)
 
         Calling this function with no arguments is the same as:
 
-        >>> engine.repositories.references.commits.files
+        >>> engine.repositories.references.commits.first_reference_commit.tree_entries.blobs
 
         :param repository_ids: list of repository ids to filter by (optional)
         :type repository_ids: list of strings
@@ -74,7 +74,7 @@ class Engine(object):
         :type reference_names: list of strings
         :param commit_hashes: list of hashes to filter by (optional)
         :type commit_hashes: list of strings
-        :rtype: FilesDataFrame
+        :rtype: BlobsDataFrame
         """
         if not isinstance(repository_ids, list):
             raise Exception("repository_ids must be a list")
@@ -85,7 +85,7 @@ class Engine(object):
         if not isinstance(commit_hashes, list):
             raise Exception("commit_hashes must be a list")
 
-        return FilesDataFrame(self.__engine.getFiles(repository_ids,
+        return BlobsDataFrame(self.__engine.getBlobs(repository_ids,
                                                   reference_names,
                                                   commit_hashes),
                               self.session,
@@ -226,6 +226,30 @@ class RepositoriesDataFrame(SourcedDataFrame):
                                    self._session, self._implicits)
 
 
+    @property
+    def head_ref(self):
+        """
+        Filters the current DataFrame references to only contain those rows whose reference is HEAD.
+
+        >>> heads_df = repos_df.head_ref
+
+        :rtype: ReferencesDataFrame
+        """
+        return self.references.ref('refs/heads/HEAD')
+
+
+    @property
+    def master_ref(self):
+        """
+        Filters the current DataFrame references to only contain those rows whose reference is master.
+
+        >>> master_df = repos_df.master_ref
+
+        :rtype: ReferencesDataFrame
+        """
+        return self.references.ref('refs/heads/master')
+
+
 class ReferencesDataFrame(SourcedDataFrame):
     """
     DataFrame with references.
@@ -305,15 +329,15 @@ class ReferencesDataFrame(SourcedDataFrame):
 
 
     @property
-    def files(self):
+    def blobs(self):
         """
-        Returns this DataFrame joined with the files DataSource.
+        Returns this DataFrame joined with the blobs DataSource.
 
-        >>> files_df = refs_df.files
+        >>> blobs_df = refs_df.blobs
 
-        :rtype: FilesDataFrame
+        :rtype: BlobsDataFrame
         """
-        return FilesDataFrame(self._engine_dataframe.getFiles(), self._session, self._implicits)
+        return BlobsDataFrame(self._engine_dataframe.getBlobs(), self._session, self._implicits)
 
 
 class CommitsDataFrame(SourcedDataFrame):
@@ -357,21 +381,65 @@ class CommitsDataFrame(SourcedDataFrame):
 
 
     @property
-    def files(self):
+    def tree_entries(self):
         """
-        Returns this DataFrame joined with the files DataSource.
+        Returns this DataFrame joined with the tree entries DataSource.
 
-        >>> files_df = commits_df.FilesDataFrame
+        >>> entries_df = commits_df.tree_entries
 
-        :rtype: FilesDataFrame
+        :rtype: TreeEntriesDataFrame
         """
-        return FilesDataFrame(self._engine_dataframe.getFiles(), self._session, self._implicits)
+        return TreeEntriesDataFrame(self._engine_dataframe.getTreeEntries(), self._session, self._implicits)
 
 
-class FilesDataFrame(SourcedDataFrame):
+    @property
+    def blobs(self):
+        """
+        Returns a new DataFrame with the blob associated to each tree entry of the commit.
+
+        >>> > blobs_df = commits_df.blobs
+
+        :rtype: BlobsDataFrame
+        """
+        return BlobsDataFrame(self._engine_dataframe.getBlobs(), self._session,
+                                self._implicits)
+
+
+class TreeEntriesDataFrame(SourcedDataFrame):
     """
-    DataFrame containing files data.
-    This class should not be instantiated directly, please get your FilesDataFrame using the
+    DataFrame with tree entries data data.
+    This class should not be instantiated directly, please get your TreeEntriesDataFrame using the
+    provided methods.
+
+    :param jdf: Java DataFrame
+    :type jdf: py4j.java_gateway.JavaObject
+    :param session: Spark Session to use
+    :type session: pyspark.sql.SparkSession
+    :param implicits: Implicits object from Scala
+    :type implicits: py4j.java_gateway.JavaObject
+    """
+
+    def __init__(self, jdf, session, implicits):
+        SourcedDataFrame.__init__(self, jdf, session, implicits)
+
+
+    @property
+    def blobs(self):
+        """
+        Returns a new DataFrame with the blob associated to each tree entry.
+
+        >>> > blobs_df = trees_df.blobs
+
+        :rtype: BlobsDataFrame
+        """
+        return BlobsDataFrame(self._engine_dataframe.getBlobs(), self._session,
+                              self._implicits)
+
+
+class BlobsDataFrame(SourcedDataFrame):
+    """
+    DataFrame containing blobs data.
+    This class should not be instantiated directly, please get your BlobsDataFrame using the
     provided methods.
 
     :param jdf: Java DataFrame
@@ -388,23 +456,23 @@ class FilesDataFrame(SourcedDataFrame):
 
     def classify_languages(self):
         """
-        Returns a new DataFrame with the language data of any file added to
+        Returns a new DataFrame with the language data of any blob added to
         its row.
 
-        >>> files_lang_df = files_df.classify_languages
+        >>> blobs_lang_df = blobs_df.classify_languages
 
-        :rtype: FilesWithLanguageDataFrame
+        :rtype: BlobsWithLanguageDataFrame
         """
-        return FilesWithLanguageDataFrame(self._engine_dataframe.classifyLanguages(),
+        return BlobsWithLanguageDataFrame(self._engine_dataframe.classifyLanguages(),
                                           self._session, self._implicits)
 
 
     def extract_uasts(self):
         """
-        Returns a new DataFrame with the parsed UAST data of any file added to
+        Returns a new DataFrame with the parsed UAST data of any blob added to
         its row.
 
-        >>> files_df.extract_uasts
+        >>> blobs_df.extract_uasts
 
         :rtype: UASTsDataFrame
         """
@@ -412,10 +480,10 @@ class FilesDataFrame(SourcedDataFrame):
                               self._session, self._implicits)
 
 
-class FilesWithLanguageDataFrame(SourcedDataFrame):
+class BlobsWithLanguageDataFrame(SourcedDataFrame):
     """
-    DataFrame containing files and language data.
-    This class should not be instantiated directly, please get your FilesWithLanguageDataFrame
+    DataFrame containing blobs and language data.
+    This class should not be instantiated directly, please get your BlobsWithLanguageDataFrame
     using the provided methods.
 
     :param jdf: Java DataFrame
@@ -432,10 +500,10 @@ class FilesWithLanguageDataFrame(SourcedDataFrame):
 
     def extract_uasts(self):
         """
-        Returns a new DataFrame with the parsed UAST data of any file added to
+        Returns a new DataFrame with the parsed UAST data of any blob added to
         its row.
 
-        >>> files_lang_df.extract_uasts
+        >>> blobs_lang_df.extract_uasts
 
         :rtype: UASTsDataFrame
         """
