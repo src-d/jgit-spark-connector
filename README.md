@@ -14,33 +14,6 @@ Current implementation combines:
 
 # Quick-start
 
-Look for the latest [**engine** version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced), and then replace in the command where `[version]` is showed:
-
-```bash
-$ wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz" -O spark-2.2.0-bin-hadoop2.7.tgz
-$ tar -xzf spark-2.2.0-bin-hadoop2.7.tgz; cd spark-2.2.0-bin-hadoop2.7
-$ ./bin/spark-shell --packages "tech.sourced:engine:[version]"
-
-# or
-$ ./bin/pyspark --packages "tech.sourced:engine:[version]"
-```
-
-Run [bblfsh daemon](https://github.com/bblfsh/bblfshd):
-
-    docker create --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.1.2
-
-Then, execute the container:
-
-    docker start bblfshd
-
-Install bblfsh drivers:
-
-    docker exec -it bblfshd bblfshctl driver install --all
-
-# Pre-requisites
-
-## Apache Spark Installation
-
 First, you need to download [Apache Spark](https://spark.apache.org/) somewhere on your machine:
 
 ```bash
@@ -53,36 +26,31 @@ Then you must extract `Spark` from the downloaded tar file:
 ```bash
 $ tar -C ~/ -xvzf spark-2.2.0-bin-hadoop2.7.tgz
 ```
-Binaries and scripts to run `Spark` are located in spark-2.2.0-bin-hadoop2.7/bin, so maybe you would like to add it to your `PATH`:
 
-```bash
-$ export PATH=$PATH:$HOME/spark-2.2.0-bin-hadoop2.7/bin
-```
-
-or just set `SPARK_HOME` and run it as following:
+Binaries and scripts to run `Spark` are located in spark-2.2.0-bin-hadoop2.7/bin, so should set `PATH` and `SPARK_HOME` to point to this directory. It's advised to add this to your shell profile:
 
 ```bash
 $ export SPARK_HOME=$HOME/spark-2.2.0-bin-hadoop2.7
-$ $SPARK_HOME/bin/spark-shell
+$ export PATH=$PATH:$SPARK_HOME/bin
 ```
 
-## bblfsh
+Look for the latest [**engine** version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced), and then replace in the command where `[version]` is showed:
 
-If you want to be able to use the UAST extraction features **engine** provides, you must run a [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can do it easily with docker
+```bash
+$ spark-shell --packages "tech.sourced:engine:[version]"
 
-    docker create --rm --name bblfshd --privileged -p 9432:9432 -v /var/lib/bblfshd:/var/lib/bblfshd bblfsh/bblfshd:v2.1.2
+# or
 
-Now, execute the container:
+$ pyspark --packages "tech.sourced:engine:[version]"
+```
 
-    docker start bblfshd
+Run [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can start it easily in a container following its [quick start guide](https://github.com/bblfsh/bblfshd#quick-start).
 
-Then you need to install bblfsh drivers to parse different languages, you should do this the first time you run the [bblfsh daemon](https://github.com/bblfsh/bblfshd):
 
-    docker exec -it bblfshd bblfshctl driver install --all
+# Pre-requisites
 
-You should be able to see the installed drivers running:
-
-    docker exec -it bblfshd bblfshctl driver list
+* [Apache Spark Installation](http://spark.apache.org/docs/latest/) >= 2.2.0
+* [bblfsh](https://github.com/bblfsh/bblfshd): Used for UAST extraction
 
 # Examples of engine usage
 
