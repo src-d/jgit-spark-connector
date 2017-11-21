@@ -5,7 +5,7 @@ import sbt.Keys.libraryDependencies
 
 organization := "tech.sourced"
 scalaVersion := "2.11.11"
-version := "0.1.7"
+version := "0.1.8"
 name := "engine"
 
 libraryDependencies += scalaTest % Test
