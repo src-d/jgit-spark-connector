@@ -423,6 +423,15 @@ class ReferencesDataFrame(SourcedDataFrame):
 
         >>> commits_df = refs_df.commits
 
+        Take into account that getting all the commits will lead to a lot of repeated tree
+        entries and blobs, thus making your query very slow.
+        Most of the time what you probably want is to get the latest state of the files in
+        a specific reference.
+        You can use first_reference_commit for that purpose, which only gets the first
+        commit of a reference, that is, the latest status of the reference.
+
+        >>> commits_df = refs_df.commits.first_reference_commit
+
         :rtype: CommitsDataFrame
         """
         return CommitsDataFrame(self._engine_dataframe.getCommits(), self._session, self._implicits)
