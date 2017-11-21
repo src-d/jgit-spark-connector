@@ -207,6 +207,30 @@ You should have a [bblfsh daemon](https://github.com/bblfsh/bblfshd) container r
 
 When the `engine-jupyter` container starts it will show you an URL that you can open in your browser.
 
+# Using engine directly from Python
+
+If you are using engine directly from Python and are unable to modify the `PYTHON_SUBMIT_ARGS` you can copy the engine jar to the pyspark jars to make it available there.
+
+```
+cp engine.jar "$(python -c 'import pyspark; print(pyspark.__path__[0])'/jars"
+```
+
+This way, you can use it in the following way:
+
+```python
+import sys
+
+pyspark_path = "/path/to/pyspark/python"
+sys.path.append(pyspark_path)
+
+from pyspark.sql import SparkSession
+from sourced.engine import Engine
+
+siva_folder = "/path/to/siva-files"
+spark = SparkSession.builder.appName("test").master("local[*]").getOrCreate()
+engine = Engine(spark, siva_folder)
+```
+
 # Development
 
 ## Build fatjar
