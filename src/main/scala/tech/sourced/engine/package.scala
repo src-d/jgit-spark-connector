@@ -2,7 +2,7 @@ package tech.sourced
 
 import gopkg.in.bblfsh.sdk.v1.uast.generated.Node
 import org.apache.spark.SparkException
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import tech.sourced.engine.udf._
 
 /**
@@ -81,6 +81,8 @@ package object engine {
   implicit class EngineDataFrame(df: DataFrame) {
 
     import df.sparkSession.implicits._
+
+    implicit val session = df.sparkSession
 
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
@@ -227,10 +229,7 @@ package object engine {
       */
     def classifyLanguages: DataFrame = {
       checkCols(df, "is_binary", "path", "content")
-      df.withColumn(
-        "lang",
-        ClassifyLanguagesUDF.function(df.sparkSession)('is_binary, 'path, 'content)
-      )
+      df.withColumn("lang", ClassifyLanguagesUDF('is_binary, 'path, 'content))
     }
 
     /**
@@ -247,14 +246,13 @@ package object engine {
       */
     def extractUASTs(): DataFrame = {
       checkCols(df, "path", "content")
-      if (df.columns.contains("lang")) {
-        df.withColumn(
-          "uast",
-          ExtractUASTsUDF.functionWithLang(df.sparkSession)('path, 'content, 'lang)
-        )
+      val lang: Column = if (df.columns.contains("lang")) {
+        df("lang")
       } else {
-        df.withColumn("uast", ExtractUASTsUDF.function(df.sparkSession)('path, 'content))
+        null
       }
+
+      df.withColumn("uast", ExtractUASTsUDF('path, 'content, lang))
     }
 
     /**
@@ -295,10 +293,8 @@ package object engine {
         throw new SparkException(s"DataFrame already contains a column named $outputColumn")
       }
 
-      df.withColumn(
-        outputColumn,
-        QueryXPathUDF(df.sparkSession, query)(df(queryColumn))
-      )
+      import org.apache.spark.sql.functions.lit
+      df.withColumn(outputColumn, QueryXPathUDF(df(queryColumn), lit(query)))
     }
 
     /**
@@ -321,7 +317,7 @@ package object engine {
         throw new SparkException(s"DataFrame already contains a column named $outputColumn")
       }
 
-      df.withColumn(outputColumn, ExtractTokensUDF()(df(queryColumn)))
+      df.withColumn(outputColumn, ExtractTokensUDF(df(queryColumn)))
     }
 
   }
@@ -364,8 +360,10 @@ package object engine {
       */
     val UDFtoRegister: List[CustomUDF] = List(
       ClassifyLanguagesUDF,
-      ExtractUASTsUDF,
-      QueryXPathUDF
+      ExtractUASTsWithoutLangUDF,
+      ExtractUASTsWithLangUDF,
+      QueryXPathUDF,
+      ExtractTokensUDF
     )
   }
 

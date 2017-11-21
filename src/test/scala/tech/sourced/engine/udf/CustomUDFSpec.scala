@@ -94,11 +94,14 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     val spark = ss
     import spark.implicits._
 
-    spark.catalog.listFunctions().filter('name like "%" + ExtractUASTsUDF.name + "%").show(false)
+    spark.catalog.listFunctions()
+      .filter('name like "%" + ExtractUASTsWithoutLangUDF.name + "%")
+      .show(false)
+
     fileSeq.toDF(fileColumns: _*).createOrReplaceTempView("uasts")
 
     val uastsDF = spark.sqlContext.sql("SELECT *, "
-      + ExtractUASTsUDF.name + "(path, content) AS uast FROM uasts")
+      + ExtractUASTsWithoutLangUDF.name + "(path, content) AS uast FROM uasts")
     uastsDF.collect
     uastsDF.columns should contain("uast")
   }
@@ -110,8 +113,10 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     spark.catalog.listFunctions().filter('name like "%" + QueryXPathUDF.name + "%").show(false)
     fileSeq.take(1).toDF(fileColumns: _*).createOrReplaceTempView("files")
 
-    val uastsDF = spark.sqlContext.sql(s"SELECT path, ${ExtractUASTsUDF.name}(path, content) " +
-      s"as uast FROM files")
+    val uastsDF = spark.sqlContext
+      .sql(s"SELECT path, ${ExtractUASTsWithoutLangUDF.name}" + s"(path, content) "
+        + s"as uast FROM files")
+
     val uast = uastsDF.first()
 
     val uasts: Seq[(String, Seq[Array[Byte]])] = Seq(
