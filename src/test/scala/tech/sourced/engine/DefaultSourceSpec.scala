@@ -66,6 +66,26 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     out should be(37)
   }
 
+  it should "work with all storage levels" in {
+    import org.apache.spark.storage.StorageLevel._
+    val storageLevels = List(
+      DISK_ONLY,
+      DISK_ONLY_2,
+      MEMORY_AND_DISK,
+      MEMORY_AND_DISK_2,
+      MEMORY_AND_DISK_SER,
+      MEMORY_AND_DISK_SER_2,
+      MEMORY_ONLY,
+      MEMORY_ONLY_2,
+      MEMORY_ONLY_SER,
+      MEMORY_ONLY_SER_2,
+      NONE,
+      OFF_HEAP
+    )
+
+    storageLevels.foreach(engine.getRepositories.persist(_).count)
+  }
+
   "Convenience for getting files" should "work without reading commits" in {
     val spark = ss
     import spark.implicits._

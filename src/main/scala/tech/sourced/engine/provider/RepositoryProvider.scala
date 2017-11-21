@@ -73,7 +73,14 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     logDebug(s"Closing repository. active/idle count: " +
       s"${repositoryPool.getNumActive(key)}/ " +
       s"${repositoryPool.getNumIdle(key)}")
-    repositoryPool.returnObject(key, repo)
+
+    if (repositoryPool.getNumActive(key) != 0) {
+      repositoryPool.returnObject(key, repo)
+    } else {
+      logWarning(s"closing repository at ${repo.getDirectory};" +
+        s" returning object to the pool failed because it was already returned")
+    }
+
     if (repositoryPool.getNumActive == 0) {
       logDebug("No active elements on the pool, clearing all.")
       repositoryPool.clear()
