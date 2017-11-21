@@ -1,7 +1,7 @@
 package tech.sourced.engine.iterator
 
 import org.eclipse.jgit.lib.Repository
-import tech.sourced.engine.util.{CompiledFilter, Filter}
+import tech.sourced.engine.util.{CompiledFilter, Filters}
 
 import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 
@@ -55,7 +55,7 @@ object RepositoryIterator {
     * @return the iterator
     */
   def loadIterator(repo: Repository,
-                   filters: Seq[Filter.Match],
+                   filters: Seq[Filters.Match],
                    repoKey: String = "id"): Iterator[String] = {
     val ids = filters.flatMap {
       case (k, repoIds) if k == repoKey => repoIds.map(_.toString)

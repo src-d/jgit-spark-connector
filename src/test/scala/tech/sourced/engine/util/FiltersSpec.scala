@@ -4,7 +4,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.types.StringType
 import org.scalatest.{FlatSpec, Matchers}
 
-class FilterSpec extends FlatSpec with Matchers {
+class FiltersSpec extends FlatSpec with Matchers {
   "CompiledFilters" should "filter properly depending of his type" in {
     val eq = EqualFilter(Attr("test", ""), "a")
 
@@ -68,7 +68,7 @@ class FilterSpec extends FlatSpec with Matchers {
   }
 
   "ColumnFilter" should "process correctly columns" in {
-    val f = Filter.compile(Or(
+    val f = Filters.compile(Or(
       Or(
         EqualTo(AttributeReference("test", StringType)(), Literal("val")),
         IsNull(AttributeReference("test", StringType)())
@@ -90,7 +90,7 @@ class FilterSpec extends FlatSpec with Matchers {
   }
 
   "ColumnFilter" should "handle correctly unsupported filters" in {
-    val f = Filter.compile(StartsWith(AttributeReference("test", StringType)(), Literal("a")))
+    val f = Filters.compile(StartsWith(AttributeReference("test", StringType)(), Literal("a")))
 
     f.matchingCases should be(Map())
     f.eval(Map("test" -> "a")) should be(None)

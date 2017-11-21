@@ -7,7 +7,7 @@ import org.eclipse.jgit.errors.IncorrectObjectTypeException
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.treewalk.TreeWalk
-import tech.sourced.engine.util.{CompiledFilter, Filter}
+import tech.sourced.engine.util.{CompiledFilter, Filters}
 
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
@@ -102,7 +102,7 @@ object CommitIterator {
     */
   def loadIterator(repo: Repository,
                    ref: Option[Ref],
-                   filters: Seq[Filter.Match],
+                   filters: Seq[Filters.Match],
                    hashKey: String = "hash"): Iterator[ReferenceWithCommit] = {
     val refs = ref match {
       case Some(r) =>

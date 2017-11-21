@@ -1,7 +1,7 @@
 package tech.sourced.engine.iterator
 
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
-import tech.sourced.engine.util.{Attr, CompiledFilter, EqualFilter, Filter}
+import tech.sourced.engine.util.{Attr, CompiledFilter, EqualFilter, Filters}
 
 import scala.collection.JavaConverters._
 
@@ -63,7 +63,7 @@ object ReferenceIterator {
     */
   def loadIterator(repo: Repository,
                    repoId: Option[String],
-                   filters: Seq[Filter.Match],
+                   filters: Seq[Filters.Match],
                    repoKey: String = "repository_id",
                    refNameKey: String = "name"): Iterator[Ref] = {
     val referenceNames = filters.flatMap {
