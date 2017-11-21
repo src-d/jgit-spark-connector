@@ -2,7 +2,7 @@
 
 This example uses the spark-shell to show how to classify blobs by their language with `classifyLanguages`.
 
-Making use of the `engine` object, it filters repositories by `id` to get all blobs from the `HEAD` references from them. After that, a call to `classifyLanguages` function detects the language for each file to show them in the aggregated column `lang` beside the selected columns `file_hash` and `path`.
+Making use of the `engine` object, it filters repositories by `id` to get all blobs from the `HEAD` references from them. After that, a call to `classifyLanguages` function detects the language for each file to show them in the aggregated column `lang` beside the selected columns `blob_id` and `path`.
 
 Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh

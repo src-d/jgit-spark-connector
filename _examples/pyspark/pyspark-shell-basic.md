@@ -4,7 +4,7 @@ In this example, the pyspark-shell is used to show a simple usage of the `source
 
 First, you can see how to import the package and instantiate and object that provide all the methods to manipulate the data retrieved from repositories.
 
-The `engine` object is used to get all the repositories, get the `HEAD` references from the repositories and eventually, get all the blobs from these references. Then a table is showed selecting the columns `file_hash`, `path` and `content`.
+The `engine` object is used to get all the repositories, get the `HEAD` references from the repositories and eventually, get all the blobs from these references. Then a table is showed selecting the columns `blob_id`, `path` and `content`.
 
 Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh

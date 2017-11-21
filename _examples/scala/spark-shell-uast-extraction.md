@@ -4,7 +4,7 @@ In the example code below, you can take a look to how the `extractUASTs` method 
 
 From the `engine` object instantiated in the spark-shell, a bunch of blobs has been got filtering repositories by `id`, retrieving their `HEAD` references and requesting for them. Once we have that blobs, we can call `extractUASTs` which send the blobs to a [bblfsh server](https://github.com/bblfsh/server) to get back the UASTs.
 
-Finally, the `file_hash`, file `path` and `uast` is showed on the table.
+Finally, the `blob_id`, file `path` and `uast` is showed on the table.
 
 Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
