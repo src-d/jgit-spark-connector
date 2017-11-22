@@ -76,7 +76,7 @@ matrix:
             tags: true
 
 before_script:
-  - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
+  - make docker-bblfsh
 
 script:
   - make travis-test
