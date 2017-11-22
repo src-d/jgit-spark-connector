@@ -21,15 +21,14 @@ class RepositoryIterator(finalColumns: Array[String],
   // we can cache here the matching cases, because they are not going to change.
   private val matchingFilters = filters.flatMap(_.matchingCases)
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[String] =
     RepositoryIterator.loadIterator(repo, matchingFilters)
 
-
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def mapColumns(id: String): Map[String, () => Any] = {
     val c = repo.getConfig
-    val uuid = RootedRepo.getRepositoryUUID(repo, id).get
+    val uuid = RootedRepo.getRepositoryRemote(repo, id).get
     val urls = c.getStringList("remote", uuid, "url")
     val isFork = c.getBoolean("remote", uuid, "isfork", false)
 
