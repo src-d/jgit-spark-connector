@@ -114,6 +114,18 @@ package object engine {
       * val commitDf = refsDf.getCommits
       * }}}
       *
+      * Take into account that getting all the commits will lead to a lot of repeated tree
+      * entries and blobs, thus making your query very slow.
+      * Most of the time what you probably want is to get the latest state of the files in
+      * a specific reference.
+      * You can use [[tech.sourced.engine.EngineDataFrame#getFirstReferenceCommit]] for
+      * that purpose, which only gets the first commit of a reference, that is, the latest
+      * status of the reference.
+      *
+      * {{{
+      * val commitsDf = refsDf.getCommits.getFirstReferenceCommit
+      * }}}
+      *
       * @return new DataFrame containing also commits data.
       */
     def getCommits: DataFrame = {
