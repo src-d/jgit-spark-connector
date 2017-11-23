@@ -1,13 +1,37 @@
 package tech.sourced.engine.provider
 
+import java.nio.file.Paths
+import java.util.UUID
+
+import org.apache.commons.io.FileUtils
 import org.apache.hadoop.fs.{FileSystem, Path}
+import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.ObjectId
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import tech.sourced.engine.{BaseSivaSpec, BaseSparkSpec}
 
 import scala.collection.JavaConverters._
 
-class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSparkSpec {
+class RepositoryProviderSpec
+  extends FlatSpec
+    with Matchers
+    with BaseSivaSpec
+    with BaseSparkSpec
+    with BeforeAndAfterEach {
+
+  private var tmpDir: java.nio.file.Path = _
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    tmpDir = Paths.get(System.getProperty("java.io.tmpdir"), UUID.randomUUID().toString)
+    tmpDir.toFile.mkdir()
+  }
+
+  override def afterEach(): Unit = {
+    super.afterEach()
+    FileUtils.deleteQuietly(tmpDir.toFile)
+  }
+
   "RepositoryRDDProvider" should "return always the same instance" in {
     val prov = RepositoryRDDProvider(ss.sparkContext)
     val prov2 = RepositoryRDDProvider(ss.sparkContext)
@@ -113,5 +137,61 @@ class RepositoryProviderSpec extends FlatSpec with Matchers with BaseSivaSpec wi
     provider.close(source, repo2)
     fs.exists(new Path(repo2.getDirectory.toString)) should be(true)
   })
+
+  "RepositoryProvider" should "return a repository given a SivaRepository" in {
+    val prov = RepositoryRDDProvider(ss.sparkContext)
+    val reposRDD = prov.get(resourcePath)
+    val source = reposRDD.first()
+
+    val provider = RepositoryProvider(tmpDir.toString)
+
+    val repo = provider.get(RepositoryProvider.keyForSource(source))
+    repo.getAllRefs.size should not(be(0))
+  }
+
+  "RepositoryProvider" should "return a repository given a BareRepository" in {
+    import Utils._
+
+    val bareRepo = Git.init()
+      .setBare(true)
+      .setDirectory(tmpDir.resolve("bare-repo").toFile)
+      .call()
+
+    addRemote(bareRepo, "bare-repo", "git@github.com:bare/repo.git")
+
+    val prov = RepositoryRDDProvider(ss.sparkContext)
+    val reposRDD = prov.get(tmpDir.toString)
+    val source = reposRDD.first()
+
+    tmpDir.resolve("tmp").toFile.mkdir()
+    val provider = RepositoryProvider(tmpDir.resolve("tmp").toString)
+
+    val repo = provider.get(RepositoryProvider.keyForSource(source))
+    repo.getRemoteNames.size should be(1)
+  }
+
+  "RepositoryProvider" should "return a repository given a GitRepository" in {
+    import Utils._
+
+    val gitRepo = Git.init()
+      .setDirectory(tmpDir.resolve("repo").toFile)
+      .call()
+
+    addRemote(gitRepo, "repo", "git@github.com:git/repo.git")
+
+    FileUtils.write(tmpDir.resolve("repo").resolve("README.md").toFile, "hello world")
+    gitRepo.add().addFilepattern("README.md").call()
+    gitRepo.commit().setMessage("first commit on regular repo").call()
+
+    val prov = RepositoryRDDProvider(ss.sparkContext)
+    val reposRDD = prov.get(tmpDir.toString)
+    val source = reposRDD.first()
+
+    tmpDir.resolve("tmp").toFile.mkdir()
+    val provider = RepositoryProvider(tmpDir.resolve("tmp").toString)
+
+    val repo = provider.get(RepositoryProvider.keyForSource(source))
+    repo.getRemoteNames.size should be(1)
+  }
 
 }
