@@ -58,5 +58,5 @@ object SivaRDDProvider {
     * @return generated RDD
     */
   private def generateRDD(sc: SparkContext, path: String): RDD[PortableDataStream] =
-    sc.binaryFiles(path).map(_._2)
+    sc.binaryFiles(path + "/*").map(_._2)
 }
