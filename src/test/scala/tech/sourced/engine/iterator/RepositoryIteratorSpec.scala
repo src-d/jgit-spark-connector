@@ -28,11 +28,11 @@ class RepositoryIteratorSpec extends FlatSpec with BaseRootedRepoIterator with B
       new RepositoryIterator(Array("id", "urls", "is_fork"), _, Seq()), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
-          row.getAs[Array[String]](1).length should be(3)
+          row.getArray(1).array.length should be(3)
           row.getBoolean(2) should be(false)
         case (1, row) =>
           row.getString(0) should be("github.com/mawag/faq-xiyoulinux")
-          row.getAs[Array[String]](1).length should be(3)
+          row.getArray(1).array.length should be(3)
           row.getBoolean(2) should be(true)
         case (c, _) => fail(s"unexpected row number: $c")
       }, total = 2, columnsCount = 3
@@ -87,8 +87,8 @@ class RepositoryIteratorSpec extends FlatSpec with BaseRootedRepoIterator with B
     val repos = iter.toList
 
     repos.length should be(2)
-    repos.head(0).toString should be("github.com/git/repo")
-    repos(1)(0).toString should startWith("file://")
+    repos.head.getString(0) should be("github.com/git/repo")
+    repos(1).getString(0) should startWith("file://")
   }
 
 }

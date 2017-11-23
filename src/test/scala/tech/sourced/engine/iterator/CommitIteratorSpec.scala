@@ -1,9 +1,8 @@
 package tech.sourced.engine.iterator
 
-import java.sql.Timestamp
-
+import org.apache.spark.sql.types.StringType
 import org.scalatest.FlatSpec
-import tech.sourced.engine.util.{Attr, EqualFilter, InFilter}
+import tech.sourced.engine.util.{Attr, InFilter}
 
 class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
 
@@ -35,56 +34,66 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           row.getInt(2) should be(0)
           row.getString(3) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getString(4) should be("Initial commit\n")
-          row.getAs[Array[String]](5) should be(Array())
-          row.getAs[Map[String, String]](6) should be(
+          row.getArray(5).toArray[String](StringType) should be(Array())
+          val m = row.getMap(6)
+          val tree = Map(m.keyArray.toObjectArray(StringType).map(_.toString)
+            .zip(m.valueArray.toObjectArray(StringType).map(_.toString)): _*)
+          tree should be(
             Map(
               "LICENSE" -> "733c072369ca77331f392c40da7404c85c36542c",
               "README.md" -> "2d2ad68c14c51e62595125b86b464427f6bf2126"
             )
           )
-          row.getAs[Array[String]](7) should be(
+          row.getArray(7).toObjectArray(StringType).map(_.toString) should be(
             Array("733c072369ca77331f392c40da7404c85c36542c",
               "2d2ad68c14c51e62595125b86b464427f6bf2126"))
           row.getInt(8) should be(0)
           row.getString(9) should be("wangbo2008@vip.qq.com")
           row.getString(10) should be("wangbo")
-          row.getTimestamp(11) should be(new Timestamp(1438072751000L))
+          row.getLong(11) should be(1438072751000L)
           row.getString(12) should be("wangbo2008@vip.qq.com")
           row.getString(13) should be("wangbo")
-          row.getTimestamp(14) should be(new Timestamp(1438072751000L))
+          row.getLong(14) should be(1438072751000L)
         case (1, row) =>
           row.getString(0) should be("github.com/mawag/faq-xiyoulinux")
           row.getString(1) should be("refs/heads/HEAD")
           row.getInt(2) should be(0)
           row.getString(3) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getString(4) should be("Initial commit\n")
-          row.getAs[Array[String]](5) should be(Array())
-          row.getAs[Map[String, String]](6) should be(
+          row.getArray(5).toObjectArray(StringType) should be(Array())
+          val m = row.getMap(6)
+          val tree = Map(m.keyArray.toObjectArray(StringType).map(_.toString)
+            .zip(m.valueArray.toObjectArray(StringType).map(_.toString)): _*)
+          tree should be(
             Map(
               "LICENSE" -> "733c072369ca77331f392c40da7404c85c36542c",
               "README.md" -> "2d2ad68c14c51e62595125b86b464427f6bf2126"
             )
           )
-          row.getAs[Array[String]](7) should be(
+          row.getArray(7).toObjectArray(StringType).map(_.toString) should be(
             Array("733c072369ca77331f392c40da7404c85c36542c",
               "2d2ad68c14c51e62595125b86b464427f6bf2126"))
           row.getInt(8) should be(0)
           row.getString(9) should be("wangbo2008@vip.qq.com")
           row.getString(10) should be("wangbo")
-          row.getTimestamp(11) should be(new Timestamp(1438072751000L))
+          row.getLong(11) should be(1438072751000L)
           row.getString(12) should be("wangbo2008@vip.qq.com")
           row.getString(13) should be("wangbo")
-          row.getTimestamp(14) should be(new Timestamp(1438072751000L))
-        case (23, row) =>
+          row.getLong(14) should be(1438072751000L)
+        case (23, row)
+        =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getString(1) should be("refs/heads/develop")
           row.getInt(2) should be(21)
           row.getString(3) should be("25fda7c4d616c8a7c017384d7745342c73eb214d")
           row.getString(4) should be("Merge pull request #5 from xiyou-linuxer/develop\n\nDevelop")
-          row.getAs[Array[String]](5) should be(
+          row.getArray(5).toObjectArray(StringType).map(_.toString) should be(
             Array("531f574cf8c457cbeb4f6a5bae2d81db22c5dc1a",
               "8331656181f9040d805b729946b12fd4382c4665"))
-          row.getAs[Map[String, String]](6) should be(
+          val m = row.getMap(6)
+          val tree = Map(m.keyArray.toObjectArray(StringType).map(_.toString)
+            .zip(m.valueArray.toObjectArray(StringType).map(_.toString)): _*)
+          tree should be(
             Map(
               "source/search.php" -> "be1dd14a91679b91151357fc37a84fc6b59be1a6",
               "source/config/db.simple.config.php" -> "a7b19793b35a11d92ee4594829e23392ddf11f79",
@@ -110,7 +119,7 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
               "LICENSE" -> "733c072369ca77331f392c40da7404c85c36542c"
             )
           )
-          row.getAs[Array[String]](7) should be(
+          row.getArray(7).toObjectArray(StringType).map(_.toString) should be(
             Array(
               "be1dd14a91679b91151357fc37a84fc6b59be1a6",
               "a7b19793b35a11d92ee4594829e23392ddf11f79",
@@ -139,11 +148,13 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           row.getInt(8) should be(2)
           row.getString(9) should be("1679211339@qq.com")
           row.getString(10) should be("磊磊")
-          row.getTimestamp(11) should be(new Timestamp(1439552359000L))
+          row.getLong(11) should be(1439552359000L)
           row.getString(12) should be("1679211339@qq.com")
           row.getString(13) should be("磊磊")
-          row.getTimestamp(14) should be(new Timestamp(1439552359000L))
-        case (i, _) if i > 1061 => fail("commits not expected")
+          row.getLong(14) should be(1439552359000L)
+        case (i, _)
+          if i > 1061
+        => fail("commits not expected")
 
         case _ =>
       }, total = 1062, columnsCount = 15
@@ -160,13 +171,13 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         ), _, null, Seq()), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
-          row.getAs[Array[String]](1) should be(Array())
+          row.getArray(1).toByteArray() should be(Array())
         case (1, row) =>
           row.getString(0) should be("github.com/mawag/faq-xiyoulinux")
-          row.getAs[Array[String]](1) should be(Array())
+          row.getArray(1).toObjectArray(StringType) should be(Array())
         case (23, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
-          row.getAs[Array[String]](1) should be(
+          row.getArray(1).toObjectArray(StringType).map(_.toString) should be(
             Array("531f574cf8c457cbeb4f6a5bae2d81db22c5dc1a",
               "8331656181f9040d805b729946b12fd4382c4665"))
         case (i, _) if i > 1061 => fail("commits not expected")
@@ -206,11 +217,6 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
   }
 
   "CommitIterator" should "apply use prev iterator" in {
-    val commits = Array(
-      "fff7062de8474d10a67d417ccea87ba6f58ca81d",
-      "531f574cf8c457cbeb4f6a5bae2d81db22c5dc1a"
-    )
-
     testIterator(repo =>
       new CommitIterator(
         Array(

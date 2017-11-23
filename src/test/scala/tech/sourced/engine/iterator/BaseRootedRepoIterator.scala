@@ -2,6 +2,7 @@ package tech.sourced.engine.iterator
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.InternalRow
 import org.eclipse.jgit.lib.Repository
 import org.scalatest.{Matchers, Suite}
 import tech.sourced.engine.provider.{RepositoryProvider, RepositorySource, RepositoryRDDProvider}
@@ -15,16 +16,16 @@ trait BaseRootedRepoIterator extends Suite with BaseSparkSpec with BaseSivaSpec 
     .contains("fff7062de8474d10a67d417ccea87ba6f58ca81d.siva")).first()
   lazy val repo: Repository = RepositoryProvider("/tmp").get(source)
 
-  def testIterator(iterator: (Repository) => Iterator[Row],
-                   matcher: (Int, Row) => Unit,
+  def testIterator(iterator: (Repository) => Iterator[InternalRow],
+                   matcher: (Int, InternalRow) => Unit,
                    total: Int,
                    columnsCount: Int): Unit = {
-    val ri: Iterator[Row] = iterator(repo)
+    val ri: Iterator[InternalRow] = iterator(repo)
 
     var count: Int = 0
     while (ri.hasNext) {
-      val row: Row = ri.next()
-      row.length should be(columnsCount)
+      val row: InternalRow = ri.next()
+      row.numFields should be(columnsCount)
       matcher(count, row)
       count += 1
     }

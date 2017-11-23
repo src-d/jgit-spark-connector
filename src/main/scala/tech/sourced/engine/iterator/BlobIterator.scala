@@ -1,6 +1,8 @@
 package tech.sourced.engine.iterator
 
 import org.apache.spark.internal.Logging
+import org.apache.spark.sql.catalyst.util.ArrayData
+import org.apache.spark.unsafe.types.UTF8String
 import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.lib.{ObjectId, ObjectReader, Repository}
 import org.eclipse.jgit.treewalk.TreeWalk
@@ -58,11 +60,11 @@ class BlobIterator(finalColumns: Array[String],
     )
     val isBinary = RawText.isBinary(content)
     Map[String, () => Any](
-      "file_hash" -> (() => commitTree.tree.getObjectId(0).name),
+      "file_hash" -> (() => UTF8String.fromString(commitTree.tree.getObjectId(0).name)),
       "content" -> (() => if (isBinary) Array.emptyByteArray else content),
-      "commit_hash" -> (() => commitTree.commit.name),
+      "commit_hash" -> (() => UTF8String.fromString(commitTree.commit.name)),
       "is_binary" -> (() => isBinary),
-      "path" -> (() => commitTree.tree.getPathString)
+      "path" -> (() => UTF8String.fromString(commitTree.tree.getPathString))
     )
   }
 

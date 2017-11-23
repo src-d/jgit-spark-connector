@@ -1,5 +1,6 @@
 package tech.sourced.engine.iterator
 
+import org.apache.spark.unsafe.types.UTF8String
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
 import tech.sourced.engine.util.{CompiledFilter, Filter}
 
@@ -19,7 +20,7 @@ class ReferenceIterator(finalColumns: Array[String],
                         filters: Seq[CompiledFilter])
   extends RootedRepoIterator[Ref](finalColumns, repo, prevIter, filters) {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[Ref] =
     ReferenceIterator.loadIterator(
       repo,
@@ -30,19 +31,15 @@ class ReferenceIterator(finalColumns: Array[String],
       filters.flatMap(_.matchingCases)
     )
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def mapColumns(ref: Ref): Map[String, () => Any] = {
     val (repoId, refName) = RootedRepo.parseRef(repo, ref.getName)
     Map[String, () => Any](
-      "repository_id" -> (() => {
-        repoId
-      }),
-      "name" -> (() => {
-        refName
-      }),
-      "hash" -> (() => {
+      "repository_id" -> (() => UTF8String.fromString(repoId)),
+      "name" -> (() => UTF8String.fromString(refName)),
+      "hash" -> (() => UTF8String.fromString(
         ObjectId.toString(Option(ref.getPeeledObjectId).getOrElse(ref.getObjectId))
-      })
+      ))
     )
   }
 

@@ -2,6 +2,7 @@ package tech.sourced.engine.iterator
 
 import org.apache.spark.{InterruptibleIterator, TaskContext}
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.InternalRow
 
 /**
   * Iterator that calls a cleanup function after the given iterator has
@@ -11,8 +12,8 @@ import org.apache.spark.sql.Row
   * @param cleanup cleanup function
   * @tparam T type of the rows in the RootedRepoIterator
   */
-class CleanupIterator[T](it: Iterator[Row], cleanup: => Unit)
-  extends InterruptibleIterator[Row](TaskContext.get(), it) {
+class CleanupIterator[T](it: Iterator[InternalRow], cleanup: => Unit)
+  extends InterruptibleIterator[InternalRow](TaskContext.get(), it) {
 
   /** @inheritdoc
     *
@@ -34,5 +35,5 @@ class CleanupIterator[T](it: Iterator[Row], cleanup: => Unit)
   }
 
   /** @inheritdoc*/
-  override def next(): Row = super.next()
+  override def next(): InternalRow = super.next()
 }
