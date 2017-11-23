@@ -5,7 +5,6 @@ import java.util.UUID
 
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.ObjectId
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import tech.sourced.engine.{BaseSivaSpec, BaseSparkSpec}
@@ -150,12 +149,9 @@ class RepositoryProviderSpec
   }
 
   "RepositoryProvider" should "return a repository given a BareRepository" in {
-    import Utils._
+    import tech.sourced.engine.util.RepoUtils._
 
-    val bareRepo = Git.init()
-      .setBare(true)
-      .setDirectory(tmpDir.resolve("bare-repo").toFile)
-      .call()
+    val bareRepo = createBareRepo(tmpDir.resolve("bare-repo"))
 
     addRemote(bareRepo, "bare-repo", "git@github.com:bare/repo.git")
 
@@ -171,11 +167,9 @@ class RepositoryProviderSpec
   }
 
   "RepositoryProvider" should "return a repository given a GitRepository" in {
-    import Utils._
+    import tech.sourced.engine.util.RepoUtils._
 
-    val gitRepo = Git.init()
-      .setDirectory(tmpDir.resolve("repo").toFile)
-      .call()
+    val gitRepo = createRepo(tmpDir.resolve("repo"))
 
     addRemote(gitRepo, "repo", "git@github.com:git/repo.git")
 

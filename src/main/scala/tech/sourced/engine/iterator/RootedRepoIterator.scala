@@ -199,11 +199,27 @@ object RootedRepo {
       // using the whole reference name
       case None =>
         val c: StoredConfig = repo.getConfig
-        // TODO: we're getting only the first remote URL, but that's not probably what we want
-        val repoId = c.getSubsections("remote").asScala.map(remote => {
-          GitUrlsParser.getIdFromUrls(c.getStringList("remote", remote, "url"))
-        }).head
-        (repoId, ref)
+        val refRemote = repo.getRemoteName(ref)
+        val repoId = c.getSubsections("remote").asScala
+          .find(_ == refRemote)
+          .map(r => GitUrlsParser.getIdFromUrls(c.getStringList("remote", r, "url")))
+          .orNull
+
+        if (repoId == null) {
+          // if branch is local, use the repo path as directory
+          // since there's no way to tell to which remote it belongs (probably none)
+          val repoPath = if (repo.getDirectory.toPath.getFileName.toString == ".git") {
+            // non-bare repositories will have the .git directory as their directory
+            // so we'll use the parent
+            repo.getDirectory.toPath.getParent
+          } else {
+            repo.getDirectory.toPath
+          }
+
+          ("file://" + repoPath, ref)
+        } else {
+          (repoId, ref)
+        }
     }
   }
 

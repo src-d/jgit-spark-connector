@@ -5,15 +5,12 @@ import java.nio.file.Paths
 import java.util.UUID
 
 import org.apache.commons.io.FileUtils
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.transport.URIish
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 import tech.sourced.engine.{BaseSivaSpec, BaseSparkSpec}
+import tech.sourced.engine.util.RepoUtils._
 
 class RepositoryRDDProviderSpec extends FlatSpec with BeforeAndAfterAll
   with Matchers with BaseSivaSpec with BaseSparkSpec {
-
-  import Utils._
 
   private var rootDir = Paths.get(
     System.getProperty("java.io.tmpdir"),
@@ -30,14 +27,8 @@ class RepositoryRDDProviderSpec extends FlatSpec with BeforeAndAfterAll
 
     rootDir.toFile.mkdir()
 
-    val bareRepo = Git.init()
-      .setBare(true)
-      .setDirectory(bareRepoDir.toFile)
-      .call()
-
-    val regularRepo = Git.init()
-      .setDirectory(regularRepoDir.toFile)
-      .call()
+    val bareRepo = createBareRepo(bareRepoDir)
+    val regularRepo = createRepo(regularRepoDir)
 
     addRemote(bareRepo, "bare-repo", "git@github.com:repos/bare.git")
     addRemote(regularRepo, "regular-repo", "git@github.com:repos/regular.git")
@@ -85,13 +76,4 @@ class RepositoryRDDProviderSpec extends FlatSpec with BeforeAndAfterAll
     FileUtils.deleteQuietly(rootDir.toFile)
   }
 
-}
-
-private object Utils {
-  def addRemote(repo: Git, name: String, url: String): Unit = {
-    val cmd = repo.remoteAdd()
-    cmd.setName(name)
-    cmd.setUri(new URIish(url))
-    cmd.call()
-  }
 }
