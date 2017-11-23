@@ -76,7 +76,8 @@ matrix:
             tags: true
 
 before_script:
-  - docker run --privileged -d -p 9432:9432 --name bblfsh bblfsh/server
+  - make -f "$TRAVIS_BUILD_DIR/Makefile" docker-bblfsh
+  - make -f "$TRAVIS_BUILD_DIR/Makefile" docker-bblfsh-install-drivers
 
 script:
   - make travis-test
