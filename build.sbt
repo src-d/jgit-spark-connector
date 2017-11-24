@@ -20,6 +20,9 @@ libraryDependencies += bblfsh % Compile
 libraryDependencies += commonsIO % Compile
 libraryDependencies += commonsPool % Compile
 libraryDependencies += enry % Compile
+libraryDependencies += scalaLib % Provided
+
+assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
 
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oUT")
 
@@ -68,6 +71,39 @@ pomIncludeRepository := (_ => false)
 
 crossPaths := false
 publishMavenStyle := true
+
+pomPostProcess := { (node: scala.xml.Node) =>
+  import scala.xml._
+  import scala.xml.transform._
+
+  object DependencyEraser extends RewriteRule {
+    override def transform(n: Node): Seq[Node] = n match {
+      case e: Elem if e.label == "dependencies" =>
+        <dependencies>
+          {e.child}
+          <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>{scalaVersion.value}</version>
+            <scope>provided</scope>
+          </dependency>
+        </dependencies>
+      case e: Elem if e.label == "dependency"
+        && e.child.exists(child => child.label == "scope" && child.text == "provided") =>
+        e
+      case e: Elem if e.label == "dependency" =>
+        val organization = e.child.filter(_.label == "groupId").flatMap(_.text).mkString
+        val artifact = e.child.filter(_.label == "artifactId").flatMap(_.text).mkString
+        val version = e.child.filter(_.label == "version").flatMap(_.text).mkString
+        Comment(s" not provided dependency $organization#$artifact;$version has been omitted ")
+      case other => other
+    }
+  }
+
+  object eraseDependencies extends RuleTransformer(DependencyEraser)
+
+  eraseDependencies(node)
+}
 
 val SONATYPE_USERNAME = scala.util.Properties.envOrElse("SONATYPE_USERNAME", "NOT_SET")
 val SONATYPE_PASSWORD = scala.util.Properties.envOrElse("SONATYPE_PASSWORD", "NOT_SET")
