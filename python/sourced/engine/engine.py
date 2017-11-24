@@ -1,6 +1,6 @@
-from __future__ import print_function
+import functools
 from py4j.java_gateway import java_import
-from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import DataFrame
 
 
 class Engine(object):
@@ -105,24 +105,6 @@ class Engine(object):
         return self.__implicits.parseUASTNode(data)
 
 
-def _custom_df_instance(func):
-    """
-    Wraps the resultant DataFrame of the method call with the class of self.
-
-    >>> @_custom_df_instance
-    >>> def method(self, *args, **kwargs):
-    >>>    return ParentClass.method(self, *args, **kwargs)
-    """
-    def _wrapper(self, *args, **kwargs):
-        dataframe = func(self, *args, **kwargs)
-        if self.__class__ != SourcedDataFrame\
-          and isinstance(self, SourcedDataFrame)\
-          and isinstance(dataframe, DataFrame):
-            return self.__class__(dataframe._jdf, self._session, self._implicits)
-        return dataframe
-    return _wrapper
-
-
 class SourcedDataFrame(DataFrame):
     """
     Custom source{d} Engine DataFrame that contains some DataFrame overriden methods and
@@ -147,185 +129,70 @@ class SourcedDataFrame(DataFrame):
     def _engine_dataframe(self):
         return self._implicits.EngineDataFrame(self._jdf)
 
-
-    @_custom_df_instance
-    def checkpoint(self, *args, **kwargs):
-        return DataFrame.checkpoint(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def withWatermark(self, *args, **kwargs):
-        return DataFrame.withWatermark(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def hint(self, *args, **kwargs):
-        return DataFrame.hint(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def limit(self, *args, **kwargs):
-        return DataFrame.limit(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def coalesce(self, *args, **kwargs):
-        return DataFrame.coalesce(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def repartition(self, *args, **kwargs):
-        return DataFrame.repartition(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def distinct(self):
-        return DataFrame.distinct(self)
-
-
-    @_custom_df_instance
-    def sample(self, *args, **kwargs):
-        return DataFrame.sample(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def sampleBy(self, *args, **kwargs):
-        return DataFrame.sampleBy(self, *args, **kwargs)
-
-
-    def randomSplit(self, *args, **kwargs):
-        df_list = DataFrame.randomSplit(self, *args, **kwargs)
-        if self.__class__ != SourcedDataFrame and isinstance(self, SourcedDataFrame):
-            return [self.__class__(df._jdf, self._session, self._implicits) for df in df_list]
-        return df_list
-
-
-    @_custom_df_instance
-    def alias(self, *args, **kwargs):
-        return DataFrame.alias(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def crossJoin(self, other):
-        return DataFrame.crossJoin(self, other)
-
-
-    @_custom_df_instance
-    def join(self, *args, **kwargs):
-        return DataFrame.join(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def sortWithinPartitions(self, *args, **kwargs):
-        return DataFrame.sortWithinPartitions(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def sort(self, *args, **kwargs):
-        return DataFrame.sort(self, *args, **kwargs)
-
-
-    orderBy = sort
-
-
-    @_custom_df_instance
-    def describe(self, *args, **kwargs):
-        return DataFrame.describe(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def summary(self, *args, **kwargs):
-        return DataFrame.summary(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def select(self, *args, **kwargs):
-        return DataFrame.select(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def selectExpr(self, *args, **kwargs):
-        return DataFrame.selectExpr(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def filter(self, *args, **kwargs):
-        return DataFrame.filter(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def union(self, *args, **kwargs):
-        return DataFrame.union(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def unionByName(self, *args, **kwargs):
-        return DataFrame.unionByName(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def intersect(self, *args, **kwargs):
-        return DataFrame.intersect(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def subtract(self, *args, **kwargs):
-        return DataFrame.subtract(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def dropDuplicates(self, *args, **kwargs):
-        return DataFrame.dropDuplicates(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def dropna(self, *args, **kwargs):
-        return DataFrame.dropna(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def fillna(self, *args, **kwargs):
-        return DataFrame.fillna(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def replace(self, *args, **kwargs):
-        return DataFrame.replace(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def crosstab(self, *args, **kwargs):
-        return DataFrame.crosstab(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def freqItems(self, *args, **kwargs):
-        return DataFrame.freqItems(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def withColumn(self, *args, **kwargs):
-        return DataFrame.withColumn(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def withColumnRenamed(self, *args, **kwargs):
-        return DataFrame.withColumnRenamed(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def drop(self, *args, **kwargs):
-        return DataFrame.drop(self, *args, **kwargs)
-
-
-    @_custom_df_instance
-    def toDF(self, *args, **kwargs):
-        return DataFrame.toDF(self, *args, **kwargs)
-
-
+    def __generate_method(name):
+        """
+        Wraps the DataFrame's original method by name to return the derived class instance.
+        """
+        try:
+            func = getattr(DataFrame, name)
+        except AttributeError as e:
+            # PySpark version is too old
+            def func(self, *args, **kwargs):
+                raise e
+            return func
+        wraps = getattr(functools, "wraps", lambda _: lambda f: f)  # py3.4+
+
+        @wraps(func)
+        def _wrapper(self, *args, **kwargs):
+            dataframe = func(self, *args, **kwargs)
+            if self.__class__ != SourcedDataFrame \
+                    and isinstance(self, SourcedDataFrame) \
+                    and isinstance(dataframe, DataFrame):
+                return self.__class__(dataframe._jdf, self._session, self._implicits)
+            return dataframe
+
+        return _wrapper
+
+    # The following code wraps all the methods of DataFrame as of 2.3
+    alias = __generate_method("alias")
+    checkpoint = __generate_method("checkpoint")
+    coalesce = __generate_method("coalesce")
+    crossJoin = __generate_method("crossJoin")
+    crosstab = __generate_method("crosstab")
+    describe = __generate_method("describe")
+    distinct = __generate_method("distinct")
+    dropDuplicates = __generate_method("dropDuplicates")
     drop_duplicates = dropDuplicates
-
+    drop = __generate_method("drop")
+    dropna = __generate_method("dropna")
+    fillna = __generate_method("fillna")
+    filter = __generate_method("filter")
+    freqItems = __generate_method("freqItems")
+    hint = __generate_method("hint")
+    intersect = __generate_method("intersect")
+    join = __generate_method("join")
+    limit = __generate_method("limit")
+    randomSplit = __generate_method("randomSplit")
+    repartition = __generate_method("repartition")
+    replace = __generate_method("replace")
+    sampleBy = __generate_method("sampleBy")
+    sample = __generate_method("sample")
+    selectExpr = __generate_method("selectExpr")
+    select = __generate_method("select")
+    sort = __generate_method("sort")
+    orderBy = sort
+    sortWithinPartitions = __generate_method("sortWithinPartitions")
+    subtract = __generate_method("subtract")
+    summary = __generate_method("summary")
+    toDF = __generate_method("toDF")
+    unionByName = __generate_method("unionByName")
+    union = __generate_method("union")
     where = filter
+    withColumn = __generate_method("withColumn")
+    withColumnRenamed = __generate_method("withColumnRenamed")
+    withWatermark = __generate_method("withWatermark")
+
+    __generate_method = staticmethod(__generate_method)  # to make IntelliSense happy
 
 
 class RepositoriesDataFrame(SourcedDataFrame):
