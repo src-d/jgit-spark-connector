@@ -160,7 +160,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
   "Get files without reading commits" should "return the correct files" in {
     val files = engine.getRepositories.getReferences.getFiles
 
-    assert(files.count == 91944)
+    assert(files.count == 3512)
   }
 
   "Get files" should "return the correct files" in {

@@ -167,6 +167,18 @@ package object engine {
       * val filesDf = commitsDf.getFiles
       * }}}
       *
+      * It can also be used to directly retrieve the files of a references dataframe, but
+      * take into account that it will only get the first commit for that reference (that is,
+      * the latest state in which the reference is).
+      *
+      * {{{
+      * val filesDf = refsDf.getFiles
+      *
+      * // is equivalent to
+      *
+      * val filesDf = refsDf.getCommits.getFirstReferenceCommit.getFiles
+      * }}}
+      *
       * @return new DataFrame containing also files data.
       */
     def getFiles: DataFrame = {
@@ -179,7 +191,7 @@ package object engine {
           .distinct()
       } else {
         checkCols(df, "name")
-        df.getCommits.getFiles
+        df.getCommits.getFirstReferenceCommit.getFiles
       }
     }
 

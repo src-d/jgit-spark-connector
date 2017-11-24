@@ -111,10 +111,10 @@ class EngineTestCase(BaseTestCase):
 
     def test_files_from_refs(self):
         df = self.engine.repositories.references.files
-        self.assertEqual(df.count(), 91944)
+        self.assertEqual(df.count(), 3512)
         file = df.sort(df.file_hash).limit(1).first()
-        self.assertEqual(file.file_hash, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
-        self.assertEqual(file.path, 'spec/database_spec.rb')
+        self.assertEqual(file.file_hash, "0024974e4b56afc8dea0d20e4ca90c1fa4323ce5")
+        self.assertEqual(file.path, 'sequel_core/stress/mem_array_keys.rb')
 
 
     def test_classify_languages(self):
