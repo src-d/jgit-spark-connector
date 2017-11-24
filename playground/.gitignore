@@ -1,0 +1,4 @@
+.ci
+build
+bin
+Makefile.main
