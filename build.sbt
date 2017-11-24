@@ -34,7 +34,9 @@ logBuffered in Test := false
 
 assemblyShadeRules in assembly := Seq(
   ShadeRule.rename("com.google.common.**" -> "com.google.shadedcommon.@1").inAll,
-  ShadeRule.rename("io.netty.**" -> "io.shadednetty.@1").inAll
+  ShadeRule.rename("io.netty.**" -> "io.shadednetty.@1").inAll,
+  ShadeRule.rename("org.apache.commons.**" -> "org.apache.shadedcommons.@1").inAll,
+  ShadeRule.rename("org.eclipse.jgit.**" -> "org.eclipse.shadedjgit.@1").inAll
 )
 
 assemblyMergeStrategy in assembly := {
@@ -80,13 +82,14 @@ pomPostProcess := { (node: scala.xml.Node) =>
     override def transform(n: Node): Seq[Node] = n match {
       case e: Elem if e.label == "dependencies" =>
         <dependencies>
-          {e.child}
-          <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-library</artifactId>
-            <version>{scalaVersion.value}</version>
-            <scope>provided</scope>
-          </dependency>
+          {e.child}<dependency>
+          <groupId>org.scala-lang</groupId>
+          <artifactId>scala-library</artifactId>
+          <version>
+            {scalaVersion.value}
+          </version>
+          <scope>provided</scope>
+        </dependency>
         </dependencies>
       case e: Elem if e.label == "dependency"
         && e.child.exists(child => child.label == "scope" && child.text == "provided") =>
