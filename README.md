@@ -49,6 +49,7 @@ Run [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can start it easily 
 
 # Pre-requisites
 
+* Scala 2.11.x
 * [Apache Spark Installation](http://spark.apache.org/docs/latest/) >= 2.2.0
 * [bblfsh](https://github.com/bblfsh/bblfshd): Used for UAST extraction
 
