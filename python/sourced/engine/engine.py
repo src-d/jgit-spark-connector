@@ -129,7 +129,7 @@ class SourcedDataFrame(DataFrame):
     def _engine_dataframe(self):
         return self._implicits.EngineDataFrame(self._jdf)
 
-    def generate_method(name):
+    def __generate_method(name):
         """
         Wraps the DataFrame's original method by name to return the derived class instance.
         """
@@ -153,51 +153,46 @@ class SourcedDataFrame(DataFrame):
 
         return _wrapper
 
-    alias = generate_method("alias")
-    checkpoint = generate_method("checkpoint")
-    coalesce = generate_method("coalesce")
-    crossJoin = generate_method("crossJoin")
-    crosstab = generate_method("crosstab")
-    describe = generate_method("describe")
-    distinct = generate_method("distinct")
-    dropDuplicates = generate_method("dropDuplicates")
+    # The following code wraps all the methods of DataFrame as of 2.3
+    alias = __generate_method("alias")
+    checkpoint = __generate_method("checkpoint")
+    coalesce = __generate_method("coalesce")
+    crossJoin = __generate_method("crossJoin")
+    crosstab = __generate_method("crosstab")
+    describe = __generate_method("describe")
+    distinct = __generate_method("distinct")
+    dropDuplicates = __generate_method("dropDuplicates")
     drop_duplicates = dropDuplicates
-    drop = generate_method("drop")
-    dropna = generate_method("dropna")
-    fillna = generate_method("fillna")
-    filter = generate_method("filter")
-    freqItems = generate_method("freqItems")
-    hint = generate_method("hint")
-    intersect = generate_method("intersect")
-    join = generate_method("join")
-    limit = generate_method("limit")
-    repartition = generate_method("repartition")
-    replace = generate_method("replace")
-    sampleBy = generate_method("sampleBy")
-    sample = generate_method("sample")
-    selectExpr = generate_method("selectExpr")
-    select = generate_method("select")
-    sort = generate_method("sort")
+    drop = __generate_method("drop")
+    dropna = __generate_method("dropna")
+    fillna = __generate_method("fillna")
+    filter = __generate_method("filter")
+    freqItems = __generate_method("freqItems")
+    hint = __generate_method("hint")
+    intersect = __generate_method("intersect")
+    join = __generate_method("join")
+    limit = __generate_method("limit")
+    randomSplit = __generate_method("randomSplit")
+    repartition = __generate_method("repartition")
+    replace = __generate_method("replace")
+    sampleBy = __generate_method("sampleBy")
+    sample = __generate_method("sample")
+    selectExpr = __generate_method("selectExpr")
+    select = __generate_method("select")
+    sort = __generate_method("sort")
     orderBy = sort
-    sortWithinPartitions = generate_method("sortWithinPartitions")
-    subtract = generate_method("subtract")
-    summary = generate_method("summary")
-    toDF = generate_method("toDF")
-    unionByName = generate_method("unionByName")
-    union = generate_method("union")
+    sortWithinPartitions = __generate_method("sortWithinPartitions")
+    subtract = __generate_method("subtract")
+    summary = __generate_method("summary")
+    toDF = __generate_method("toDF")
+    unionByName = __generate_method("unionByName")
+    union = __generate_method("union")
     where = filter
-    withColumn = generate_method("withColumn")
-    withColumnRenamed = generate_method("withColumnRenamed")
-    withWatermark = generate_method("withWatermark")
+    withColumn = __generate_method("withColumn")
+    withColumnRenamed = __generate_method("withColumnRenamed")
+    withWatermark = __generate_method("withWatermark")
 
-    generate_method = staticmethod(generate_method)  # to make IntelliSense happy
-    del generate_method
-
-    def randomSplit(self, *args, **kwargs):
-        df_list = DataFrame.randomSplit(self, *args, **kwargs)
-        if self.__class__ != SourcedDataFrame and isinstance(self, SourcedDataFrame):
-            return [self.__class__(df._jdf, self._session, self._implicits) for df in df_list]
-        return df_list
+    __generate_method = staticmethod(__generate_method)  # to make IntelliSense happy
 
 
 class RepositoriesDataFrame(SourcedDataFrame):
