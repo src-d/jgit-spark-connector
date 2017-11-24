@@ -1,6 +1,5 @@
 package tech.sourced.engine
 
-import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
