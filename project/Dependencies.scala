@@ -12,5 +12,5 @@ object Dependencies {
   lazy val enry = "tech.sourced" % "enry-java" % "1.6.1"
   lazy val commonsIO = "commons-io" % "commons-io" % "2.5"
   lazy val commonsPool = "org.apache.commons" % "commons-pool2" % "2.4.3"
-
+  lazy val scalaLib = "org.scala-lang" % "scala-library" % "2.11.11"
 }
