@@ -119,7 +119,7 @@ build:
 	$(SBT) assembly
 
 travis-test:
-	$(SBT) clean coverage test coverageReport scalastyle test:scalastyle
+	$(SBT) clean coverage test integration:test coverageReport scalastyle test:scalastyle
 
 docker-bblfsh:
 	$(DOCKER_RUN) $(BBLFSH_RUN_FLAGS)

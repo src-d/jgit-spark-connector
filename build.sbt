@@ -1,7 +1,6 @@
 import java.nio.file.{Files, StandardCopyOption}
 
 import Dependencies.{scalaTest, _}
-import sbt.Keys.libraryDependencies
 
 organization := "tech.sourced"
 scalaVersion := "2.11.11"
@@ -21,6 +20,8 @@ libraryDependencies += commonsIO % Compile
 libraryDependencies += commonsPool % Compile
 libraryDependencies += enry % Compile
 libraryDependencies += scalaLib % Provided
+
+inThisBuild(Testing.settings)
 
 assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
 
