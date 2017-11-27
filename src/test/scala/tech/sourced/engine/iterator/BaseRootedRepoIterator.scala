@@ -1,21 +1,19 @@
 package tech.sourced.engine.iterator
 
-import org.apache.spark.UtilsWrapper
-import org.apache.spark.input.PortableDataStream
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Row
 import org.eclipse.jgit.lib.Repository
 import org.scalatest.{Matchers, Suite}
-import tech.sourced.engine.provider.{RepositoryProvider, SivaRDDProvider}
+import tech.sourced.engine.provider.{RepositoryProvider, RepositorySource, RepositoryRDDProvider}
 import tech.sourced.engine.{BaseSivaSpec, BaseSparkSpec}
 
 trait BaseRootedRepoIterator extends Suite with BaseSparkSpec with BaseSivaSpec with Matchers {
-  lazy val prov: SivaRDDProvider = SivaRDDProvider(ss.sparkContext)
-  lazy val rdd: RDD[PortableDataStream] = prov.get(resourcePath)
+  lazy val prov: RepositoryRDDProvider = RepositoryRDDProvider(ss.sparkContext)
+  lazy val rdd: RDD[RepositorySource] = prov.get(resourcePath)
 
-  lazy val pds: PortableDataStream = rdd.filter(pds => pds.getPath()
+  lazy val source: RepositorySource = rdd.filter(source => source.pds.getPath()
     .contains("fff7062de8474d10a67d417ccea87ba6f58ca81d.siva")).first()
-  lazy val repo: Repository = RepositoryProvider("/tmp").get(pds)
+  lazy val repo: Repository = RepositoryProvider("/tmp").get(source)
 
   def testIterator(iterator: (Repository) => Iterator[Row],
                    matcher: (Int, Row) => Unit,

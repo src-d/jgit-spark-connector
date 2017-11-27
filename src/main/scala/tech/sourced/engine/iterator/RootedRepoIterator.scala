@@ -1,5 +1,7 @@
 package tech.sourced.engine.iterator
 
+import java.util.UUID
+
 import org.apache.spark.sql.Row
 import org.eclipse.jgit.lib.{Repository, StoredConfig}
 import tech.sourced.engine.util.{CompiledFilter, GitUrlsParser}
@@ -139,36 +141,36 @@ abstract class RootedRepoIterator[T](finalColumns: Array[String],
 object RootedRepo {
 
   /**
-    * Returns the ID of a repository given its UUID.
+    * Returns the ID of a repository given its remote name.
     *
-    * @param repo repository
-    * @param uuid repository UUID
+    * @param repo       repository
+    * @param remoteName remote name
     * @return repository ID
     */
-  private[iterator] def getRepositoryId(repo: Repository, uuid: String): Option[String] = {
+  private[iterator] def getRepositoryId(repo: Repository, remoteName: String): Option[String] = {
     // TODO: maybe a cache here could improve performance
     val c: StoredConfig = repo.getConfig
-    c.getSubsections("remote").asScala.find(i => i == uuid) match {
+    c.getSubsections("remote").asScala.find(_ == remoteName) match {
       case None => None
-      case Some(i) => Some(GitUrlsParser.getIdFromUrls(
-        c.getStringList("remote", i, "url")
+      case Some(name) => Some(GitUrlsParser.getIdFromUrls(
+        c.getStringList("remote", name, "url")
       ))
     }
   }
 
   /**
-    * Returns the UUID of a repository given its ID.
+    * Returns the remote name of a repository with the given ID.
     *
     * @param repo repository
     * @param id   repository id
-    * @return UUID of the repo
+    * @return remote name
     */
-  private[iterator] def getRepositoryUUID(repo: Repository, id: String): Option[String] = {
+  private[iterator] def getRepositoryRemote(repo: Repository, id: String): Option[String] = {
     // TODO: maybe a cache here could improve performance
     val c: StoredConfig = repo.getConfig
-    c.getSubsections("remote").asScala.find(uuid => {
+    c.getSubsections("remote").asScala.find(remoteName => {
       val actualId: String =
-        GitUrlsParser.getIdFromUrls(c.getStringList("remote", uuid, "url"))
+        GitUrlsParser.getIdFromUrls(c.getStringList("remote", remoteName, "url"))
 
       actualId == id
     })
@@ -184,10 +186,41 @@ object RootedRepo {
   private[iterator] def parseRef(repo: Repository, ref: String): (String, String) = {
     val split: Array[String] = ref.split("/")
     val uuid: String = split.last
-    val repoId: String = getRepositoryId(repo, uuid).get
-    val refName: String = split.init.mkString("/")
 
-    (repoId, refName)
+    // if it's a siva file, the last part will be the uuid of the repository, which
+    // is the name of the remote associated to that particular repository
+    getRepositoryId(repo, uuid) match {
+      case Some(repoId) =>
+        val refName: String = split.init.mkString("/")
+
+        (repoId, refName)
+
+      // If no uuid matches, it means this is not a siva file, so we should find this
+      // using the whole reference name
+      case None =>
+        val c: StoredConfig = repo.getConfig
+        val refRemote = repo.getRemoteName(ref)
+        val repoId = c.getSubsections("remote").asScala
+          .find(_ == refRemote)
+          .map(r => GitUrlsParser.getIdFromUrls(c.getStringList("remote", r, "url")))
+          .orNull
+
+        if (repoId == null) {
+          // if branch is local, use the repo path as directory
+          // since there's no way to tell to which remote it belongs (probably none)
+          val repoPath = if (repo.getDirectory.toPath.getFileName.toString == ".git") {
+            // non-bare repositories will have the .git directory as their directory
+            // so we'll use the parent
+            repo.getDirectory.toPath.getParent
+          } else {
+            repo.getDirectory.toPath
+          }
+
+          ("file://" + repoPath, ref)
+        } else {
+          (repoId, ref)
+        }
+    }
   }
 
 }

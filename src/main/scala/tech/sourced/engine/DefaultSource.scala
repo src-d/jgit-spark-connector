@@ -7,7 +7,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Row, SQLContext, SparkSession}
 import org.apache.spark.{SparkException, UtilsWrapper}
 import tech.sourced.engine.iterator._
-import tech.sourced.engine.provider.{RepositoryProvider, SivaRDDProvider}
+import tech.sourced.engine.provider.{RepositoryProvider, RepositoryRDDProvider}
 import tech.sourced.engine.util.Filter
 
 /**
@@ -79,16 +79,16 @@ case class GitRelation(session: SparkSession,
 
   override def buildScan(requiredColumns: Seq[Attribute], filters: Seq[Expression]): RDD[Row] = {
     val sc = session.sparkContext
-    val sivaRDD = SivaRDDProvider(sc).get(path)
+    val reposRDD = RepositoryRDDProvider(sc).get(path)
 
     val requiredCols = sc.broadcast(requiredColumns.map(_.name).toArray)
     val reposLocalPath = sc.broadcast(localPath)
     val sources = sc.broadcast(GitRelation.getSources(tableSource, schema))
     val filtersBySource = sc.broadcast(GitRelation.getFiltersBySource(filters))
 
-    sivaRDD.flatMap(pds => {
+    reposRDD.flatMap(source => {
       val provider = RepositoryProvider(reposLocalPath.value, skipCleanup)
-      val repo = provider.get(pds)
+      val repo = provider.get(source)
 
       // since the sources are ordered by their hierarchy, we can chain them like this
       // using the last used iterator as input for the current one
@@ -129,7 +129,7 @@ case class GitRelation(session: SparkSession,
       })
 
       // FIXME: when the RDD is persisted to disk the last element of this iterator is closed twice
-      new CleanupIterator(iter.getOrElse(Seq().toIterator), provider.close(pds, repo))
+      new CleanupIterator(iter.getOrElse(Seq().toIterator), provider.close(source, repo))
     })
   }
 }
