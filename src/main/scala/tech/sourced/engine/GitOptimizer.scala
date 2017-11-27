@@ -19,7 +19,7 @@ object SquashGitRelationJoin extends Rule[LogicalPlan] {
   /** @inheritdoc*/
   def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
     // Joins are only applicable per repository, so we can push down completely
-    // the join into the datasource
+    // the join into the data source
     case q@Join(_, _, _, _) =>
       val jd = GitOptimizer.getJoinData(q)
       if (!jd.valid) {
@@ -28,7 +28,7 @@ object SquashGitRelationJoin extends Rule[LogicalPlan] {
 
       jd match {
         case JoinData(filters, joinConditions, projectExprs, attributes, Some(session), _) =>
-          var relation = LogicalRelation(
+          val relation = LogicalRelation(
             GitRelation(
               session,
               GitOptimizer.attributesToSchema(attributes), joinConditions
@@ -37,21 +37,21 @@ object SquashGitRelationJoin extends Rule[LogicalPlan] {
             None
           )
 
-          var node = GitOptimizer.joinConditionsToFilters(joinConditions) match {
+          val node = GitOptimizer.joinConditionsToFilters(joinConditions) match {
             case Some(condition) => Filter(condition, relation)
             case None => relation
           }
 
-          node = filters match {
+          val filteredNode = filters match {
             case Some(filter) => Filter(filter, node)
             case None => relation
           }
 
           // If the projection is empty, just return the filter
           if (projectExprs.nonEmpty) {
-            Project(projectExprs, node)
+            Project(projectExprs, filteredNode)
           } else {
-            node
+            filteredNode
           }
         case _ => q
       }

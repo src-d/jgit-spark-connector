@@ -74,26 +74,6 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
     out should be(37)
   }
 
-  it should "work with all storage levels" in {
-    import org.apache.spark.storage.StorageLevel._
-    val storageLevels = List(
-      DISK_ONLY,
-      DISK_ONLY_2,
-      MEMORY_AND_DISK,
-      MEMORY_AND_DISK_2,
-      MEMORY_AND_DISK_SER,
-      MEMORY_AND_DISK_SER_2,
-      MEMORY_ONLY,
-      MEMORY_ONLY_2,
-      MEMORY_ONLY_SER,
-      MEMORY_ONLY_SER_2,
-      NONE,
-      OFF_HEAP
-    )
-
-    storageLevels.foreach(engine.getRepositories.persist(_).count)
-  }
-
   it should "get all tree entries" in {
     val df = engine.getRepositories.getReferences.getCommits.getTreeEntries
     df.count() should be(304362)
@@ -171,7 +151,6 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
       .drop("repository_id", "reference_name")
       .distinct()
 
-    files.show(truncate = false)
     assert(files.count == 91944)
   }
 
@@ -183,7 +162,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
       .drop("repository_id", "reference_name")
       .distinct()
 
-    assert(files.count == 3512)
+    assert(files.count == 91944)
   }
 
   "Get files" should "return the correct files" in {

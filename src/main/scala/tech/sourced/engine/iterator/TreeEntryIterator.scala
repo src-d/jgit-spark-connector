@@ -22,10 +22,7 @@ class TreeEntryIterator(finalColumns: Array[String],
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[TreeEntry] =
     TreeEntryIterator.loadIterator(
       repo,
-      Option(prevIter) match {
-        case Some(it) => Option(it.currentRow)
-        case None => None
-      },
+      Option(prevIter).map(_.currentRow),
       filters.flatMap(_.matchingCases)
     )
 

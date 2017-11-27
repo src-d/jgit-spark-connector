@@ -23,10 +23,7 @@ class ReferenceIterator(finalColumns: Array[String],
   protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[Ref] =
     ReferenceIterator.loadIterator(
       repo,
-      Option(prevIter) match {
-        case Some(it) => Option(it.currentRow)
-        case None => None
-      },
+      Option(prevIter).map(_.currentRow),
       filters.flatMap(_.matchingCases)
     )
 

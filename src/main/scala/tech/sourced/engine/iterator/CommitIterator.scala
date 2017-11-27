@@ -29,10 +29,7 @@ class CommitIterator(finalColumns: Array[String],
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[ReferenceWithCommit] =
     CommitIterator.loadIterator(
       repo,
-      Option(prevIter) match {
-        case Some(it) => Option(it.currentRow)
-        case None => None
-      },
+      Option(prevIter).map(_.currentRow),
       filters.flatMap(_.matchingCases)
     )
 
