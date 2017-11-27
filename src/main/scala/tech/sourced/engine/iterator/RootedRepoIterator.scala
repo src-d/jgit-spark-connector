@@ -3,6 +3,7 @@ package tech.sourced.engine.iterator
 import java.util.UUID
 
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.InternalRow
 import org.eclipse.jgit.lib.{Repository, StoredConfig}
 import tech.sourced.engine.util.{CompiledFilter, GitUrlsParser}
 
@@ -25,7 +26,7 @@ import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 abstract class RootedRepoIterator[T](finalColumns: Array[String],
                                      repo: Repository,
                                      prevIter: RootedRepoIterator[_],
-                                     filters: Seq[CompiledFilter]) extends Iterator[Row] {
+                                     filters: Seq[CompiledFilter]) extends Iterator[InternalRow] {
 
   /** Raw values of the row. */
   type RawRow = Map[String, () => Any]
@@ -114,7 +115,7 @@ abstract class RootedRepoIterator[T](finalColumns: Array[String],
     }
   }
 
-  override def next: Row = {
+  override def next: InternalRow = {
     currentRow = iter.next
     val mappedValues = if (prevIterCurrentRow != null) {
       prevIterCurrentRow ++ mapColumns(currentRow)
@@ -123,7 +124,7 @@ abstract class RootedRepoIterator[T](finalColumns: Array[String],
     }
 
     val values = finalColumns.map(c => mappedValues(c)())
-    Row(values: _*)
+    InternalRow(values: _*)
   }
 
 

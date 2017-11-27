@@ -1,7 +1,7 @@
 package tech.sourced.engine.iterator
 
-import java.sql.Timestamp
-
+import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, ArrayData}
+import org.apache.spark.unsafe.types.UTF8String
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.errors.IncorrectObjectTypeException
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
@@ -25,7 +25,7 @@ class CommitIterator(finalColumns: Array[String],
                      filters: Seq[CompiledFilter])
   extends RootedRepoIterator[ReferenceWithCommit](finalColumns, repo, prevIter, filters) {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[ReferenceWithCommit] =
     CommitIterator.loadIterator(
       repo,
@@ -36,7 +36,7 @@ class CommitIterator(finalColumns: Array[String],
       filters.flatMap(_.matchingCases)
     )
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override protected def mapColumns(obj: ReferenceWithCommit): Map[String, () => Any] = {
     val (repoId, refName) = RootedRepo.parseRef(repo, obj.ref.getName)
 
@@ -44,23 +44,34 @@ class CommitIterator(finalColumns: Array[String],
     lazy val files: Map[String, String] = this.getFiles(obj.commit)
 
     Map[String, () => Any](
-      "repository_id" -> (() => repoId),
-      "reference_name" -> (() => refName),
+      "repository_id" -> (() => UTF8String.fromString(repoId)),
+      "reference_name" -> (() => UTF8String.fromString(refName)),
       "index" -> (() => obj.index),
-      "hash" -> (() => ObjectId.toString(c.getId)),
-      "message" -> (() => c.getFullMessage),
-      "parents" -> (() => c.getParents.map(p => ObjectId.toString(p.getId))),
-      "tree" -> (() => files),
-      "blobs" -> (() => files.values.toArray),
+      "hash" -> (() => UTF8String.fromString(ObjectId.toString(c.getId))),
+      "message" -> (() => UTF8String.fromString(c.getFullMessage)),
+      "parents" -> (() => ArrayData.toArrayData(
+        c.getParents.map(p => UTF8String.fromString(ObjectId.toString(p.getId)))
+      )),
+      "tree" -> (() => {
+        val tree = files.map {
+          case (k, v) => (UTF8String.fromString(k), UTF8String.fromString(v))
+        }
+        ArrayBasedMapData(
+          tree.keys.toArray,
+          tree.values.toArray
+        )
+      }
+        ),
+      "blobs" -> (() => ArrayData.toArrayData(files.values.toArray.map(UTF8String.fromString))),
       "parents_count" -> (() => c.getParentCount),
 
-      "author_email" -> (() => c.getAuthorIdent.getEmailAddress),
-      "author_name" -> (() => c.getAuthorIdent.getName),
-      "author_date" -> (() => new Timestamp(c.getAuthorIdent.getWhen.getTime)),
+      "author_email" -> (() => UTF8String.fromString(c.getAuthorIdent.getEmailAddress)),
+      "author_name" -> (() => UTF8String.fromString(c.getAuthorIdent.getName)),
+      "author_date" -> (() => c.getAuthorIdent.getWhen.getTime),
 
-      "committer_email" -> (() => c.getCommitterIdent.getEmailAddress),
-      "committer_name" -> (() => c.getCommitterIdent.getName),
-      "committer_date" -> (() => new Timestamp(c.getCommitterIdent.getWhen.getTime))
+      "committer_email" -> (() => UTF8String.fromString(c.getCommitterIdent.getEmailAddress)),
+      "committer_name" -> (() => UTF8String.fromString(c.getCommitterIdent.getName)),
+      "committer_date" -> (() => c.getCommitterIdent.getWhen.getTime)
     )
   }
 
@@ -162,7 +173,7 @@ class RefWithCommitIterator(repo: Repository,
   private var commits: Iterator[RevCommit] = _
   private var index: Int = 0
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def hasNext: Boolean = {
     while ((commits == null || !commits.hasNext) && refs.hasNext) {
       actualRef = refs.next()
@@ -181,7 +192,7 @@ class RefWithCommitIterator(repo: Repository,
     refs.hasNext || (commits != null && commits.hasNext)
   }
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def next(): ReferenceWithCommit = {
     val result: ReferenceWithCommit = ReferenceWithCommit(actualRef, commits.next(), index)
     index += 1

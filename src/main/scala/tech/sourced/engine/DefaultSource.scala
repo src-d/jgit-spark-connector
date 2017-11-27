@@ -15,10 +15,10 @@ import tech.sourced.engine.util.Filter
   */
 class DefaultSource extends RelationProvider with DataSourceRegister {
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def shortName: String = "git"
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def createRelation(sqlContext: SQLContext,
                               parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(
@@ -53,7 +53,7 @@ object DefaultSource {
   * Also, the [[GitOptimizer]] might merge some table sources into one by squashing joins, so the
   * result will be the resultant table chained with the previous one using chained iterators.
   *
-  * @param session             Spark session
+  * @param session        Spark session
   * @param schema         schema of the relation
   * @param joinConditions join conditions, if any
   * @param tableSource    source table if any
@@ -76,6 +76,8 @@ case class GitRelation(session: SparkSession,
   override def unhandledFilters(filters: Array[Filter]): Array[Filter] = {
     super.unhandledFilters(filters)
   }
+
+  override def needConversion: Boolean = false
 
   override def buildScan(requiredColumns: Seq[Attribute], filters: Seq[Expression]): RDD[Row] = {
     val sc = session.sparkContext
@@ -130,7 +132,7 @@ case class GitRelation(session: SparkSession,
 
       // FIXME: when the RDD is persisted to disk the last element of this iterator is closed twice
       new CleanupIterator(iter.getOrElse(Seq().toIterator), provider.close(source, repo))
-    })
+    }).asInstanceOf[RDD[Row]]
   }
 }
 

@@ -1,5 +1,7 @@
 package tech.sourced.engine.iterator
 
+import org.apache.spark.sql.catalyst.util.ArrayData
+import org.apache.spark.unsafe.types.UTF8String
 import org.eclipse.jgit.lib.Repository
 import tech.sourced.engine.util.{CompiledFilter, Filter}
 
@@ -33,8 +35,8 @@ class RepositoryIterator(finalColumns: Array[String],
       .orElse(Some(false)).get
 
     Map[String, () => Any](
-      "id" -> (() => id),
-      "urls" -> (() => urls),
+      "id" -> (() => UTF8String.fromString(id)),
+      "urls" -> (() => ArrayData.toArrayData(urls.map(UTF8String.fromString))),
       "is_fork" -> (() => isFork)
     )
   }
