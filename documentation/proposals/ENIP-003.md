@@ -35,6 +35,30 @@ With `MetadataDataSource` we can have a rule that squashes `MetadataRelation`s i
 
 First step would be to make this a two steps process: first putting everything inside the metadata database and then running the actual queries on the engine. Then, on top of that, on-demand capabilities would be added as a second-step to remove the need for another step previous to the execution.
 
+Since `BlobIterator` is going to keep needing access to the `RepositorySource` with the repository that is going to be read, it is obvious we need to store the path of the repository in the repositories table. Although this is not a very useful thing to display to the user, it might come in handy to have it as part of the `repositories` schema.
+
+The schema of the `repositories` table would look like this afterwards:
+
+```
+id | urls | is_fork | path |
+```
+
+Then storing the metadata in a database becomes really trivial.
+
+To make the `BlobIterator` access the `RepositorySource` and the chained `MetadataRelation` we need an RDD of rows from the database and join it with the RDD of `RepositorySource`s we have by their `path`.
+Easiest way, but maybe not the most optimal would be:
+
+```scala
+val df1 = rdd1.toDF
+val df2 = rdd2.toDF
+
+val result = df1.join(df2, df1("path") <==> df2("path")).rdd
+```
+
+`MetadataRelation` would basically be a query builder and an iterator to loop over all the results returned by the database using the corresponding JDBC driver (SQLite in this case), that only chains itself with the regular `BlobIterator` in case blobs are requested.
+
+Sadly, most of JDBC datasource code (if any) can't be reused, because it does not deal with `Expression`s in the filters but `Filter`s, but it's code can be a reference for the implementation of our `MetadataRelation`.
+
 To add "on-demand" capabilities we need another extra table containing the status in which every repository or siva file is, that is, containing its `stat`. That way, we can know when a repository or siva file has changed and rebuild the cache accordingly, either by erasing and building again or doing a more sophisticated process that diffs changes and inserts/deletes only what is necessary.
 
 At this point, iterators (either from `GitRelation` or `MetadataRelation`) need to store all the data of a repository in the database before processing it (or diff and act accordingly if it's an outdated repository that already exists in the database).
@@ -53,4 +77,5 @@ Data nodes should have enough disk space to store all the metadata that reposito
 
 ## References
 
-n/a
+- [JDBCRDD in Spark](https://github.com/apache/spark/blob/master/sql/core/src/main/scala/org/apache/spark/sql/execution/datasources/jdbc/JDBCRDD.scala)
+- [JDBCUtils in Spark](https://github.com/apache/spark/blob/master/sql/core/src/main/scala/org/apache/spark/sql/execution/datasources/jdbc/JdbcUtils.scala)
