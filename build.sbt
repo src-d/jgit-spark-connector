@@ -12,7 +12,7 @@ libraryDependencies += scalaTest % Test
 libraryDependencies += scoverage % Test
 libraryDependencies += sparkSql % Provided
 libraryDependencies += newerHadoopClient % Provided //due to newer v. of guava in bblfsh
-// grpc for bblfsh/client-scala needs to be newer then in Spark
+// grpc for bblfsh/client-scala needs to be newer than in Spark
 libraryDependencies += fixNettyForGrpc
 libraryDependencies += jgit % Compile
 libraryDependencies += siva % Compile
@@ -22,8 +22,6 @@ libraryDependencies += commonsPool % Compile
 libraryDependencies += enry % Compile
 libraryDependencies += scalaLib % Provided
 
-assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
-
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oUT")
 
 test in assembly := {}
@@ -32,11 +30,10 @@ assemblyJarName in assembly := s"${name.value}-${version.value}.jar"
 parallelExecution in Test := false
 logBuffered in Test := false
 
+// Shade everything but tech.sourced.engine so the user does not have conflicts
 assemblyShadeRules in assembly := Seq(
   ShadeRule.rename("com.google.common.**" -> "com.google.shadedcommon.@1").inAll,
-  ShadeRule.rename("io.netty.**" -> "io.shadednetty.@1").inAll,
-  ShadeRule.rename("org.apache.commons.**" -> "org.apache.shadedcommons.@1").inAll,
-  ShadeRule.rename("org.eclipse.jgit.**" -> "org.eclipse.shadedjgit.@1").inAll
+  ShadeRule.rename("io.netty.**" -> "io.shadednetty.@1").inAll
 )
 
 assemblyMergeStrategy in assembly := {
@@ -74,40 +71,6 @@ pomIncludeRepository := (_ => false)
 crossPaths := false
 publishMavenStyle := true
 
-pomPostProcess := { (node: scala.xml.Node) =>
-  import scala.xml._
-  import scala.xml.transform._
-
-  object DependencyEraser extends RewriteRule {
-    override def transform(n: Node): Seq[Node] = n match {
-      case e: Elem if e.label == "dependencies" =>
-        <dependencies>
-          {e.child}<dependency>
-          <groupId>org.scala-lang</groupId>
-          <artifactId>scala-library</artifactId>
-          <version>
-            {scalaVersion.value}
-          </version>
-          <scope>provided</scope>
-        </dependency>
-        </dependencies>
-      case e: Elem if e.label == "dependency"
-        && e.child.exists(child => child.label == "scope" && child.text == "provided") =>
-        e
-      case e: Elem if e.label == "dependency" =>
-        val organization = e.child.filter(_.label == "groupId").flatMap(_.text).mkString
-        val artifact = e.child.filter(_.label == "artifactId").flatMap(_.text).mkString
-        val version = e.child.filter(_.label == "version").flatMap(_.text).mkString
-        Comment(s" not provided dependency $organization#$artifact;$version has been omitted ")
-      case other => other
-    }
-  }
-
-  object eraseDependencies extends RuleTransformer(DependencyEraser)
-
-  eraseDependencies(node)
-}
-
 val SONATYPE_USERNAME = scala.util.Properties.envOrElse("SONATYPE_USERNAME", "NOT_SET")
 val SONATYPE_PASSWORD = scala.util.Properties.envOrElse("SONATYPE_PASSWORD", "NOT_SET")
 credentials += Credentials(
@@ -123,7 +86,25 @@ pgpSecretRing := baseDirectory.value / "project" / ".gnupg" / "secring.gpg"
 pgpPublicRing := baseDirectory.value / "project" / ".gnupg" / "pubring.gpg"
 pgpPassphrase := Some(SONATYPE_PASSPHRASE.toArray)
 
-publishArtifact in(Compile, packageBin) := false
+packageBin in Compile := {
+  val file = (packageBin in Compile).value
+  val dest = new java.io.File(file.getParent, s"${name.value}-${version.value}-slim.jar")
+  Files.copy(
+    new java.io.File(file.getAbsolutePath).toPath,
+    dest.toPath,
+    StandardCopyOption.REPLACE_EXISTING
+  )
+  Files.delete(file.toPath)
+  dest
+}
+
+publishArtifact in (Compile, packageBin) := false
+
+val packageSlim = taskKey[File]("package-slim")
+
+packageSlim := (packageBin in Compile).value
+
+addArtifact(Artifact("engine", "jar", "jar", "slim"), packageSlim)
 
 assembly := {
   val file = assembly.value
@@ -135,6 +116,8 @@ assembly := {
   )
   file
 }
+
+assembly := assembly.dependsOn(packageBin in Compile).value
 
 addArtifact(artifact in(Compile, assembly), assembly)
 
