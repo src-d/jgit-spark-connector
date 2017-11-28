@@ -25,7 +25,7 @@ class ReferenceIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
     )
   }
 
-  "ReferenceIterator" should "return only specified columns" in {
+  it should "return only specified columns" in {
     testIterator(
       new ReferenceIterator(Array("repository_id", "name"), _, null, Seq()), {
         case (0, row) =>
@@ -42,7 +42,7 @@ class ReferenceIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
     )
   }
 
-  "ReferenceIterator" should "apply passed filters" in {
+  it should "apply passed filters" in {
     testIterator(
       new ReferenceIterator(
         Array("repository_id", "name"),
@@ -60,7 +60,7 @@ class ReferenceIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
     )
   }
 
-  "ReferenceIterator" should "use previously passed iterator" in {
+  it should "use previously passed iterator" in {
     testIterator(repo =>
       new ReferenceIterator(
         Array("repository_id", "name"),

@@ -4,7 +4,7 @@ In this example, the pyspark-shell is used to show a simple usage of the `source
 
 First, you can see how to import the package and instantiate and object that provide all the methods to manipulate the data retrieved from repositories.
 
-The `engine` object is used to get all the repositories, get the `HEAD` references from the repositories and eventually, get all the files from these references. Then a table is showed selecting the columns `file_hash`, `path` and `content`.
+The `engine` object is used to get all the repositories, get the `HEAD` references from the repositories and eventually, get all the blobs from these references. Then a table is showed selecting the columns `blob_id`, `path` and `content`.
 
 Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
@@ -15,11 +15,11 @@ Code
 ```python
 from sourced.engine import Engine
 engine = Engine(spark, '/path/to/siva-files')
-engine.repositories.references.head_ref.files.select('file_hash', 'path', 'content').show()
+engine.repositories.references.head_ref.commits.tree_entries.blobs.select('blob_id', 'path', 'content').show()
 
 ''' Output:
 +--------------------+--------------------+--------------------+
-|           file_hash|                path|             content|
+|           blob_id  |                path|             content|
 +--------------------+--------------------+--------------------+
 |ff4fa0794274a7ffb...|fibonacci/fibonac...|[64 65 66 20 66 6...|
 |7268016814b8ab7bc...|          gcd/gcd.py|[69 6D 70 6F 72 7...|

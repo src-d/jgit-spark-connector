@@ -1,8 +1,8 @@
 ## Classifying languages example
 
-This example uses the pyspark-shell to show how to classify files by their language with `classify_languages()`.
+This example uses the pyspark-shell to show how to classify blobs by their language with `classify_languages()`.
 
-Making use of the `engine` object, it retrieves repositories to get all files from the `HEAD` references from them. After that, a call to `classify_languages()` function detects the language for each file to show them in the aggregated column `lang` beside the selected columns `file_hash` and `path`.
+Making use of the `engine` object, it retrieves repositories to get all blobs from the `HEAD` references from them. After that, a call to `classify_languages()` function detects the language for each file to show them in the aggregated column `lang` beside the selected columns `blob_id` and `path`.
 
 Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
@@ -13,11 +13,11 @@ Code:
 ```python
 from sourced.engine import Engine
 engine = Engine(spark, '/path/to/siva-files')
-engine.repositories.references.head_ref.files.classify_languages().select("file_hash", "path", "lang").show()
+engine.repositories.references.head_ref.commits.tree_entries.blobs.classify_languages().select("blob_id", "path", "lang").show()
 
 ''' Output:
 +--------------------+--------------------+--------+
-|           file_hash|                path|    lang|
+|             blob_id|                path|    lang|
 +--------------------+--------------------+--------+
 |ff4fa0794274a7ffb...|fibonacci/fibonac...|  Python|
 |7268016814b8ab7bc...|          gcd/gcd.py|  Python|

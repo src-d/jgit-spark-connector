@@ -18,7 +18,7 @@ Code:
 import tech.sourced.engine._
 
 val engine = Engine(spark, "/path/to/siva-files")
-engine.getRepositories.getHEAD.getFiles.classifyLanguages.where('lang === "Python").extractUASTs.queryUAST("//*[@roleIdentifier]", "uast", "result").extractTokens("result", "tokens").select('path, 'lang, 'uast, 'tokens).show
+engine.getRepositories.getHEAD.getCommits.getTreeEntries.getBlobs.classifyLanguages.where('lang === "Python").extractUASTs.queryUAST("//*[@roleIdentifier]", "uast", "result").extractTokens("result", "tokens").select('path, 'lang, 'uast, 'tokens).show
 
 /* Output:
 +--------------------+------+-------------+--------------------+

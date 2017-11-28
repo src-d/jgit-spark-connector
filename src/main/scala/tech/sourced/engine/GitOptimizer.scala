@@ -19,7 +19,7 @@ object SquashGitRelationJoin extends Rule[LogicalPlan] {
   /** @inheritdoc*/
   def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
     // Joins are only applicable per repository, so we can push down completely
-    // the join into the datasource
+    // the join into the data source
     case q@Join(_, _, _, _) =>
       val jd = GitOptimizer.getJoinData(q)
       if (!jd.valid) {
@@ -37,16 +37,21 @@ object SquashGitRelationJoin extends Rule[LogicalPlan] {
             None
           )
 
-          val node = filters match {
-            case Some(filter) => Filter(filter, relation)
+          val node = GitOptimizer.joinConditionsToFilters(joinConditions) match {
+            case Some(condition) => Filter(condition, relation)
+            case None => relation
+          }
+
+          val filteredNode = filters match {
+            case Some(filter) => Filter(filter, node)
             case None => relation
           }
 
           // If the projection is empty, just return the filter
           if (projectExprs.nonEmpty) {
-            Project(projectExprs, node)
+            Project(projectExprs, filteredNode)
           } else {
-            node
+            filteredNode
           }
         case _ => q
       }
@@ -254,4 +259,56 @@ object GitOptimizer extends Logging {
         .map((a: Attribute) => StructField(a.name, a.dataType, a.nullable, a.metadata))
         .toArray
     )
+
+  /**
+    * Takes the join conditions, if any, and transforms them to filters, by removing some filters
+    * that don't make sense because they are already done inside the iterator.
+    *
+    * @param expr optional condition to transform
+    * @return transformed join conditions or none
+    */
+  def joinConditionsToFilters(expr: Option[Expression]): Option[Expression] = expr match {
+    case Some(e) =>
+      e transformUp {
+        case Equality(
+        a: AttributeReference,
+        b: AttributeReference
+        ) if isRedundantAttributeFilter(a, b) =>
+          EqualTo(Literal(1), Literal(1))
+
+        case BinaryOperator(a, Equality(IntegerLiteral(1), IntegerLiteral(1))) =>
+          a
+
+        case BinaryOperator(Equality(IntegerLiteral(1), IntegerLiteral(1)), b) =>
+          b
+      } match {
+        case Equality(IntegerLiteral(1), IntegerLiteral(1)) =>
+          None
+        case finalExpr =>
+          Some(finalExpr)
+      }
+    case None => None
+  }
+
+  /**
+    * Returns whether the equality between the two given attribute references is redundant
+    * for a filter (because they are taken care of inside the iterators).
+    *
+    * @param a left attribute
+    * @param b right attribute
+    * @return is redundant or not
+    */
+  def isRedundantAttributeFilter(a: AttributeReference, b: AttributeReference): Boolean = {
+    val orderedNames = Seq(a.name, b.name).sorted
+    (orderedNames.head, orderedNames(1)) match {
+      case ("id", "repository_id") => true
+      case ("repository_id", "repository_id") => true
+      case ("name", "reference_name") => true
+      case ("commit_hash", "hash") => true
+      case ("commit_hash", "commit_hash") => true
+      case ("blob", "blob_id") => true
+      case _ => false
+    }
+  }
+
 }

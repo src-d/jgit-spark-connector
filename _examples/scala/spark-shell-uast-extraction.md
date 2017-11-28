@@ -2,9 +2,9 @@
 
 In the example code below, you can take a look to how the `extractUASTs` method works.
 
-From the `engine` object instantiated in the spark-shell, a bunch of files has been got filtering repositories by `id`, retrieving their `HEAD` references and requesting for them. Once we have that files, we can call `extractUASTs` which send the files to a [bblfsh server](https://github.com/bblfsh/server) to get back the UASTs.
+From the `engine` object instantiated in the spark-shell, a bunch of blobs has been got filtering repositories by `id`, retrieving their `HEAD` references and requesting for them. Once we have that blobs, we can call `extractUASTs` which send the blobs to a [bblfsh server](https://github.com/bblfsh/server) to get back the UASTs.
 
-Finally, the `file_hash`, file `path` and `uast` is showed on the table.
+Finally, the `blob_id`, file `path` and `uast` is showed on the table.
 
 Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
@@ -15,13 +15,13 @@ $ spark-shell --packages "tech.sourced:engine:[version]"
 import tech.sourced.engine._
 
 val engine = Engine(spark, "/path/to/siva-files")
-val exampleDf = engine.getRepositories.filter('id === "github.com/mingrammer/funmath.git").getHEAD.getFiles.extractUASTs.select('file_hash, 'path, 'uast)
+val exampleDf = engine.getRepositories.filter('id === "github.com/mingrammer/funmath.git").getHEAD.getCommits.getTreeEntries.getBlobs.extractUASTs.select('blob_id, 'path, 'uast)
 
 exampleDf.show
 
 /* Output:
 +--------------------+--------------------+-------------+
-|           file_hash|                path|         uast|
+|             blob_id|                path|         uast|
 +--------------------+--------------------+-------------+
 |ff4fa0794274a7ffb...|fibonacci/fibonac...|[[B@5e53daf6]|
 |7268016814b8ab7bc...|          gcd/gcd.py|[[B@65f08242]|

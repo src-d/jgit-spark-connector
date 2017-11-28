@@ -18,11 +18,11 @@ Code:
 from sourced.engine import Engine
 engine = Engine(spark, '/path/to/siva-files')
 
-engine.repositories.references.head_ref.files.classify_languages().where('lang = "Python"').extract_uasts().query_uast('//*[@roleIdentifier]').extract_tokens('result', 'tokens').select('file_hash', 'path', 'lang', 'uast', 'tokens').show()
+engine.repositories.references.head_ref.commits.tree_entries.blobs.classify_languages().where('lang = "Python"').extract_uasts().query_uast('//*[@roleIdentifier]').extract_tokens('result', 'tokens').select('blob_id', 'path', 'lang', 'uast', 'tokens').show()
 
 ''' Output:
 +--------------------+--------------------+------+-------------+--------------------+
-|           file_hash|                path|  lang|         uast|              tokens|
+|             blob_id|                path|  lang|         uast|              tokens|
 +--------------------+--------------------+------+-------------+--------------------+
 |ff4fa0794274a7ffb...|fibonacci/fibonac...|Python|[[B@617b4738]|[fibonacci, n, in...|
 |7268016814b8ab7bc...|          gcd/gcd.py|Python|[[B@2c66d0f9]|[math, gcd, a, in...|

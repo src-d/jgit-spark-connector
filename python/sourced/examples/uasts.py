@@ -9,7 +9,7 @@ def main():
     engine = Engine(session, repos_path)
     engine.repositories.references\
         .filter('name = "refs/heads/develop"')\
-        .commits.files\
+        .commits.first_reference_commit.tree_entries.blobs\
         .classify_languages()\
         .filter('lang = "Ruby"')\
         .extract_uasts()\

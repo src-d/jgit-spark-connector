@@ -41,11 +41,6 @@ root
  |-- message: string (nullable = false)
  |-- parents: array (nullable = true)
  |    |-- element: string (containsNull = false)
- |-- tree: map (nullable = true)
- |    |-- key: string
- |    |-- value: string (valueContainsNull = false)
- |-- blobs: array (nullable = true)
- |    |-- element: string (containsNull = false)
  |-- parents_count: integer (nullable = false)
  |-- author_email: string (nullable = true)
  |-- author_name: string (nullable = true)
@@ -55,33 +50,49 @@ root
  |-- committer_date: timestamp (nullable = true)
 '''
 
-engine.repositories.references.files.printSchema()
+engine.repositories.references.commits.tree_entries.printSchema()
 ''' Output:
 root
- |-- file_hash: string (nullable = false)
- |-- content: binary (nullable = true)
  |-- commit_hash: string (nullable = false)
+ |-- repository_id: string (nullable = false)
+ |-- reference_name: string (nullable = false)
+ |-- path: string (nullable = true)
+ |-- blob: string (nullable = false)
+'''
+
+engine.repositories.references.commits.tree_entries.blobs.printSchema()
+''' Output:
+root
+ |-- blob_id: string (nullable = false)
+ |-- commit_hash: string (nullable = false)
+ |-- repository_id: string (nullable = false)
+ |-- reference_name: string (nullable = false)
+ |-- content: binary (nullable = true)
  |-- is_binary: boolean (nullable = false)
  |-- path: string (nullable = true)
 '''
 
-engine.repositories.references.files.classify_languages().printSchema()
+engine.repositories.references.commits.tree_entries.blobs.classify_languages().printSchema()
 ''' Output:
 root
- |-- file_hash: string (nullable = false)
- |-- content: binary (nullable = true)
+ |-- blob_id: string (nullable = false)
  |-- commit_hash: string (nullable = false)
+ |-- repository_id: string (nullable = false)
+ |-- reference_name: string (nullable = false)
+ |-- content: binary (nullable = true)
  |-- is_binary: boolean (nullable = false)
  |-- path: string (nullable = true)
  |-- lang: string (nullable = true)
 '''
 
-engine.repositories.references.files.classify_languages().extract_uasts().printSchema()
+engine.repositories.references.commits.tree_entries.blobs.classify_languages().extract_uasts().printSchema()
 ''' Output:
 root
- |-- file_hash: string (nullable = false)
- |-- content: binary (nullable = true)
+ |-- blob_id: string (nullable = false)
  |-- commit_hash: string (nullable = false)
+ |-- repository_id: string (nullable = false)
+ |-- reference_name: string (nullable = false)
+ |-- content: binary (nullable = true)
  |-- is_binary: boolean (nullable = false)
  |-- path: string (nullable = true)
  |-- lang: string (nullable = true)

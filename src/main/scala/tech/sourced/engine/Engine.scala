@@ -56,59 +56,58 @@ class Engine(session: SparkSession) {
   def getRepositories: DataFrame = getDataSource("repositories", session)
 
   /**
-    * Retrieves the files of a list of repositories, reference names and commit hashes.
-    * So the result will be a [[org.apache.spark.sql.DataFrame]] of all the files in
+    * Retrieves the blobs of a list of repositories, reference names and commit hashes.
+    * So the result will be a [[org.apache.spark.sql.DataFrame]] of all the blobs in
     * the given commits that are in the given references that belong to the given
     * repositories.
     *
     * {{{
-    * val filesDfFast = engine.getFiles(repoIds, refNames, hashes)
+    * val blobsDf = engine.getFiles(repoIds, refNames, hashes)
     * }}}
     *
     * Calling this function with no arguments is the same as:
     *
     * {{{
-    * engine.getRepositories.getReferences.getCommits.getFiles
+    * engine.getRepositories.getReferences.getCommits.getTreeEntries.getBlobs
     * }}}
     *
     * @param repositoryIds  List of the repository ids to filter by (optional)
     * @param referenceNames List of reference names to filter by (optional)
     * @param commitHashes   List of commit hashes to filter by (optional)
-    * @return [[org.apache.spark.sql.DataFrame]] with files of the given commits, refs and repos.
+    * @return [[org.apache.spark.sql.DataFrame]] with blobs of the given commits, refs and repos.
     */
-  def getFiles(repositoryIds: Seq[String] = Seq(),
+  def getBlobs(repositoryIds: Seq[String] = Seq(),
                referenceNames: Seq[String] = Seq(),
                commitHashes: Seq[String] = Seq()): DataFrame = {
     val df = getRepositories
-    import df.sparkSession.implicits._
 
     var reposDf = df
     if (repositoryIds.nonEmpty) {
-      reposDf = reposDf.filter($"id".isin(repositoryIds: _*))
+      reposDf = reposDf.filter(reposDf("id").isin(repositoryIds: _*))
     }
 
     var refsDf = reposDf.getReferences
     if (referenceNames.nonEmpty) {
-      refsDf = refsDf.filter($"name".isin(referenceNames: _*))
+      refsDf = refsDf.filter(refsDf("name").isin(referenceNames: _*))
     }
 
     var commitsDf = refsDf.getCommits
     commitsDf = if (commitHashes.nonEmpty) {
-      commitsDf.filter($"hash".isin(commitHashes: _*))
+      commitsDf.filter(commitsDf("hash").isin(commitHashes: _*))
     } else {
       commitsDf.getFirstReferenceCommit
     }
 
-    commitsDf.getFiles
+    commitsDf.getTreeEntries.getBlobs
   }
 
   /**
     * This method is only offered for easier usage from Python.
     */
-  private[engine] def getFiles(repositoryIds: java.util.List[String],
+  private[engine] def getBlobs(repositoryIds: java.util.List[String],
                                referenceNames: java.util.List[String],
                                commitHashes: java.util.List[String]): DataFrame =
-    getFiles(
+    getBlobs(
       asScalaBuffer(repositoryIds),
       asScalaBuffer(referenceNames),
       asScalaBuffer(commitHashes)

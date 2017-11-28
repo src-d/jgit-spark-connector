@@ -63,10 +63,6 @@ abstract class RootedRepoIterator[T](finalColumns: Array[String],
     */
   protected def mapColumns(obj: T): RawRow
 
-  private val repoConfig = repo.getConfig
-
-  private val remotes = repoConfig.getSubsections("remote").asScala
-
   //final private def isEmpty: Boolean = !hasNext
 
   /**

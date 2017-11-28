@@ -60,6 +60,7 @@ object RepositoryIterator {
                    repoKey: String = "id"): Iterator[String] = {
     val ids = filters.flatMap {
       case (k, repoIds) if k == repoKey => repoIds.map(_.toString)
+      case ("id", repoIds) => repoIds.map(_.toString)
       case _ => Seq()
     }
 
