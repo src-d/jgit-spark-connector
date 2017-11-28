@@ -73,6 +73,42 @@ For [sbt](http://www.scala-sbt.org/) managed projects add the dependency:
 
 In both cases, replace `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced)
 
+### Usage in applications as a dependency
+
+The default jar published is a fatjar containing all the dependencies required by the engine. It's meant to be used directly as a jar or through `--packages` for Spark usage.
+
+If you want to use it in an application and built a fatjar with that you need to follow these steps to use what we call the "slim" jar:
+
+With maven:
+
+```xml
+<dependency>
+    <groupId>tech.sourced</groupId>
+    <artifactId>engine</artifactId>
+    <version>[version]</version>
+    <classifier>slim</classifier>
+</dependency>
+```
+
+Or (for sbt):
+
+```scala
+libraryDependencies += "tech.sourced" % "engine" % "[version]" % Compile classifier "slim"
+```
+
+If you run into problems with `io.netty.versions.properties` on sbt, you can add the following snippet to solve it:
+
+In sbt:
+
+```scala
+assemblyMergeStrategy in assembly := {
+  case "META-INF/io.netty.versions.properties" => MergeStrategy.last
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}
+```
+
 ## pyspark
 
 ### Local mode
