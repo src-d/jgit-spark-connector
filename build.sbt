@@ -12,7 +12,7 @@ libraryDependencies += scalaTest % Test
 libraryDependencies += scoverage % Test
 libraryDependencies += sparkSql % Provided
 libraryDependencies += newerHadoopClient % Provided //due to newer v. of guava in bblfsh
-// grpc for bblfsh/client-scala needs to be newer then in Spark
+// grpc for bblfsh/client-scala needs to be newer than in Spark
 libraryDependencies += fixNettyForGrpc
 libraryDependencies += jgit % Compile
 libraryDependencies += siva % Compile
@@ -32,11 +32,19 @@ assemblyJarName in assembly := s"${name.value}-${version.value}.jar"
 parallelExecution in Test := false
 logBuffered in Test := false
 
+// Shade everything but tech.sourced.engine so the user does not have conflicts
 assemblyShadeRules in assembly := Seq(
-  ShadeRule.rename("com.google.common.**" -> "com.google.shadedcommon.@1").inAll,
-  ShadeRule.rename("io.netty.**" -> "io.shadednetty.@1").inAll,
-  ShadeRule.rename("org.apache.commons.**" -> "org.apache.shadedcommons.@1").inAll,
-  ShadeRule.rename("org.eclipse.jgit.**" -> "org.eclipse.shadedjgit.@1").inAll
+  ShadeRule.rename("com.**" -> "shaded.com.@1").inAll,
+  ShadeRule.rename("org.**" -> "shaded.org.@1").inAll,
+  ShadeRule.rename("javax.**" -> "shaded.javax.@1").inAll,
+  ShadeRule.rename("google.**" -> "shaded.google.@1").inAll,
+  ShadeRule.rename("scalapb.**" -> "shaded.scalapb.@1").inAll,
+  ShadeRule.rename("gopkg.**" -> "shaded.gopkg.@1").inAll,
+  ShadeRule.rename("io.**" -> "shaded.io.@1").inAll,
+  ShadeRule.rename("fastparse.**" -> "shaded.fastparse.@1").inAll,
+  ShadeRule.rename("sourcecode.**" -> "shaded.sourcecode.@1").inAll,
+  ShadeRule.rename("tech.sourced.enry.**" -> "shaded.tech.sourced.enry.@1").inAll,
+  ShadeRule.rename("tech.sourced.siva.**" -> "shaded.tech.sourced.siva.@1").inAll
 )
 
 assemblyMergeStrategy in assembly := {
