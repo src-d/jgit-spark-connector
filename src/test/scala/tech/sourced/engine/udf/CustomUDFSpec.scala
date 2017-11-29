@@ -25,7 +25,6 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     val languagesDf = fileSeq.toDF(fileColumns: _*).classifyLanguages
 
     languagesDf.schema.fields should contain(StructField("lang", StringType))
-    languagesDf.show
   }
 
   it should "guess the correct language" in {
@@ -40,23 +39,22 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
       case "no-filename" => row.getString(1) should be("Python")
       case _ => row.getString(1) should be(null)
     })
-
-    languagesDf.show
   }
 
   it should "works as a registered udf" in {
     val spark = ss
     import spark.implicits._
 
-    spark.catalog.listFunctions().filter('name like "%"
-      + ClassifyLanguagesUDF.name + "%").show(false)
+    // to see the UDFs registered in the catalog:
+    // spark.catalog.listFunctions().filter('name like "%"
+    //   + ClassifyLanguagesUDF.name + "%").show(false)
+
     fileSeq.toDF(fileColumns: _*).createOrReplaceTempView("files")
 
     val languagesDf = spark.sqlContext.sql("SELECT *, "
       + ClassifyLanguagesUDF.name + "(is_binary, path, content) AS lang FROM files")
-    languagesDf.schema.fields should contain(StructField("lang", StringType))
 
-    languagesDf.show
+    languagesDf.schema.fields should contain(StructField("lang", StringType))
   }
 
   "UAST parsing of content" should "produce non-empty results" in {
@@ -66,7 +64,6 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     val uastDf = fileSeq.toDF(fileColumns: _*).extractUASTs()
 
     uastDf.columns should contain("uast")
-    uastDf.show
 
     uastDf.take(2).zipWithIndex.map {
       case (row, 0) => assert(row(3).asInstanceOf[Array[Byte]].nonEmpty)
@@ -82,9 +79,9 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
 
     uastDf.columns should contain("lang")
     uastDf.columns should contain("uast")
-    uastDf.show
 
     uastDf.take(2).zipWithIndex.map {
+
       case (row, 0) => assert(row(3).asInstanceOf[Array[Byte]].nonEmpty)
       case (row, 1) => assert(row(3).asInstanceOf[Array[Byte]].nonEmpty)
     }
@@ -94,14 +91,16 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     val spark = ss
     import spark.implicits._
 
-    spark.catalog.listFunctions()
-      .filter('name like "%" + ExtractUASTsWithoutLangUDF.name + "%")
-      .show(false)
+    // to see the UDFs registered in the catalog:
+    // spark.catalog.listFunctions()
+    //   .filter('name like "%" + ExtractUASTsWithoutLangUDF.name + "%")
+    //   .show(false)
 
     fileSeq.toDF(fileColumns: _*).createOrReplaceTempView("uasts")
 
     val uastsDF = spark.sqlContext.sql("SELECT *, "
       + ExtractUASTsWithoutLangUDF.name + "(path, content) AS uast FROM uasts")
+
     uastsDF.collect
     uastsDF.columns should contain("uast")
   }
@@ -110,7 +109,11 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     val spark = ss
     import spark.implicits._
 
-    spark.catalog.listFunctions().filter('name like "%" + QueryXPathUDF.name + "%").show(false)
+    // to see the UDFs registered in the catalog:
+    // spark.catalog.listFunctions()
+    //   .filter('name like "%" + ExtractUASTsWithoutLangUDF.name + "%")
+    //   .show(false)
+
     fileSeq.take(1).toDF(fileColumns: _*).createOrReplaceTempView("files")
 
     val uastsDF = spark.sqlContext
