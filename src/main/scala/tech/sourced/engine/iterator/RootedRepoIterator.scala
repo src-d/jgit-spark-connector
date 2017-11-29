@@ -1,7 +1,5 @@
 package tech.sourced.engine.iterator
 
-import java.util.UUID
-
 import org.apache.spark.sql.Row
 import org.eclipse.jgit.lib.{Repository, StoredConfig}
 import tech.sourced.engine.util.{CompiledFilter, GitUrlsParser}
@@ -28,7 +26,7 @@ abstract class RootedRepoIterator[T](finalColumns: Array[String],
                                      filters: Seq[CompiledFilter]) extends Iterator[Row] {
 
   /** Raw values of the row. */
-  type RawRow = Map[String, () => Any]
+  type RawRow = Map[String, Any]
 
   /** Instance of the internal iterator. */
   private var iter: Iterator[T] = _
@@ -118,7 +116,7 @@ abstract class RootedRepoIterator[T](finalColumns: Array[String],
       mapColumns(currentRow)
     }
 
-    val values = finalColumns.map(c => mappedValues(c)())
+    val values = finalColumns.map(c => mappedValues(c))
     Row(values: _*)
   }
 

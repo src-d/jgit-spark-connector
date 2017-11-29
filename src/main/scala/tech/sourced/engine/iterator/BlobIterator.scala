@@ -58,7 +58,7 @@ class BlobIterator(finalColumns: Array[String],
   }
 
   /** @inheritdoc*/
-  override protected def mapColumns(blob: Blob): Map[String, () => Any] = {
+  override protected def mapColumns(blob: Blob): RawRow = {
     // Don't read the blob again if it's already in the blob cache
     val content = if (blobCache.contains(blob.id)) {
       blobCache.getOrElse(blob.id, Array.emptyByteArray)
@@ -72,13 +72,13 @@ class BlobIterator(finalColumns: Array[String],
     }
     val isBinary = RawText.isBinary(content)
 
-    Map[String, () => Any](
-      "commit_hash" -> (() => blob.commit.getName),
-      "repository_id" -> (() => blob.repo),
-      "reference_name" -> (() => blob.ref),
-      "blob_id" -> (() => blob.id.getName),
-      "content" -> (() => if (isBinary) Array.emptyByteArray else content),
-      "is_binary" -> (() => isBinary)
+    Map[String, Any](
+      "commit_hash" -> blob.commit.getName,
+      "repository_id" -> blob.repo,
+      "reference_name" -> blob.ref,
+      "blob_id" -> blob.id.getName,
+      "content" -> (if (isBinary) Array.emptyByteArray else content),
+      "is_binary" -> isBinary
     )
   }
 
