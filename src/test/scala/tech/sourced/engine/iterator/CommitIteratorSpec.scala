@@ -5,7 +5,7 @@ import java.sql.Timestamp
 import org.scalatest.FlatSpec
 import tech.sourced.engine.util.{Attr, EqualFilter, InFilter}
 
-class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
+class CommitIteratorSpec extends FlatSpec with BaseChainableIterator {
 
   private val cols = Array(
     "repository_id",

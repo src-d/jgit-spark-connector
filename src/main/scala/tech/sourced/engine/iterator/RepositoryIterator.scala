@@ -15,7 +15,7 @@ class RepositoryIterator(repositoryPath: String,
                          finalColumns: Array[String],
                          repo: Repository,
                          filters: Seq[CompiledFilter])
-  extends RootedRepoIterator[String](finalColumns, repo, null, filters) {
+  extends ChainableIterator[String](finalColumns, null, filters) {
 
   // since this iterator does not override getFilters method of RootedRepository
   // we can cache here the matching cases, because they are not going to change.
@@ -25,7 +25,7 @@ class RepositoryIterator(repositoryPath: String,
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[String] =
     RepositoryIterator.loadIterator(repo, matchingFilters)
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override protected def mapColumns(id: String): RawRow = {
     val c = repo.getConfig
     val remote = RootedRepo.getRepositoryRemote(repo, id)

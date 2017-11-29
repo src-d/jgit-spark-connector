@@ -17,7 +17,7 @@ class ReferenceIterator(finalColumns: Array[String],
                         repo: Repository,
                         prevIter: RepositoryIterator,
                         filters: Seq[CompiledFilter])
-  extends RootedRepoIterator[Ref](finalColumns, repo, prevIter, filters) {
+  extends ChainableIterator[Ref](finalColumns, prevIter, filters) {
 
   /** @inheritdoc */
   protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[Ref] =

@@ -22,7 +22,7 @@ class CommitIterator(finalColumns: Array[String],
                      repo: Repository,
                      prevIter: ReferenceIterator,
                      filters: Seq[CompiledFilter])
-  extends RootedRepoIterator[ReferenceWithCommit](finalColumns, repo, prevIter, filters) {
+  extends ChainableIterator[ReferenceWithCommit](finalColumns, prevIter, filters) {
 
   /** @inheritdoc */
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[ReferenceWithCommit] =

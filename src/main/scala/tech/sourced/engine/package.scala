@@ -46,6 +46,11 @@ package object engine {
     */
   private[engine] val skipCleanupKey = "spark.tech.sourced.engine.cleanup.skip"
 
+  private[engine] val dbPathKey = "spark.tech.sourced.engine.db.path"
+
+  val defaultSourceName: String = "tech.sourced.engine"
+  val metadataSourceName: String = "tech.sourced.engine.MetadataSource"
+
   // The keys repositoriesPathKey, bblfshHostKey, bblfshPortKey and skipCleanupKey must
   // start by "spark." to be able to be loaded from the "spark-defaults.conf" file.
 
@@ -87,7 +92,7 @@ package object engine {
 
     import df.sparkSession.implicits._
 
-    implicit val session = df.sparkSession
+    implicit val session: SparkSession = df.sparkSession
 
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
@@ -365,9 +370,7 @@ package object engine {
     * @return dataframe for the given table
     */
   private[engine] def getDataSource(table: String, session: SparkSession): DataFrame =
-    session.read.format("tech.sourced.engine.DefaultSource")
-      .option("table", table)
-      .load(session.sqlContext.getConf(repositoriesPathKey))
+    session.table(table)
 
   /**
     * Ensures the given [[org.apache.spark.sql.DataFrame]] contains some required columns.

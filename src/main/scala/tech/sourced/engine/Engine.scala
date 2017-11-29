@@ -3,10 +3,14 @@ package tech.sourced.engine
 import java.util.Properties
 
 import org.apache.spark.sql.functions.{lit, when}
-import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkException
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import tech.sourced.engine.rule.{
+  AddSourceToAttributes,
+  SquashMetadataRelationsJoin,
+  SquashGitRelationsJoin
+}
 import tech.sourced.engine.udf.ConcatArrayUDF
 
 import scala.collection.JavaConversions.asScalaBuffer
@@ -40,10 +44,36 @@ import scala.collection.JavaConversions.asScalaBuffer
   * @constructor creates a Engine instance with the given Spark session.
   * @param session Spark session to be used
   */
-class Engine(session: SparkSession) extends Logging {
+class Engine(session: SparkSession, repositoriesPath: String) extends Logging {
 
+  this.setRepositoriesPath(repositoriesPath)
   session.registerUDFs()
-  session.experimental.extraOptimizations = Seq(AddSourceToAttributes, SquashGitRelationJoin)
+  session.experimental.extraOptimizations = Seq(
+    AddSourceToAttributes,
+    SquashGitRelationsJoin,
+    SquashMetadataRelationsJoin
+  )
+  registerViews()
+
+  private def registerViews(): Unit = {
+    Sources.orderedSources.foreach(table => {
+      session.read.format(defaultSourceName)
+        .option(DefaultSource.tableNameKey, table)
+        .load(session.sqlContext.getConf(repositoriesPathKey))
+        .createOrReplaceTempView(table)
+    })
+  }
+
+  def fromMetadata(dbPath: String): Engine = {
+    Seq("repositories", "references", "commits", "tree_entries").foreach(table => {
+      session.read.format(metadataSourceName)
+        .option(DefaultSource.tableNameKey, table)
+        .option(MetadataSource.dbPathKey, dbPath)
+        .load()
+        .createOrReplaceTempView(table)
+    })
+    this
+  }
 
   /**
     * Returns a DataFrame with the data about the repositories found at
@@ -235,7 +265,7 @@ object Engine {
     * @return Engine instance
     */
   def apply(session: SparkSession, repositoriesPath: String, repositoriesFormat: String): Engine = {
-    new Engine(session)
+    new Engine(session, repositoriesPath)
       .setRepositoriesPath(repositoriesPath)
       .setRepositoriesFormat(repositoriesFormat)
   }

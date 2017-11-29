@@ -7,7 +7,7 @@ import org.scalatest.{Matchers, Suite}
 import tech.sourced.engine.provider.{RepositoryProvider, RepositorySource, RepositoryRDDProvider}
 import tech.sourced.engine.{BaseSivaSpec, BaseSparkSpec}
 
-trait BaseRootedRepoIterator extends Suite with BaseSparkSpec with BaseSivaSpec with Matchers {
+trait BaseChainableIterator extends Suite with BaseSparkSpec with BaseSivaSpec with Matchers {
   lazy val prov: RepositoryRDDProvider = RepositoryRDDProvider(ss.sparkContext)
   lazy val rdd: RDD[RepositorySource] = prov.get(resourcePath, RepositoryRDDProvider.SivaFormat)
 

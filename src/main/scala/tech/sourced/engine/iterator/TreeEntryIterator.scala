@@ -16,7 +16,7 @@ class TreeEntryIterator(finalColumns: Array[String],
                         repo: Repository,
                         prevIter: CommitIterator,
                         filters: Seq[CompiledFilter])
-  extends RootedRepoIterator[TreeEntry](finalColumns, repo, prevIter, filters) {
+  extends ChainableIterator[TreeEntry](finalColumns, prevIter, filters) {
 
   /** @inheritdoc*/
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[TreeEntry] =
@@ -26,7 +26,7 @@ class TreeEntryIterator(finalColumns: Array[String],
       filters.flatMap(_.matchingCases)
     )
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def mapColumns(obj: TreeEntry): RawRow = {
     Map[String, Any](
       "commit_hash" -> obj.commitHash.getName,

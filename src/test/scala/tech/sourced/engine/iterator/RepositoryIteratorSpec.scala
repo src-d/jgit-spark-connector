@@ -8,7 +8,7 @@ import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 import tech.sourced.engine.provider.{RepositoryProvider, RepositoryRDDProvider}
 import tech.sourced.engine.util.{Attr, EqualFilter}
 
-class RepositoryIteratorSpec extends FlatSpec with BaseRootedRepoIterator with BeforeAndAfterEach {
+class RepositoryIteratorSpec extends FlatSpec with BaseChainableIterator with BeforeAndAfterEach {
 
   private var tmpDir: java.nio.file.Path = _
 

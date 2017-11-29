@@ -16,19 +16,37 @@ import scala.collection.mutable
   * @param filters      filters for the iterator
   */
 class BlobIterator(finalColumns: Array[String],
-                   repo: Repository,
-                   prevIter: TreeEntryIterator,
-                   filters: Seq[CompiledFilter])
-  extends RootedRepoIterator[Blob](finalColumns, repo, prevIter, filters) with Logging {
+                      repo: Repository,
+                      prevIter: Either[TreeEntryIterator, MetadataRowsIterator],
+                      filters: Seq[CompiledFilter])
+  extends ChainableIterator[Blob](
+    finalColumns,
+    Option(prevIter).map {
+      case Left(l) => l
+      case Right(r) => r
+    }.orNull,
+    filters
+  ) with Logging {
 
   // stores the references to the blob, so we only have to read the blob once
   val blobCache: mutable.HashMap[ObjectId, Array[Byte]] = mutable.HashMap()
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[Blob] = {
     val treeEntryIter = Option(prevIter) match {
-      case Some(it) =>
-        Seq(it.currentRow).toIterator
+      case Some(i) => i match {
+        case Left(it) =>
+          Seq(it.currentRow).toIterator
+        case Right(it) =>
+          val row = it.currentRow
+          Seq(TreeEntry(
+            ObjectId.fromString(row("commit_hash").toString),
+            row("path").toString,
+            ObjectId.fromString(row("blob").toString),
+            row("reference_name").toString,
+            row("repository_id").toString
+          )).toIterator
+      }
       case None => TreeEntryIterator.loadIterator(
         repo,
         None,
@@ -57,7 +75,6 @@ class BlobIterator(finalColumns: Array[String],
     }
   }
 
-  /** @inheritdoc*/
   override protected def mapColumns(blob: Blob): RawRow = {
     // Don't read the blob again if it's already in the blob cache
     val content = if (blobCache.contains(blob.id)) {

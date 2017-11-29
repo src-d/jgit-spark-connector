@@ -3,7 +3,7 @@ package tech.sourced.engine.iterator
 import org.scalatest.FlatSpec
 import tech.sourced.engine.util.{Attr, EqualFilter}
 
-class TreeEntryIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
+class TreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
 
   private val cols = Array(
     "commit_hash",

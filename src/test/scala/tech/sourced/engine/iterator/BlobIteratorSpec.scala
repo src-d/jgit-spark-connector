@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets
 import org.scalatest.FlatSpec
 import tech.sourced.engine.util.{Attr, CompiledFilter, EqualFilter, InFilter}
 
-class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
+class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
 
   val columns = Array(
     "blob_id",
@@ -149,7 +149,7 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
       new BlobIterator(
         columns,
         repo,
-        new TreeEntryIterator(
+        Left(new TreeEntryIterator(
           Array("blob"),
           repo,
           new CommitIterator(
@@ -159,7 +159,7 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
             filters
           ),
           Seq()
-        ),
+        )),
         Seq()
       ), {
       case (_, row) =>
@@ -179,7 +179,7 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
       new BlobIterator(
         columns,
         repo,
-        new TreeEntryIterator(
+        Left(new TreeEntryIterator(
           Array("blob"),
           repo,
           new CommitIterator(
@@ -202,7 +202,7 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
             Seq(InFilter(Attr("hash", "commits"), commits))
           ),
           Seq()
-        ),
+        )),
         Seq()
       ), {
       case (_, row) =>
