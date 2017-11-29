@@ -5,7 +5,7 @@ import sbt.Keys.libraryDependencies
 
 organization := "tech.sourced"
 scalaVersion := "2.11.11"
-version := "0.1.11"
+version := "0.1.12"
 name := "engine"
 
 libraryDependencies += scalaTest % Test
@@ -21,6 +21,7 @@ libraryDependencies += commonsIO % Compile
 libraryDependencies += commonsPool % Compile
 libraryDependencies += enry % Compile
 libraryDependencies += scalaLib % Provided
+libraryDependencies += sqlite % Compile
 
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oUT")
 

@@ -8,7 +8,7 @@ import org.apache.spark.sql.{Row, SQLContext, SparkSession}
 import org.apache.spark.{SparkException, UtilsWrapper}
 import tech.sourced.engine.iterator._
 import tech.sourced.engine.provider.{RepositoryProvider, RepositoryRDDProvider}
-import tech.sourced.engine.util.Filter
+import tech.sourced.engine.util.{CompiledFilter, Filter}
 
 /**
   * Default source to provide new git relations.
@@ -98,6 +98,7 @@ case class GitRelation(session: SparkSession,
       sources.value.foreach({
         case k@"repositories" =>
           iter = Some(new RepositoryIterator(
+            source.root,
             requiredCols.value,
             repo,
             filtersBySource.value.getOrElse(k, Seq())
@@ -156,8 +157,7 @@ private object GitRelation {
     * @param schema      resultant schema
     * @return sequence with table sources
     */
-  private def getSources(tableSource: Option[String],
-                         schema: StructType): Seq[String] =
+  private def getSources(tableSource: Option[String], schema: StructType): Seq[String] =
     tableSource match {
       case Some(ts) => Seq(ts)
       case None =>
@@ -173,7 +173,7 @@ private object GitRelation {
     * @param filters list of expression to compile the filters
     * @return compiled and grouped filters
     */
-  private def getFiltersBySource(filters: Seq[Expression]) =
+  private def getFiltersBySource(filters: Seq[Expression]): Map[String, Seq[CompiledFilter]] =
     filters.map(Filter.compile)
       .flatMap(_.filters)
       .map(e => (e.sources.distinct, e))

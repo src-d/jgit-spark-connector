@@ -1,8 +1,13 @@
 package tech.sourced.engine
 
+import java.util.Properties
+
+import org.apache.spark.sql.functions.{lit, when}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.SparkException
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import tech.sourced.engine.udf.ConcatArrayUDF
 
 import scala.collection.JavaConversions.asScalaBuffer
 
@@ -35,10 +40,10 @@ import scala.collection.JavaConversions.asScalaBuffer
   * @constructor creates a Engine instance with the given Spark session.
   * @param session Spark session to be used
   */
-class Engine(session: SparkSession) {
+class Engine(session: SparkSession) extends Logging {
 
   session.registerUDFs()
-  session.experimental.extraOptimizations = Seq(SquashGitRelationJoin)
+  session.experimental.extraOptimizations = Seq(AddSourceToAttributes, SquashGitRelationJoin)
 
   /**
     * Returns a DataFrame with the data about the repositories found at
@@ -62,7 +67,7 @@ class Engine(session: SparkSession) {
     * repositories.
     *
     * {{{
-    * val blobsDf = engine.getFiles(repoIds, refNames, hashes)
+    * val blobsDf = engine.getBlobs(repoIds, refNames, hashes)
     * }}}
     *
     * Calling this function with no arguments is the same as:
@@ -158,6 +163,41 @@ class Engine(session: SparkSession) {
   def skipCleanup(skip: Boolean): Engine = {
     session.conf.set(skipCleanupKey, skip)
     this
+  }
+
+  def saveMetadata(folder: java.nio.file.Path): Unit = {
+    if (!folder.toFile.exists() || !folder.toFile.isDirectory) {
+      throw new SparkException("folder given to saveMetadata is not a directory " +
+        "or does not exist")
+    }
+
+    val dbFile = folder.resolve("engine_metadata.db")
+    if (dbFile.toFile.exists) {
+      log.warn(s"metadata file '$dbFile' already exists, it will be deleted")
+      dbFile.toFile.delete()
+    }
+
+    implicit val session: SparkSession = this.session
+
+    val properties = new Properties()
+    properties.put("driver", "org.sqlite.JDBC")
+    Seq("repositories", "references", "commits", "tree_entries").foreach {
+      table =>
+        val df = (table, getDataSource(table, session)) match {
+          case ("repositories", d) =>
+            d.withColumn("urls", ConcatArrayUDF(d("urls"), lit("|")))
+              .withColumn(
+                "is_fork",
+                when(d("is_fork") === false, 0)
+                  .otherwise(when(d("is_fork") === true, 1).otherwise(null))
+              )
+          case ("commits", d) =>
+            d.withColumn("parents", ConcatArrayUDF(d("parents"), lit("|")))
+          case (_, d) => d
+        }
+
+        df.write.jdbc(s"jdbc:sqlite:$dbFile", s"engine_$table", properties)
+    }
   }
 
 }
