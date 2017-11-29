@@ -154,6 +154,5 @@ docker-push: docker-build
 	fi;
 
 maven-release:
-	$(SBT) publishLocal && \
-	$(SBT) publishSigned && \
+	$(SBT) clean publishSigned && \
 	$(SBT) sonatypeRelease
