@@ -10,13 +10,38 @@ import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.types._
 
 /**
+  * Rule to assign to an [[AttributeReference]] metadata to identify the table it belongs to.
+  */
+object AddSourceToAttributes extends Rule[LogicalPlan] {
+
+  /**
+    * SOURCE is the key used for attach metadata to [[AttributeReference]]s.
+    */
+  val SOURCE = "source"
+
+  /** @inheritdoc */
+  def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
+    case LogicalRelation(gitRelation@GitRelation(_, _, _, schemaSource), out, catalogTable) =>
+      val processedOut = schemaSource match {
+        case Some(table) => out.map(
+          _.withMetadata(new MetadataBuilder().putString(SOURCE, table).build()
+          ).asInstanceOf[AttributeReference]
+        )
+        case None => out
+      }
+
+      LogicalRelation(gitRelation, processedOut, catalogTable)
+  }
+}
+
+/**
   * Logical plan rule to transform joins of [[GitRelation]]s into a single [[GitRelation]]
   * that will use chainable iterators for better performance. Rather than obtaining all the
   * data from each table in isolation, it will reuse already filtered data from the previous
   * iterator.
   */
 object SquashGitRelationJoin extends Rule[LogicalPlan] {
-  /** @inheritdoc*/
+  /** @inheritdoc */
   def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
     // Joins are only applicable per repository, so we can push down completely
     // the join into the data source
@@ -149,22 +174,12 @@ object GitOptimizer extends Logging {
         JoinData(Some(cond), valid = true)
       case Project(namedExpressions, _) =>
         JoinData(None, projectExpressions = namedExpressions, valid = true)
-      case LogicalRelation(GitRelation(session, _, joinCondition, schemaSource), out, _) =>
-
-        // Add metadata to attributes
-        val processedOut = schemaSource match {
-          case Some(ss) => out
-            .map(_.withMetadata(
-              new MetadataBuilder()
-                .putString("source", ss).build()).asInstanceOf[AttributeReference])
-          case None => out
-        }
-
+      case LogicalRelation(GitRelation(session, _, joinCondition, _), out, _) =>
         JoinData(
           None,
           valid = true,
           joinCondition = joinCondition,
-          attributes = processedOut,
+          attributes = out,
           session = Some(session)
         )
       case other =>

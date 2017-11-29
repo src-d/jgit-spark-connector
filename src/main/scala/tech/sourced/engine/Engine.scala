@@ -38,7 +38,7 @@ import scala.collection.JavaConversions.asScalaBuffer
 class Engine(session: SparkSession) {
 
   session.registerUDFs()
-  session.experimental.extraOptimizations = Seq(SquashGitRelationJoin)
+  session.experimental.extraOptimizations = Seq(AddSourceToAttributes, SquashGitRelationJoin)
 
   /**
     * Returns a DataFrame with the data about the repositories found at
@@ -62,7 +62,7 @@ class Engine(session: SparkSession) {
     * repositories.
     *
     * {{{
-    * val blobsDf = engine.getFiles(repoIds, refNames, hashes)
+    * val blobsDf = engine.getBlobs(repoIds, refNames, hashes)
     * }}}
     *
     * Calling this function with no arguments is the same as:

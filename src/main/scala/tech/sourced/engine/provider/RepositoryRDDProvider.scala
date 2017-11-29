@@ -81,29 +81,29 @@ object RepositoryRDDProvider {
       })
       .groupBy(_._1) // group by root directory
       .flatMap {
-        case (dir, files) =>
-          // files ending in .siva will be treated as an individual siva repository
-          // If there are no siva files in a repository, HEAD file will be searched
-          // if it's found, it will be treated as a bare repository. If it's not a
-          // bare repository, .git directory will be searched and if found, it will
-          // be treated as a regular git repository.
-          val sivaFiles = files.filter(_._2.endsWith(".siva"))
-          if (sivaFiles.nonEmpty) {
-            sivaFiles.map(f => SivaRepository(f._3))
-          } else if (files.exists(_._2 == "HEAD")) {
-            Seq(BareRepository(files.head._1, files.head._3))
-          } else if (files.nonEmpty) {
-            val f = files.head
-            val fs = FileSystem.get(f._3.getConfiguration)
-            if (fs.exists(new Path(f._1, ".git"))) {
-              Seq(GitRepository(f._1, f._3))
-            } else {
-              Seq()
-            }
+      case (dir, files) =>
+        // files ending in .siva will be treated as an individual siva repository
+        // If there are no siva files in a repository, HEAD file will be searched
+        // if it's found, it will be treated as a bare repository. If it's not a
+        // bare repository, .git directory will be searched and if found, it will
+        // be treated as a regular git repository.
+        val sivaFiles = files.filter(_._2.endsWith(".siva"))
+        if (sivaFiles.nonEmpty) {
+          sivaFiles.map(f => SivaRepository(f._3))
+        } else if (files.exists(_._2 == "HEAD")) {
+          Seq(BareRepository(files.head._1, files.head._3))
+        } else if (files.nonEmpty) {
+          val f = files.head
+          val fs = FileSystem.get(f._3.getConfiguration)
+          if (fs.exists(new Path(f._1, ".git"))) {
+            Seq(GitRepository(f._1, f._3))
           } else {
             Seq()
           }
-      }
+        } else {
+          Seq()
+        }
+    }
   }
 }
 
@@ -111,27 +111,46 @@ object RepositoryRDDProvider {
   * RepositorySource is a repository that comes from a certain source.
   */
 sealed trait RepositorySource extends Serializable {
+  /**
+    * Returns the portable data stream of one of the repository files. In the case
+    * of siva files, of the siva file itself.
+    *
+    * @return portable data stream
+    */
   def pds: PortableDataStream
+
+  /**
+    * Returns the path to the root of the repository. In the case of siva files, the
+    * path to the siva file itself.
+    *
+    * @return path to the repository root
+    */
+  def root: String
 }
 
 /**
   * Repository coming from a siva file.
+  *
   * @param pds portable data stream of the siva file
   */
-case class SivaRepository(pds: PortableDataStream) extends RepositorySource
+case class SivaRepository(pds: PortableDataStream) extends RepositorySource {
+  def root: String = pds.getPath
+}
 
 /**
   * Repository coming from a bare repository.
+  *
   * @param root root of the repository
-  * @param pds portable data stream of any repository file (should only be used to
-  *            retrieve the HDFS config)
+  * @param pds  portable data stream of any repository file (should only be used to
+  *             retrieve the HDFS config)
   */
 case class BareRepository(root: String, pds: PortableDataStream) extends RepositorySource
 
 /**
   * Repository coming from a regular repository with a .git directory.
+  *
   * @param root root of the repository
-  * @param pds portable data stream of any repository file (should only be used to
-  *            retrieve the HDFS config)
+  * @param pds  portable data stream of any repository file (should only be used to
+  *             retrieve the HDFS config)
   */
 case class GitRepository(root: String, pds: PortableDataStream) extends RepositorySource
