@@ -15,6 +15,7 @@ private[engine] object Schema {
     StructField("id", StringType, nullable = false) ::
       StructField("urls", ArrayType(StringType, containsNull = false), nullable = false) ::
       StructField("is_fork", BooleanType) ::
+      StructField("repository_path", StringType) ::
       Nil
   )
 

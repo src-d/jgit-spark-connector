@@ -25,23 +25,30 @@ class RepositoryIteratorSpec extends FlatSpec with BaseRootedRepoIterator with B
 
   "RepositoryIterator" should "return data for all repositories into a siva file" in {
     testIterator(
-      new RepositoryIterator(Array("id", "urls", "is_fork"), _, Seq()), {
+      new RepositoryIterator(
+        "/foo/bar",
+        Array("id", "urls", "is_fork", "repository_path"),
+        _,
+        Seq()
+      ), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getAs[Array[String]](1).length should be(3)
           row.getBoolean(2) should be(false)
+          row.getString(3) should be("/foo/bar")
         case (1, row) =>
           row.getString(0) should be("github.com/mawag/faq-xiyoulinux")
           row.getAs[Array[String]](1).length should be(3)
           row.getBoolean(2) should be(true)
+          row.getString(3) should be("/foo/bar")
         case (c, _) => fail(s"unexpected row number: $c")
-      }, total = 2, columnsCount = 3
+      }, total = 2, columnsCount = 4
     )
   }
 
   it should "return only specified columns" in {
     testIterator(
-      new RepositoryIterator(Array("id", "is_fork"), _, Seq()), {
+      new RepositoryIterator("/foo/bar", Array("id", "is_fork"), _, Seq()), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getBoolean(1) should be(false)
@@ -56,6 +63,7 @@ class RepositoryIteratorSpec extends FlatSpec with BaseRootedRepoIterator with B
   it should "apply passed filters" in {
     testIterator(
       new RepositoryIterator(
+        "/foo/bar",
         Array("id", "is_fork"),
         _,
         Seq(EqualFilter(Attr("id", "repository"), "github.com/mawag/faq-xiyoulinux"))
@@ -83,7 +91,7 @@ class RepositoryIteratorSpec extends FlatSpec with BaseRootedRepoIterator with B
     val source = rdd.first()
     val repo = RepositoryProvider(tmpDir.toString).get(source)
 
-    val iter = new RepositoryIterator(Array("id"), repo, Seq())
+    val iter = new RepositoryIterator("/foo/bar", Array("id"), repo, Seq())
     val repos = iter.toList
 
     repos.length should be(2)

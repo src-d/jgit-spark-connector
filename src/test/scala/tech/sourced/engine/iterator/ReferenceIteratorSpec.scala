@@ -66,6 +66,7 @@ class ReferenceIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         Array("repository_id", "name"),
         repo,
         new RepositoryIterator(
+          "/foo/bar",
           Array("id"),
           repo,
           Seq(EqualFilter(Attr("id", "repository"), "github.com/xiyou-linuxer/faq-xiyoulinux"))
