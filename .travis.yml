@@ -81,4 +81,3 @@ before_script:
 
 script:
   - make travis-test
-  - make build
