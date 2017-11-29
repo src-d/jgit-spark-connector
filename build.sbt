@@ -23,6 +23,7 @@ libraryDependencies += commonsIO % Compile
 libraryDependencies += commonsPool % Compile
 libraryDependencies += enry % Compile
 libraryDependencies += scalaLib % Provided
+libraryDependencies += sqlite % Compile
 
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oUT")
 
