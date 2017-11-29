@@ -151,6 +151,7 @@ class CommitIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           Array("name"),
           repo,
           new RepositoryIterator(
+            "/foo/bar",
             Array("id"),
             repo,
             Seq()

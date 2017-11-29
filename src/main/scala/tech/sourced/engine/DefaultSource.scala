@@ -99,6 +99,7 @@ case class GitRelation(session: SparkSession,
       sources.value.foreach({
         case k@"repositories" =>
           iter = Some(new RepositoryIterator(
+            source.root,
             requiredCols.value,
             repo,
             filtersBySource.value.getOrElse(k, Seq())
