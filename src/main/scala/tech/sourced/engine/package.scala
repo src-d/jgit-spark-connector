@@ -392,7 +392,8 @@ package object engine {
       ExtractUASTsWithoutLangUDF,
       ExtractUASTsWithLangUDF,
       QueryXPathUDF,
-      ExtractTokensUDF
+      ExtractTokensUDF,
+      ConcatArrayUDF
     )
   }
 
