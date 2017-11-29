@@ -38,7 +38,7 @@ import scala.collection.JavaConversions.asScalaBuffer
 class Engine(session: SparkSession) {
 
   session.registerUDFs()
-  session.experimental.extraOptimizations = Seq(SquashGitRelationJoin)
+  session.experimental.extraOptimizations = Seq(AddSourceToAttributes, SquashGitRelationJoin)
 
   /**
     * Returns a DataFrame with the data about the repositories found at
