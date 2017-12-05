@@ -131,11 +131,6 @@ class Engine(session: SparkSession) {
     * @return instance of the engine itself
     */
   def setRepositoriesPath(path: String): Engine = {
-    if (!FileSystem.get(session.sparkContext.hadoopConfiguration).exists(new Path(path))) {
-      throw new SparkException(s"the given repositories path ($path) does not exist, " +
-        s"so siva files can't be read from there")
-    }
-
     session.conf.set(repositoriesPathKey, path)
     this
   }
