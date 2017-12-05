@@ -26,7 +26,7 @@ class EngineSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSpark
   }
 
   "saveMetadata" should "store all metadata tables in a SQLite db" in {
-    engine.saveMetadata(tmpPath)
+    engine.saveMetadata(tmpPath.toString)
 
     val dbFile = tmpPath.resolve("engine_metadata.db")
     dbFile.toFile.exists should be(true)

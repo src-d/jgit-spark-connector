@@ -4,7 +4,7 @@ import java.nio.file.Paths
 import java.sql.{Date, Timestamp}
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.types.{Metadata, MetadataBuilder, StructType}
+import org.apache.spark.sql.types.{MetadataBuilder, StructType}
 import org.apache.spark.sql.{Row, SQLContext, SparkSession}
 import org.apache.spark._
 import tech.sourced.engine.provider.{RepositoryProvider, RepositoryRDDProvider}
@@ -30,23 +30,22 @@ class MetadataSource extends RelationProvider with DataSourceRegister {
       throw new SparkException(s"parameter '${DefaultSource.tableNameKey}' must be provided")
     )
 
-    val dbPath = Paths.get(parameters.getOrElse(
-      MetadataSource.dbPathKey,
-      throw new SparkException(s"parameter '${MetadataSource.dbPathKey}' must be provided")
-    )).resolve(MetadataSource.dbName)
+    val dbPath = Paths.get(
+      parameters.getOrElse(
+        MetadataSource.DbPathKey,
+        throw new SparkException(s"parameter '${MetadataSource.DbPathKey}' must be provided")
+      ),
+      parameters.getOrElse(
+        MetadataSource.DbNameKey,
+        throw new SparkException(s"parameter '${MetadataSource.DbNameKey}' must be provided")
+      )
+    )
 
     if (!dbPath.toFile.exists()) {
       throw new SparkException(s"database at '$dbPath' does not exist")
     }
 
-    val schema: StructType = table match {
-      case "repositories" => Schema.repositories
-      case "references" => Schema.references
-      case "commits" => Schema.commits
-      case "tree_entries" => Schema.treeEntries
-      case "blobs" => Schema.blobs
-      case other => throw new SparkException(s"table '$other' is not supported")
-    }
+    val schema: StructType = Schema(table)
 
     MetadataRelation(sqlContext.sparkSession, schema, dbPath.toString, tableSource = Some(table))
   }
@@ -61,9 +60,9 @@ case class MetadataRelation(session: SparkSession,
   extends BaseRelation with CatalystScan {
 
   private val localPath: String = UtilsWrapper.getLocalDir(session.sparkContext.getConf)
-  private val path: String = session.conf.get(repositoriesPathKey)
+  private val path: String = session.conf.get(RepositoriesPathKey)
   private val skipCleanup: Boolean = session.conf.
-    get(skipCleanupKey, default = "false").toBoolean
+    get(SkipCleanupKey, default = "false").toBoolean
 
   override def sqlContext: SQLContext = session.sqlContext
 
@@ -129,11 +128,11 @@ case class MetadataRelation(session: SparkSession,
             val provider = RepositoryProvider(reposLocalPath.value, skipCleanup)
             val repo = provider.get(source)
 
-            val rowsIter = new MetadataRowsIterator(requiredCols.value, rows.toIterator)
+            val finalCols = requiredCols.value.map(_.name)
             val iter = new BlobIterator(
-              requiredCols.value.map(_.name),
+              finalCols,
               repo,
-              Right(rowsIter),
+              new MetadataTreeEntryIterator(finalCols, rows.toIterator),
               filtersBySource.value.getOrElse("blobs", Seq())
             )
 
@@ -178,7 +177,7 @@ case class MetadataRelation(session: SparkSession,
           // and then add all the columns in tree_entries (because they are needed in BlobIterator
           // and repositories.repository_path because it's needed to join the RDDs.
           val nonBlobsColumns = requiredColumns
-            .filterNot(_.metadata.getString(Sources.sourceKey) == "blobs")
+            .filterNot(_.metadata.getString(Sources.SourceKey) == "blobs")
           val repoPathField = Schema.repositories(Schema.repositories.fieldIndex("repository_path"))
           val fields = nonBlobsColumns ++
             (Schema.treeEntries.map((_, "tree_entries")) ++ Array((repoPathField, "repositories")))
@@ -188,14 +187,14 @@ case class MetadataRelation(session: SparkSession,
                     sf.name,
                     sf.dataType,
                     sf.nullable,
-                    new MetadataBuilder().putString(Sources.sourceKey, table).build()
+                    new MetadataBuilder().putString(Sources.SourceKey, table).build()
                   )().asInstanceOf[Attribute]
               }
 
           // because of the previous step we might have introduced some duplicated columns,
           // we need to remove them
           val uniqueFields = fields
-            .groupBy(attr => (attr.name, attr.metadata.getString(Sources.sourceKey)))
+            .groupBy(attr => (attr.name, attr.metadata.getString(Sources.SourceKey)))
             .map(_._2.head)
             .toSeq
 
@@ -218,8 +217,9 @@ case class MetadataRelation(session: SparkSession,
 }
 
 object MetadataSource {
-  val dbPathKey: String = "dbpath"
-  val dbName: String = "engine_metadata.db"
+  val DbPathKey: String = "metadatadbpath"
+  val DbNameKey: String = "metadatadbname"
+  val DefaultDbName: String = "engine_metadata.db"
 }
 
 case class Join(left: String, right: String, conditions: Seq[JoinCondition])
@@ -280,7 +280,15 @@ case class QueryBuilder(fields: Seq[Attribute] = Array[Attribute](),
     if (fields.nonEmpty) {
       fields.map(qualify).mkString(", ")
     } else {
-      "null"
+      // when there is no field selected, such as a count of repositories,
+      // just get the first field of the first table to avoid returning all
+      // the fields
+      tables.headOption match {
+        case Some(table) =>
+          qualify(table, Schema(table).head.name)
+        case None =>
+          throw new SparkException("unable to build sql query with no tables and no columns")
+      }
     }
 
   private def whereClause: String = {
@@ -326,7 +334,7 @@ case class QueryBuilder(fields: Seq[Attribute] = Array[Attribute](),
 object QueryBuilder {
 
   private def qualify(col: Attribute): String = {
-    val table = col.metadata.getString(Sources.sourceKey)
+    val table = col.metadata.getString(Sources.SourceKey)
     s"${prefixTable(table)}.`${col.name}`"
   }
 

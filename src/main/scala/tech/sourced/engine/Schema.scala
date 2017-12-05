@@ -1,5 +1,6 @@
 package tech.sourced.engine
 
+import org.apache.spark.SparkException
 import org.apache.spark.sql.types._
 
 /**
@@ -77,5 +78,22 @@ private[engine] object Schema {
       StructField("is_binary", BooleanType, nullable = false) ::
       Nil
   )
+
+  /**
+    * Return the schema for the table with the given name. Throws a SparkException
+    * if there is no schema for the given table.
+    *
+    * @param table name
+    * @return schema for the table
+    * @throws SparkException if the table does not exist
+    */
+  def apply(table: String): StructType = table match {
+    case "repositories" => Schema.repositories
+    case "references" => Schema.references
+    case "commits" => Schema.commits
+    case "tree_entries" => Schema.treeEntries
+    case "blobs" => Schema.blobs
+    case other => throw new SparkException(s"table '$other' is not supported")
+  }
 
 }

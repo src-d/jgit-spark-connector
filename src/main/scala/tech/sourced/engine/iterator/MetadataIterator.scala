@@ -5,6 +5,7 @@ import java.sql.{Connection, DriverManager, ResultSet}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.types.{ArrayType, BooleanType, TimestampType}
+import org.eclipse.jgit.lib.ObjectId
 import tech.sourced.engine.util.CompiledFilter
 
 class MetadataIterator(fields: Seq[Attribute],
@@ -110,16 +111,5 @@ class JDBCQueryIterator(fields: Seq[Attribute],
       .toArray
       .asInstanceOf[Array[Any]]
   }
-
-}
-
-class MetadataRowsIterator(cols: Seq[Attribute],
-                           iter: Iterator[Map[String, Any]])
-  extends ChainableIterator[Map[String, Any]](cols.map(_.name).toArray, null, Seq()) {
-
-  override def loadIterator(filters: Seq[CompiledFilter]): Iterator[Map[String, Any]] =
-    iter
-
-  override def mapColumns(obj: Map[String, Any]): RawRow = obj
 
 }

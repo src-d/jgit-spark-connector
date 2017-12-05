@@ -3,7 +3,7 @@ package tech.sourced.engine.iterator
 import org.scalatest.FlatSpec
 import tech.sourced.engine.util.{Attr, EqualFilter}
 
-class TreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
+class GitTreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
 
   private val cols = Array(
     "commit_hash",
@@ -13,10 +13,10 @@ class TreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
     "blob"
   )
 
-  "TreeEntryIterator" should "return all tree entries from all commits " +
+  "GitTreeEntryIterator" should "return all tree entries from all commits " +
     "from all repositories into a siva file" in {
     testIterator(
-      new TreeEntryIterator(
+      new GitTreeEntryIterator(
         cols, _, null, Seq()), {
         case (0, row) =>
           row.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
@@ -54,7 +54,7 @@ class TreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
     )
 
     testIterator(
-      new TreeEntryIterator(
+      new GitTreeEntryIterator(
         cols, _, null, filters), {
         case (_, r) =>
           r.getString(3) should be("README.md")
@@ -69,7 +69,7 @@ class TreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
     )
 
     testIterator(
-      new TreeEntryIterator(
+      new GitTreeEntryIterator(
         cols, _, null, filters), {
         case (_, r) =>
           r.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")
@@ -84,7 +84,7 @@ class TreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
     )
 
     testIterator(repo =>
-      new TreeEntryIterator(
+      new GitTreeEntryIterator(
         cols,
         repo,
         new CommitIterator(Array("hash"), repo, null, filters),
@@ -110,7 +110,7 @@ class TreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
     )
 
     testIterator(
-      new TreeEntryIterator(
+      new GitTreeEntryIterator(
         cols, _, null, filters), {
         case (i, r) if i % 2 == 0 =>
           r.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")

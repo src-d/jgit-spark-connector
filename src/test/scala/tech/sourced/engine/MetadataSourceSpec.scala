@@ -18,7 +18,7 @@ class MetadataSourceSpec extends BaseSourceSpec("MetadataSource") {
     tmpDir.toFile.mkdir()
 
     engine = Engine(ss, resourcePath)
-    engine.saveMetadata(tmpDir)
+    engine.saveMetadata(tmpDir.toString)
     engine = engine.fromMetadata(tmpDir.toString)
   }
 

@@ -10,14 +10,10 @@ class DefaultSourceSpec extends BaseSourceSpec("DefaultSource") {
         .and(references("name").startsWith("refs/pull"))
     ).count()
 
-
     info("Files/blobs with commit hashes:\n")
     val blobsDf = references.getCommits.getBlobs.select(
       "path", "commit_hash"
     )
-    blobsDf.explain(true)
-    blobsDf.show()
-
     out should be(37)
   }
 }

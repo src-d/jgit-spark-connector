@@ -1,16 +1,13 @@
 package tech.sourced.engine
 
+import java.nio.file.Paths
 import java.util.Properties
 
 import org.apache.spark.sql.functions.{lit, when}
 import org.apache.spark.SparkException
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import tech.sourced.engine.rule.{
-  AddSourceToAttributes,
-  SquashMetadataRelationsJoin,
-  SquashGitRelationsJoin
-}
+import tech.sourced.engine.rule._
 import tech.sourced.engine.udf.ConcatArrayUDF
 
 import scala.collection.JavaConversions.asScalaBuffer
@@ -55,23 +52,47 @@ class Engine(session: SparkSession, repositoriesPath: String) extends Logging {
   )
   registerViews()
 
+  /**
+    * Register the initial views with the DefaultSource.
+    */
   private def registerViews(): Unit = {
     Sources.orderedSources.foreach(table => {
-      session.read.format(defaultSourceName)
+      session.read.format(DefaultSourceName)
         .option(DefaultSource.tableNameKey, table)
-        .load(session.sqlContext.getConf(repositoriesPathKey))
+        .load(session.sqlContext.getConf(RepositoriesPathKey))
         .createOrReplaceTempView(table)
     })
   }
 
-  def fromMetadata(dbPath: String): Engine = {
-    Seq("repositories", "references", "commits", "tree_entries").foreach(table => {
-      session.read.format(metadataSourceName)
+  /**
+    * Registers in the current session the views of the MetadataSource so the data is obtained
+    * from the metadata database instead of reading the repositories with the DefaultSource.
+    *
+    * @param dbPath path to the folder that contains the database.
+    * @param dbName name of the database file (engine_metadata.db) by default.
+    * @return the same instance of the engine
+    */
+  def fromMetadata(dbPath: String, dbName: String = MetadataSource.DefaultDbName): Engine = {
+    Seq(RepositoriesTable, ReferencesTable, CommitsTable, TreeEntriesTable).foreach(table => {
+      session.read.format(MetadataSourceName)
         .option(DefaultSource.tableNameKey, table)
-        .option(MetadataSource.dbPathKey, dbPath)
+        .option(MetadataSource.DbPathKey, dbPath)
+        .option(MetadataSource.DbNameKey, dbName)
         .load()
         .createOrReplaceTempView(table)
     })
+    this
+  }
+
+  /**
+    * Registers in the current session the views of the DefaultSource so the data is obtained
+    * by reading the repositories instead of reading from the MetadataSource. This has no effect
+    * if [[Engine#fromMetadata]] has not been called before.
+    *
+    * @return the same instance of the engine
+    */
+  def fromRepositories(): Engine = {
+    registerViews()
     this
   }
 
@@ -166,7 +187,7 @@ class Engine(session: SparkSession, repositoriesPath: String) extends Logging {
     * @return instance of the engine itself
     */
   def setRepositoriesPath(path: String): Engine = {
-    session.conf.set(repositoriesPathKey, path)
+    session.conf.set(RepositoriesPathKey, path)
     this
   }
 
@@ -183,7 +204,7 @@ class Engine(session: SparkSession, repositoriesPath: String) extends Logging {
     * @return instance of the engine itself
     */
   def setRepositoriesFormat(format: String): Engine = {
-    session.conf.set(repositoriesFormatKey, format)
+    session.conf.set(RepositoriesFormatKey, format)
     this
   }
 
@@ -203,17 +224,28 @@ class Engine(session: SparkSession, repositoriesPath: String) extends Logging {
     * @return instance of the engine itself
     */
   def skipCleanup(skip: Boolean): Engine = {
-    session.conf.set(skipCleanupKey, skip)
+    session.conf.set(SkipCleanupKey, skip)
     this
   }
 
-  def saveMetadata(folder: java.nio.file.Path): Unit = {
+  /**
+    * Saves all the metadata in a SQLite database on the given path as "engine_metadata.db".
+    * If the database already exists, it will be overwritten. The given path must exist and
+    * must be a directory, otherwise it will throw a [[SparkException]].
+    * Saved tables are repositories, references, commits and tree_entries. Blobs are not saved.
+    *
+    * @param path   where database with the metadata will be stored.
+    * @param dbName name of the database file
+    * @throws SparkException when the given path is not a folder or does not exist.
+    */
+  def saveMetadata(path: String, dbName: String = MetadataSource.DefaultDbName): Unit = {
+    val folder = Paths.get(path)
     if (!folder.toFile.exists() || !folder.toFile.isDirectory) {
       throw new SparkException("folder given to saveMetadata is not a directory " +
         "or does not exist")
     }
 
-    val dbFile = folder.resolve("engine_metadata.db")
+    val dbFile = folder.resolve(dbName)
     if (dbFile.toFile.exists) {
       log.warn(s"metadata file '$dbFile' already exists, it will be deleted")
       dbFile.toFile.delete()
@@ -223,7 +255,7 @@ class Engine(session: SparkSession, repositoriesPath: String) extends Logging {
 
     val properties = new Properties()
     properties.put("driver", "org.sqlite.JDBC")
-    Seq("repositories", "references", "commits", "tree_entries").foreach {
+    Seq(RepositoriesTable, ReferencesTable, CommitsTable, TreeEntriesTable).foreach {
       table =>
         val df = (table, getDataSource(table, session)) match {
           case ("repositories", d) =>

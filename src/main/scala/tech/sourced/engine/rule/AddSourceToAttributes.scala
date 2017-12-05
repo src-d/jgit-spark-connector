@@ -17,7 +17,7 @@ object AddSourceToAttributes extends Rule[LogicalPlan] {
   /**
     * SOURCE is the key used for attach metadata to [[AttributeReference]]s.
     */
-  private val SOURCE = Sources.sourceKey
+  private val SOURCE = Sources.SourceKey
 
   /** @inheritdoc */
   def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {

@@ -33,25 +33,31 @@ package object engine {
   /**
     * Key used for the option to specify the path of siva files.
     */
-  private[engine] val repositoriesPathKey = "spark.tech.sourced.engine.repositories.path"
+  private[engine] val RepositoriesPathKey = "spark.tech.sourced.engine.repositories.path"
 
   /**
     * Key used for the option to specify the type of repositories. It can be siva, bare or standard
     */
-  private[engine] val repositoriesFormatKey = "spark.tech.sourced.engine.repositories.format"
+  private[engine] val RepositoriesFormatKey = "spark.tech.sourced.engine.repositories.format"
 
   /**
     * Key used for the option to specify whether files should be deleted after
     * their usage or not.
     */
-  private[engine] val skipCleanupKey = "spark.tech.sourced.engine.cleanup.skip"
+  private[engine] val SkipCleanupKey = "spark.tech.sourced.engine.cleanup.skip"
 
-  private[engine] val dbPathKey = "spark.tech.sourced.engine.db.path"
+  // DataSource names
+  val DefaultSourceName: String = "tech.sourced.engine"
+  val MetadataSourceName: String = "tech.sourced.engine.MetadataSource"
 
-  val defaultSourceName: String = "tech.sourced.engine"
-  val metadataSourceName: String = "tech.sourced.engine.MetadataSource"
+  // Table names
+  val RepositoriesTable: String = "repositories"
+  val ReferencesTable: String = "references"
+  val CommitsTable: String = "commits"
+  val TreeEntriesTable: String = "tree_entries"
+  val BlobsTable: String = "blobs"
 
-  // The keys repositoriesPathKey, bblfshHostKey, bblfshPortKey and skipCleanupKey must
+  // The keys RepositoriesPathKey, bblfshHostKey, bblfshPortKey and SkipCleanupKey must
   // start by "spark." to be able to be loaded from the "spark-defaults.conf" file.
 
   /**
@@ -109,7 +115,7 @@ package object engine {
     def getReferences: DataFrame = {
       checkCols(df, "id")
       val reposIdsDf = df.select($"id")
-      getDataSource("references", df.sparkSession)
+      getDataSource(ReferencesTable, df.sparkSession)
         .join(reposIdsDf, $"repository_id" === $"id")
         .drop($"id")
     }
@@ -141,7 +147,7 @@ package object engine {
     def getCommits: DataFrame = {
       checkCols(df, "repository_id")
       val refsIdsDf = df.select($"name", $"repository_id")
-      val commitsDf = getDataSource("commits", df.sparkSession)
+      val commitsDf = getDataSource(CommitsTable, df.sparkSession)
       commitsDf.join(refsIdsDf, refsIdsDf("repository_id") === commitsDf("repository_id") &&
         commitsDf("reference_name") === refsIdsDf("name"))
         .drop(refsIdsDf("name")).drop(refsIdsDf("repository_id"))
@@ -182,7 +188,7 @@ package object engine {
     def getTreeEntries: DataFrame = {
       checkCols(df, "index", "hash") // references also has hash, index makes sure that is commits
       val commitsDf = df.select("hash")
-      val entriesDf = getDataSource("tree_entries", df.sparkSession)
+      val entriesDf = getDataSource(TreeEntriesTable, df.sparkSession)
       entriesDf.join(commitsDf, entriesDf("commit_hash") === commitsDf("hash"))
         .drop($"hash")
     }
@@ -204,7 +210,7 @@ package object engine {
         df.getTreeEntries.getBlobs
       } else {
         val treesDf = df.select("path", "blob")
-        val blobsDf = getDataSource("blobs", df.sparkSession)
+        val blobsDf = getDataSource(BlobsTable, df.sparkSession)
         blobsDf.join(treesDf, treesDf("blob") === blobsDf("blob_id"))
           .drop($"blob")
       }

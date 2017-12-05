@@ -14,10 +14,10 @@ import tech.sourced.engine.provider.{RepositoryProvider, RepositoryRDDProvider}
   */
 class DefaultSource extends RelationProvider with DataSourceRegister {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def shortName: String = "git"
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def createRelation(sqlContext: SQLContext,
                               parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(
@@ -25,14 +25,7 @@ class DefaultSource extends RelationProvider with DataSourceRegister {
       throw new SparkException("parameter 'table' must be provided")
     )
 
-    val schema: StructType = table match {
-      case "repositories" => Schema.repositories
-      case "references" => Schema.references
-      case "commits" => Schema.commits
-      case "tree_entries" => Schema.treeEntries
-      case "blobs" => Schema.blobs
-      case other => throw new SparkException(s"table '$other' is not supported")
-    }
+    val schema: StructType = Schema(table)
 
     GitRelation(sqlContext.sparkSession, schema, tableSource = Some(table))
   }
@@ -66,10 +59,10 @@ case class GitRelation(session: SparkSession,
   extends BaseRelation with CatalystScan {
 
   private val localPath: String = UtilsWrapper.getLocalDir(session.sparkContext.getConf)
-  private val path: String = session.conf.get(repositoriesPathKey)
-  private val repositoriesFormat: String = session.conf.get(repositoriesFormatKey)
+  private val path: String = session.conf.get(RepositoriesPathKey)
+  private val repositoriesFormat: String = session.conf.get(RepositoriesFormatKey)
   private val skipCleanup: Boolean = session.conf.
-    get(skipCleanupKey, default = "false").toBoolean
+    get(SkipCleanupKey, default = "false").toBoolean
 
   // this needs to be overridden to extend BaseRelataion,
   // though is not very useful since already we have the SparkSession
@@ -122,7 +115,7 @@ case class GitRelation(session: SparkSession,
           ))
 
         case k@"tree_entries" =>
-          iter = Some(new TreeEntryIterator(
+          iter = Some(new GitTreeEntryIterator(
             requiredCols.value,
             repo,
             iter.map(_.asInstanceOf[CommitIterator]).orNull,
@@ -133,7 +126,7 @@ case class GitRelation(session: SparkSession,
           iter = Some(new BlobIterator(
             requiredCols.value,
             repo,
-            iter.map(i => Left(i.asInstanceOf[TreeEntryIterator])).orNull,
+            iter.map(_.asInstanceOf[GitTreeEntryIterator]).orNull,
             filtersBySource.value.getOrElse(k, Seq())
           ))
 

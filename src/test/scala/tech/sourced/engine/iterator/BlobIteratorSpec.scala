@@ -46,7 +46,7 @@ class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
           row.getBoolean(5) should be(false)
         case _ =>
       }, total = 22187, columnsCount = columns.length
-      // NOTE: it differs from the number of tree entries in TreeEntryIteratorSpec because
+      // NOTE: it differs from the number of tree entries in GitTreeEntryIteratorSpec because
       // Blob Objects can be missing
     )
   }
@@ -149,7 +149,7 @@ class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
       new BlobIterator(
         columns,
         repo,
-        Left(new TreeEntryIterator(
+        new GitTreeEntryIterator(
           Array("blob"),
           repo,
           new CommitIterator(
@@ -159,7 +159,7 @@ class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
             filters
           ),
           Seq()
-        )),
+        ),
         Seq()
       ), {
       case (_, row) =>
@@ -179,7 +179,7 @@ class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
       new BlobIterator(
         columns,
         repo,
-        Left(new TreeEntryIterator(
+        new GitTreeEntryIterator(
           Array("blob"),
           repo,
           new CommitIterator(
@@ -202,7 +202,7 @@ class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
             Seq(InFilter(Attr("hash", "commits"), commits))
           ),
           Seq()
-        )),
+        ),
         Seq()
       ), {
       case (_, row) =>

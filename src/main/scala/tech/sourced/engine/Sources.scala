@@ -9,7 +9,7 @@ import tech.sourced.engine.util.{CompiledFilter, Filter}
   */
 object Sources {
 
-  val sourceKey: String = "source"
+  val SourceKey: String = "source"
 
   /** Sources ordered by their position in the hierarchy. */
   val orderedSources = Array(
@@ -43,7 +43,7 @@ object Sources {
       case Some(ts) => Seq(ts)
       case None =>
         schema
-          .map(_.metadata.getString(sourceKey))
+          .map(_.metadata.getString(SourceKey))
           .distinct
           .sortWith(Sources.compare(_, _) < 0)
     }

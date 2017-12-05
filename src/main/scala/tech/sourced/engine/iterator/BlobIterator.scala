@@ -17,14 +17,11 @@ import scala.collection.mutable
   */
 class BlobIterator(finalColumns: Array[String],
                       repo: Repository,
-                      prevIter: Either[TreeEntryIterator, MetadataRowsIterator],
+                      prevIter: TreeEntryIterator,
                       filters: Seq[CompiledFilter])
   extends ChainableIterator[Blob](
     finalColumns,
-    Option(prevIter).map {
-      case Left(l) => l
-      case Right(r) => r
-    }.orNull,
+    Option(prevIter).orNull,
     filters
   ) with Logging {
 
@@ -34,20 +31,9 @@ class BlobIterator(finalColumns: Array[String],
   /** @inheritdoc */
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[Blob] = {
     val treeEntryIter = Option(prevIter) match {
-      case Some(i) => i match {
-        case Left(it) =>
-          Seq(it.currentRow).toIterator
-        case Right(it) =>
-          val row = it.currentRow
-          Seq(TreeEntry(
-            ObjectId.fromString(row("commit_hash").toString),
-            row("path").toString,
-            ObjectId.fromString(row("blob").toString),
-            row("reference_name").toString,
-            row("repository_id").toString
-          )).toIterator
-      }
-      case None => TreeEntryIterator.loadIterator(
+      case Some(it) =>
+        Seq(it.currentRow).toIterator
+      case None => GitTreeEntryIterator.loadIterator(
         repo,
         None,
         filters.flatMap(_.matchingCases),
