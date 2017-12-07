@@ -186,10 +186,10 @@ scala> val engine = Engine(spark, "/path/to/siva-files")
 Then, you will be able to perform queries over the repositories:
 
 ```bash
-scala> engine.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
-     | getReferences.filter('name === "refs/heads/HEAD").
-     | getCommits.filter('message.contains("Initial")).
-     | select('repository_id, 'hash, 'message).
+scala> engine.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux"').
+     | getReferences.filter('name === "refs/heads/HEAD"').
+     | getCommits.filter('message.contains("Initial")').
+     | select('repository_id', 'hash', 'message').
      | show
 
      +--------------------------------+-------------------------------+--------------------+
