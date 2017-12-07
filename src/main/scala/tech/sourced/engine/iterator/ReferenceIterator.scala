@@ -28,18 +28,12 @@ class ReferenceIterator(finalColumns: Array[String],
     )
 
   /** @inheritdoc */
-  override protected def mapColumns(ref: Ref): Map[String, () => Any] = {
+  override protected def mapColumns(ref: Ref): RawRow = {
     val (repoId, refName) = RootedRepo.parseRef(repo, ref.getName)
-    Map[String, () => Any](
-      "repository_id" -> (() => {
-        repoId
-      }),
-      "name" -> (() => {
-        refName
-      }),
-      "hash" -> (() => {
-        ObjectId.toString(Option(ref.getPeeledObjectId).getOrElse(ref.getObjectId))
-      })
+    Map[String, Any](
+      "repository_id" -> repoId,
+      "name" -> refName,
+      "hash" -> ObjectId.toString(Option(ref.getPeeledObjectId).getOrElse(ref.getObjectId))
     )
   }
 

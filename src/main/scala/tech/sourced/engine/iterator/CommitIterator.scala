@@ -6,7 +6,6 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.errors.IncorrectObjectTypeException
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
 import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.treewalk.TreeWalk
 import tech.sourced.engine.util.{CompiledFilter, Filter}
 
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
@@ -34,26 +33,26 @@ class CommitIterator(finalColumns: Array[String],
     )
 
   /** @inheritdoc*/
-  override protected def mapColumns(obj: ReferenceWithCommit): Map[String, () => Any] = {
+  override protected def mapColumns(obj: ReferenceWithCommit): RawRow = {
     val (repoId, refName) = RootedRepo.parseRef(repo, obj.ref.getName)
 
     val c: RevCommit = obj.commit
-    Map[String, () => Any](
-      "repository_id" -> (() => repoId),
-      "reference_name" -> (() => refName),
-      "index" -> (() => obj.index),
-      "hash" -> (() => ObjectId.toString(c.getId)),
-      "message" -> (() => c.getFullMessage),
-      "parents" -> (() => c.getParents.map(p => ObjectId.toString(p.getId))),
-      "parents_count" -> (() => c.getParentCount),
+    Map[String, Any](
+      "repository_id" -> repoId,
+      "reference_name" -> refName,
+      "index" -> obj.index,
+      "hash" -> ObjectId.toString(c.getId),
+      "message" -> c.getFullMessage,
+      "parents" -> c.getParents.map(p => ObjectId.toString(p.getId)),
+      "parents_count" -> c.getParentCount,
 
-      "author_email" -> (() => c.getAuthorIdent.getEmailAddress),
-      "author_name" -> (() => c.getAuthorIdent.getName),
-      "author_date" -> (() => new Timestamp(c.getAuthorIdent.getWhen.getTime)),
+      "author_email" -> c.getAuthorIdent.getEmailAddress,
+      "author_name" -> c.getAuthorIdent.getName,
+      "author_date" -> new Timestamp(c.getAuthorIdent.getWhen.getTime),
 
-      "committer_email" -> (() => c.getCommitterIdent.getEmailAddress),
-      "committer_name" -> (() => c.getCommitterIdent.getName),
-      "committer_date" -> (() => new Timestamp(c.getCommitterIdent.getWhen.getTime))
+      "committer_email" -> c.getCommitterIdent.getEmailAddress,
+      "committer_name" -> c.getCommitterIdent.getName,
+      "committer_date" -> new Timestamp(c.getCommitterIdent.getWhen.getTime)
     )
   }
 

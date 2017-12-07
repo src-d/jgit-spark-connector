@@ -24,7 +24,7 @@ class RepositoryIterator(finalColumns: Array[String],
     RepositoryIterator.loadIterator(repo, matchingFilters)
 
   /** @inheritdoc */
-  override protected def mapColumns(id: String): Map[String, () => Any] = {
+  override protected def mapColumns(id: String): RawRow = {
     val c = repo.getConfig
     val remote = RootedRepo.getRepositoryRemote(repo, id)
     val urls = remote.map(r => c.getStringList("remote", r, "url"))
@@ -32,10 +32,10 @@ class RepositoryIterator(finalColumns: Array[String],
     val isFork = remote.map(r => c.getBoolean("remote", r, "isfork", false))
       .orElse(Some(false)).get
 
-    Map[String, () => Any](
-      "id" -> (() => id),
-      "urls" -> (() => urls),
-      "is_fork" -> (() => isFork)
+    Map[String, Any](
+      "id" -> id,
+      "urls" -> urls,
+      "is_fork" -> isFork
     )
   }
 

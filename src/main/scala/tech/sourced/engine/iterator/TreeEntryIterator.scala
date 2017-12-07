@@ -26,14 +26,14 @@ class TreeEntryIterator(finalColumns: Array[String],
       filters.flatMap(_.matchingCases)
     )
 
-  /** @inheritdoc */
-  override protected def mapColumns(obj: TreeEntry): Map[String, () => Any] = {
-    Map[String, () => Any](
-      "commit_hash" -> (() => obj.commitHash.getName),
-      "reference_name" -> (() => obj.ref),
-      "repository_id" -> (() => obj.repo),
-      "path" -> (() => obj.path),
-      "blob" -> (() => obj.blob.getName)
+  /** @inheritdoc*/
+  override protected def mapColumns(obj: TreeEntry): RawRow = {
+    Map[String, Any](
+      "commit_hash" -> obj.commitHash.getName,
+      "reference_name" -> obj.ref,
+      "repository_id" -> obj.repo,
+      "path" -> obj.path,
+      "blob" -> obj.blob.getName
     )
   }
 
