@@ -5,8 +5,10 @@ import sbt.Keys.libraryDependencies
 
 organization := "tech.sourced"
 scalaVersion := "2.11.11"
-version := "0.2.0"
 name := "engine"
+
+git.useGitDescribe := true
+enablePlugins(GitVersioning)
 
 libraryDependencies += scalaTest % Test
 libraryDependencies += scoverage % Test
