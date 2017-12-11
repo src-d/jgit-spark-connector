@@ -109,7 +109,8 @@ class QueryBuilderSpec extends FlatSpec with Matchers {
         JoinCondition("references", "repository_id", "commits", "repository_id"),
         JoinCondition("references", "name", "commits", "reference_name")
       ))
-    )).selectedTables should be(s"${prefixTable("repositories")} INNER JOIN ${prefixTable("references")} ON (" +
+    )).selectedTables should be(s"${prefixTable("repositories")} INNER JOIN " +
+      s"${prefixTable("references")} ON (" +
       s"${qualify("repositories", "id")} = ${qualify("references", "repository_id")}) INNER JOIN " +
       s"${prefixTable("commits")} ON (${qualify("references", "repository_id")} = " +
       s"${qualify("commits", "repository_id")} AND ${qualify("references", "name")} = " +

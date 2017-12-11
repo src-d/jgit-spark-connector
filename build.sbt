@@ -24,6 +24,7 @@ libraryDependencies += commonsPool % Compile
 libraryDependencies += enry % Compile
 libraryDependencies += scalaLib % Provided
 libraryDependencies += sqlite % Compile
+libraryDependencies += sqlite % Test
 
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oUT")
 

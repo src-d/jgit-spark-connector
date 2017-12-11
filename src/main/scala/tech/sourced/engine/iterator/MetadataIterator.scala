@@ -5,8 +5,6 @@ import java.sql.{Connection, DriverManager, ResultSet}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.types.{ArrayType, BooleanType, TimestampType}
-import org.eclipse.jgit.lib.ObjectId
-import tech.sourced.engine.util.CompiledFilter
 
 class MetadataIterator(fields: Seq[Attribute],
                        dbPath: String,

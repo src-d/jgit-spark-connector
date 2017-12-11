@@ -158,8 +158,8 @@ private[engine] object QueryBuilder {
         s"(NOT ($col != ${compileValue(value)} OR $col IS NULL OR " +
           s"${compileValue(value)} IS NULL) OR " +
           s"($col IS NULL AND ${compileValue(value)} IS NULL))"
-      case LessThan(attr: AttributeReference, Literal(value, _))
-      => s"${qualify(attr)} < ${compileValue(value)}"
+      case LessThan(attr: AttributeReference, Literal(value, _)) =>
+        s"${qualify(attr)} < ${compileValue(value)}"
       case GreaterThan(attr: AttributeReference, value) =>
         s"${qualify(attr)} > ${compileValue(value)}"
       case LessThanOrEqual(attr: AttributeReference, Literal(value, _)) =>
