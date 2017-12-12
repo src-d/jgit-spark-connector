@@ -29,6 +29,7 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
   private val repositoryPool =
     new GenericKeyedObjectPool[RepositoryKey, Repository](repositoryObjectFactory)
 
+  // TODO parametrize
   repositoryPool.setMaxTotalPerKey(5)
   repositoryPool.setMaxIdlePerKey(4)
   repositoryPool.setBlockWhenExhausted(true)
@@ -41,8 +42,8 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     */
   def get(key: RepositoryKey): Repository = {
     logDebug(s"Getting new repository instance. active/idle count: " +
-      s"${repositoryPool.getNumActive(key)}/ " +
-      s"${repositoryPool.getNumIdle(key)}")
+      s"${repositoryPool.getNumActive()}/ " +
+      s"${repositoryPool.getNumIdle()}")
     repositoryPool.borrowObject(key)
   }
 
@@ -66,8 +67,8 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
   def close(source: RepositorySource, repo: Repository): Unit = {
     val key = RepositoryProvider.keyForSource(source)
     logDebug(s"Closing repository. active/idle count: " +
-      s"${repositoryPool.getNumActive(key)}/ " +
-      s"${repositoryPool.getNumIdle(key)}")
+      s"${repositoryPool.getNumActive()}/ " +
+      s"${repositoryPool.getNumIdle()}")
 
     if (repositoryPool.getNumActive(key) != 0) {
       repositoryPool.returnObject(key, repo)
