@@ -73,23 +73,24 @@ object RepositoryRDDProvider {
                            sc: SparkContext,
                            path: String,
                            repositoriesFormat: String): RDD[RepositorySource] = {
-    val binariesRDD = sc.binaryFiles(s"$path/*").map(_._2)
-    val groupedRDD = binariesRDD.map((pds: PortableDataStream) => {
-      // returns a tuple of the root directory where it is contained, with a maximum depth
-      // of 1 under the given path, the file name, and the portable data stream
-      val path = pds.getPath
-      val idx = path.indexOf('/', path.length + 1)
-      if (idx < 0) {
-        val p = new Path(path)
-        (p.getParent.toString, (p.getName, pds))
-      } else {
-        val (parent, file) = path.splitAt(idx)
-        (parent, (file, pds))
+    val binariesRDD = sc.binaryFiles(s"$path/*")
+    val groupedRDD = binariesRDD.map {
+      case (path: String, pds: PortableDataStream) => {
+        // returns a tuple of the root directory where it is contained, with a maximum depth
+        // of 1 under the given path, the file name, and the portable data stream
+        val idx = path.indexOf('/', path.length + 1)
+        if (idx < 0) {
+          val p = new Path(path)
+          (p.getParent.toString, (p.getName, pds))
+        } else {
+          val (parent, file) = path.splitAt(idx)
+          (parent, (file, pds))
+        }
       }
-    }).groupByKey()
+    }.groupByKey()
 
     repositoriesFormat match {
-      case SivaFormat => binariesRDD.map(SivaRepository)
+      case SivaFormat => binariesRDD.map(b => SivaRepository(b._2))
       case BareFormat => groupedRDD.map {
         case (dir, files) =>
           BareRepository(dir, files.head._2)
@@ -112,22 +113,25 @@ sealed trait RepositorySource extends Serializable {
 
 /**
   * Repository coming from a siva file.
+  *
   * @param pds portable data stream of the siva file
   */
 case class SivaRepository(pds: PortableDataStream) extends RepositorySource
 
 /**
   * Repository coming from a bare repository.
+  *
   * @param root root of the repository
-  * @param pds portable data stream of any repository file (should only be used to
-  *            retrieve the HDFS config)
+  * @param pds  portable data stream of any repository file (should only be used to
+  *             retrieve the HDFS config)
   */
 case class BareRepository(root: String, pds: PortableDataStream) extends RepositorySource
 
 /**
   * Repository coming from a regular repository with a .git directory.
+  *
   * @param root root of the repository
-  * @param pds portable data stream of any repository file (should only be used to
-  *            retrieve the HDFS config)
+  * @param pds  portable data stream of any repository file (should only be used to
+  *             retrieve the HDFS config)
   */
 case class GitRepository(root: String, pds: PortableDataStream) extends RepositorySource
