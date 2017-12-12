@@ -13,7 +13,7 @@ Code:
 ```scala
 import tech.sourced.engine._
 
-val engine = Engine(spark, "/path/to/siva-files")
+val engine = Engine(spark, "/path/to/siva-files", "siva")
 engine.getRepositories.filter('id === "github.com/mingrammer/funmath.git").getHEAD.getCommits.getTreeEntries.getBlobs.classifyLanguages.select('blob_id, 'path, 'lang).show
 
 /* Output:

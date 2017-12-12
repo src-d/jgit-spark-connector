@@ -13,7 +13,7 @@ Code:
 ```scala
 import tech.sourced.engine._
 
-val engine = Engine(spark, "/path/to/siva-files")
+val engine = Engine(spark, "/path/to/siva-files", "siva")
 engine.getRepositories.getHEAD.getCommits.getTreeEntries.getBlobs.classifyLanguages.extractUASTs.select('blob_id, 'path, 'lang, 'uast).show
 
 /* Output:

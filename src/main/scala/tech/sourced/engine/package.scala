@@ -36,6 +36,11 @@ package object engine {
   private[engine] val repositoriesPathKey = "spark.tech.sourced.engine.repositories.path"
 
   /**
+    * Key used for the option to specify the type of repositories. It can be siva, bare or standard
+    */
+  private[engine] val repositoriesFormatKey = "spark.tech.sourced.engine.repositories.format"
+
+  /**
     * Key used for the option to specify whether files should be deleted after
     * their usage or not.
     */

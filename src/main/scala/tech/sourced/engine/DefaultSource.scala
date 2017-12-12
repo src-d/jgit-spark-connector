@@ -67,6 +67,7 @@ case class GitRelation(session: SparkSession,
 
   private val localPath: String = UtilsWrapper.getLocalDir(session.sparkContext.getConf)
   private val path: String = session.conf.get(repositoriesPathKey)
+  private val repositoriesFormat: String = session.conf.get(repositoriesFormatKey)
   private val skipCleanup: Boolean = session.conf.
     get(skipCleanupKey, default = "false").toBoolean
 
@@ -81,7 +82,7 @@ case class GitRelation(session: SparkSession,
   override def buildScan(requiredColumns: Seq[Attribute],
                          filters: Seq[Expression]): RDD[Row] = {
     val sc = session.sparkContext
-    val reposRDD = RepositoryRDDProvider(sc).get(path)
+    val reposRDD = RepositoryRDDProvider(sc).get(path, repositoriesFormat)
 
     val requiredCols = sc.broadcast(requiredColumns.map(_.name).toArray)
     val reposLocalPath = sc.broadcast(localPath)

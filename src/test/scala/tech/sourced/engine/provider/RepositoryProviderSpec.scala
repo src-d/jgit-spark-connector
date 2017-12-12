@@ -43,7 +43,7 @@ class RepositoryProviderSpec
   "RepositoryRDDProvider" should "return the exact name of siva files" in {
     val prov = RepositoryRDDProvider(ss.sparkContext)
 
-    val reposRDD = prov.get(resourcePath)
+    val reposRDD = prov.get(resourcePath, RepositoryRDDProvider.SivaFormat)
 
     reposRDD.count() should be(3)
   }
@@ -51,7 +51,7 @@ class RepositoryProviderSpec
   "RepositoryProvider" should "read correctly siva repositories" in {
     val prov = RepositoryRDDProvider(ss.sparkContext)
 
-    val reposRDD = prov.get(resourcePath)
+    val reposRDD = prov.get(resourcePath, RepositoryRDDProvider.SivaFormat)
 
     val refs = reposRDD.flatMap(pds => {
       val repo = RepositoryProvider("/tmp").get(pds)
@@ -64,7 +64,7 @@ class RepositoryProviderSpec
 
   "RepositoryProvider" should "not delete siva file with skipCleanup = true" in {
     val prov = RepositoryRDDProvider(ss.sparkContext)
-    val reposRDD = prov.get(resourcePath)
+    val reposRDD = prov.get(resourcePath, RepositoryRDDProvider.SivaFormat)
     val sivaFilesExist = reposRDD.map(source => {
       val provider = RepositoryProvider("/tmp", skipCleanup = true)
       val repo = provider.get(source)
@@ -81,7 +81,7 @@ class RepositoryProviderSpec
   "RepositoryProvider" should "delete siva file with skipCleanup = false" in {
     val prov = RepositoryRDDProvider(ss.sparkContext)
 
-    val reposRDD = prov.get(resourcePath)
+    val reposRDD = prov.get(resourcePath, RepositoryRDDProvider.SivaFormat)
 
     val sivaFilesExist = reposRDD.map(source => {
       val provider = new RepositoryProvider("/tmp/two")
@@ -98,7 +98,7 @@ class RepositoryProviderSpec
 
   "RepositoryProvider" should "cleanup unpacked files when nobody else is using the repo" in {
     val prov = RepositoryRDDProvider(ss.sparkContext)
-    val reposRDD = prov.get(resourcePath)
+    val reposRDD = prov.get(resourcePath, RepositoryRDDProvider.SivaFormat)
     val source = reposRDD.first()
 
     // needs to be a fresh instance, since some of the tests may not cleanup
@@ -118,7 +118,7 @@ class RepositoryProviderSpec
   "RepositoryProvider with skipCleanup = true"
     .should("not cleanup unpacked files when nobody else is using the repo").in({
     val prov = RepositoryRDDProvider(ss.sparkContext)
-    val reposRDD = prov.get(resourcePath)
+    val reposRDD = prov.get(resourcePath, RepositoryRDDProvider.SivaFormat)
     val source = reposRDD.first()
 
     // needs to be a fresh instance, since some of the tests may not cleanup
@@ -139,7 +139,7 @@ class RepositoryProviderSpec
 
   "RepositoryProvider" should "return a repository given a SivaRepository" in {
     val prov = RepositoryRDDProvider(ss.sparkContext)
-    val reposRDD = prov.get(resourcePath)
+    val reposRDD = prov.get(resourcePath, RepositoryRDDProvider.SivaFormat)
     val source = reposRDD.first()
 
     val provider = RepositoryProvider(tmpDir.toString)
@@ -156,7 +156,7 @@ class RepositoryProviderSpec
     addRemote(bareRepo, "bare-repo", "git@github.com:bare/repo.git")
 
     val prov = RepositoryRDDProvider(ss.sparkContext)
-    val reposRDD = prov.get(tmpDir.toString)
+    val reposRDD = prov.get(tmpDir.toString, RepositoryRDDProvider.BareFormat)
     val source = reposRDD.first()
 
     tmpDir.resolve("tmp").toFile.mkdir()
@@ -173,12 +173,12 @@ class RepositoryProviderSpec
 
     addRemote(gitRepo, "repo", "git@github.com:git/repo.git")
 
-    FileUtils.write(tmpDir.resolve("repo").resolve("README.md").toFile, "hello world")
+    FileUtils.write(tmpDir.resolve("repo").resolve("README.md").toFile, "hello world", "UTF-8")
     gitRepo.add().addFilepattern("README.md").call()
     gitRepo.commit().setMessage("first commit on regular repo").call()
 
     val prov = RepositoryRDDProvider(ss.sparkContext)
-    val reposRDD = prov.get(tmpDir.toString)
+    val reposRDD = prov.get(tmpDir.toString, RepositoryRDDProvider.StandardFormat)
     val source = reposRDD.first()
 
     tmpDir.resolve("tmp").toFile.mkdir()

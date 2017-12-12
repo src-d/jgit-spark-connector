@@ -15,7 +15,7 @@ Code:
 ```scala
 import tech.sourced.engine._
 
-val engine = Engine(spark, "/path/to/siva-files")
+val engine = Engine(spark, "/path/to/siva-files", "siva")
 engine.getRepositories.filter('id === "github.com/mingrammer/funmath.git").getReferences.filter('name === "refs/heads/HEAD").getCommits.filter('message.contains("Initial")).select('repository_id, 'hash, 'message).show
 
 /* Output:

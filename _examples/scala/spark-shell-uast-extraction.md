@@ -14,7 +14,7 @@ $ spark-shell --packages "tech.sourced:engine:[version]"
 ```scala
 import tech.sourced.engine._
 
-val engine = Engine(spark, "/path/to/siva-files")
+val engine = Engine(spark, "/path/to/siva-files", "siva")
 val exampleDf = engine.getRepositories.filter('id === "github.com/mingrammer/funmath.git").getHEAD.getCommits.getTreeEntries.getBlobs.extractUASTs.select('blob_id, 'path, 'uast)
 
 exampleDf.show

@@ -79,7 +79,8 @@ class RepositoryIteratorSpec extends FlatSpec with BaseRootedRepoIterator with B
     gitRepo.add().addFilepattern("README.md").call()
     gitRepo.commit().setMessage("first commit on regular repo").call()
 
-    val rdd = RepositoryRDDProvider(ss.sparkContext).get(tmpDir.toString)
+    val rdd = RepositoryRDDProvider(ss.sparkContext)
+      .get(tmpDir.toString, RepositoryRDDProvider.StandardFormat)
     val source = rdd.first()
     val repo = RepositoryProvider(tmpDir.toString).get(source)
 

@@ -9,7 +9,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
   override protected def beforeAll(): Unit = {
     super.beforeAll()
 
-    engine = Engine(ss, resourcePath)
+    engine = Engine(ss, resourcePath, "siva")
   }
 
   "Default source" should "get heads of all repositories and count the files" in {
@@ -110,7 +110,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
   it should "filter by reference from repos dataframe" in {
     val spark = ss
 
-    val df = Engine(spark, resourcePath)
+    val df = Engine(spark, resourcePath, "siva")
       .getRepositories
       .getReference("refs/heads/develop")
 
@@ -120,7 +120,7 @@ class DefaultSourceSpec extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
   "Filter by HEAD reference" should "return only HEAD references" in {
     val spark = ss
-    val df = Engine(spark, resourcePath).getRepositories.getHEAD
+    val df = Engine(spark, resourcePath, "siva").getRepositories.getHEAD
     df.show
     assert(df.count == 5)
   }

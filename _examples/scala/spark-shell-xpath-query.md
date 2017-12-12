@@ -17,7 +17,7 @@ Code:
 ```scala
 import tech.sourced.engine._
 
-val engine = Engine(spark, "/path/to/siva-files")
+val engine = Engine(spark, "/path/to/siva-files", "siva")
 engine.getRepositories.getHEAD.getCommits.getTreeEntries.getBlobs.classifyLanguages.where('lang === "Python").extractUASTs.queryUAST("//*[@roleIdentifier]", "uast", "result").extractTokens("result", "tokens").select('path, 'lang, 'uast, 'tokens).show
 
 /* Output:
