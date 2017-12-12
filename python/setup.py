@@ -24,8 +24,8 @@ setup(
     author="source{d}",
     author_email="hello@sourced.tech",
     url="https://github.com/src-d/engine/tree/master/python",
-    packages=['sourced',
-              'sourced.engine'],
+    packages=['sourced.engine'],
+    namespace_packages=['sourced'],
     install_requires=["pyspark>=2.0.0"],
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
