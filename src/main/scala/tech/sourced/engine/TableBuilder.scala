@@ -1,6 +1,6 @@
 package tech.sourced.engine
 
-import java.sql.DriverManager
+import java.sql.{DriverManager, PreparedStatement}
 
 import org.apache.spark.SparkException
 import org.apache.spark.internal.Logging
@@ -47,7 +47,15 @@ private[engine] case class Table(name: String,
     try {
       sql(schema).foreach(sql => {
         log.debug(s"executing SQL statement for table `$name`: `$sql`")
-        conn.prepareStatement(sql).execute()
+        var stmt: PreparedStatement = null
+        try {
+          stmt = conn.prepareStatement(sql)
+          stmt.execute()
+        } finally {
+          if (stmt != null) {
+            stmt.close()
+          }
+        }
       })
       conn.commit()
     } catch {
@@ -55,9 +63,7 @@ private[engine] case class Table(name: String,
         log.error(s"unable to create table $name and its indexes", e)
         conn.rollback()
     } finally {
-      if (!conn.isClosed) {
-        conn.close()
-      }
+      conn.close()
     }
   }
 }
@@ -78,6 +84,12 @@ object Tables {
 
   val commits = Table(
     prefix("commits"),
+    Seq("hash"),
+    Seq()
+  )
+
+  val repoHasCommits = Table(
+    prefix("repository_has_commits"),
     Seq("hash", "repository_id", "reference_name"),
     Seq("index")
   )
@@ -85,7 +97,7 @@ object Tables {
   val treeEntries = Table(
     prefix("tree_entries"),
     // blob id can point to several paths, so we need this overly complex composite pk
-    Seq("blob", "path", "commit_hash", "reference_name", "repository_id"),
+    Seq("blob", "path", "commit_hash"),
     Seq()
   )
 
@@ -93,6 +105,7 @@ object Tables {
     case "repositories" => repositories
     case "references" => references
     case "commits" => commits
+    case "repository_has_commits" => repoHasCommits
     case "tree_entries" => treeEntries
   }
 

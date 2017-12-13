@@ -255,23 +255,35 @@ class Engine(session: SparkSession, repositoriesPath: String) extends Logging {
 
     val properties = new Properties()
     properties.put("driver", "org.sqlite.JDBC")
-    Seq(RepositoriesTable, ReferencesTable, CommitsTable, TreeEntriesTable).foreach {
-      table =>
-        val df = (table, getDataSource(table, session)) match {
-          case ("repositories", d) =>
-            d.withColumn("urls", ConcatArrayUDF(d("urls"), lit("|")))
-              .withColumn(
-                "is_fork",
-                when(d("is_fork") === false, 0)
-                  .otherwise(when(d("is_fork") === true, 1).otherwise(null))
-              )
-          case ("commits", d) =>
-            d.withColumn("parents", ConcatArrayUDF(d("parents"), lit("|")))
-          case (_, d) => d
-        }
 
+    val repositoriesDf = getDataSource(RepositoriesTable, session)
+    val referencesDf = repositoriesDf.getReferences
+    val commitsDf = referencesDf.getCommits
+    val treeEntriesDf = commitsDf.getTreeEntries
+
+    Seq(
+      (RepositoriesTable, repositoriesDf
+        .withColumn("urls", ConcatArrayUDF(repositoriesDf("urls"), lit("|")))
+        .withColumn(
+          "is_fork",
+          when(repositoriesDf("is_fork") === false, 0)
+            .otherwise(when(repositoriesDf("is_fork") === true, 1).otherwise(null))
+        )),
+      (ReferencesTable, referencesDf),
+      (CommitsTable, commitsDf
+        .drop("reference_name", "repository_id", "index")
+        .withColumn("parents", ConcatArrayUDF(commitsDf("parents"), lit("|")))
+        .distinct()),
+      (RepositoryHasCommitsTable, commitsDf
+        .select("hash", "reference_name", "repository_id", "index")),
+      (TreeEntriesTable, treeEntriesDf
+        .drop("reference_name", "repository_id").distinct())
+    ).foreach {
+      case (table, df) =>
         Tables(table).create(dbFile.toString, df.schema)
-        df.write.mode(SaveMode.Append)
+        df.repartition(session.currentActiveExecutors())
+          .write
+          .mode(SaveMode.Append)
           .jdbc(s"jdbc:sqlite:$dbFile", Tables.prefix(table), properties)
     }
   }

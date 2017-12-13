@@ -56,6 +56,8 @@ package object engine {
   val CommitsTable: String = "commits"
   val TreeEntriesTable: String = "tree_entries"
   val BlobsTable: String = "blobs"
+  val RepositoryHasCommitsTable: String = "repository_has_commits"
+
 
   // The keys RepositoriesPathKey, bblfshHostKey, bblfshPortKey and SkipCleanupKey must
   // start by "spark." to be able to be loaded from the "spark-defaults.conf" file.
@@ -75,6 +77,26 @@ package object engine {
         customUDF.name,
         customUDF.function(session)
       ))
+    }
+
+    /**
+      * Returns the number of executors that are active right now.
+      *
+      * @return number of active executors
+      */
+    def currentActiveExecutors(): Int = {
+      val sc = session.sparkContext
+      val driver = sc.getConf.get("spark.driver.host")
+      val executors = sc.getExecutorMemoryStatus
+        .keys
+        .filter(ex => ex.split(":").head != driver)
+        .toArray
+        .distinct
+        .length
+
+      // If there are no executors, it means it's a local job
+      // so there's just one node to get the data from.
+      if (executors > 0) executors else 1
     }
 
   }

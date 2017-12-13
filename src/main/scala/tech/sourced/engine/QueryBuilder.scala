@@ -119,8 +119,8 @@ private[engine] case class QueryBuilder(fields: Seq[Attribute] = Array[Attribute
 private[engine] object QueryBuilder {
 
   def qualify(col: Attribute): String = {
-    val table = col.metadata.getString(Sources.SourceKey)
-    s"${prefixTable(table)}.`${col.name}`"
+    val (table, name) = Schema.metadataTableAndCol(col)
+    qualify(table, name)
   }
 
   def qualify(table: String, col: String): String =

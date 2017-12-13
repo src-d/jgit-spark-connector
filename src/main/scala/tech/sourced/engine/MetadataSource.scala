@@ -1,17 +1,14 @@
 package tech.sourced.engine
 
 import java.nio.file.Paths
-import java.sql.{Date, Timestamp}
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{MetadataBuilder, StructType}
 import org.apache.spark.sql.{Row, SQLContext, SparkSession}
 import org.apache.spark._
 import tech.sourced.engine.provider.{RepositoryProvider, RepositoryRDDProvider}
-import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, Expression}
 import org.apache.spark.sql.sources._
-import org.apache.spark.unsafe.types.UTF8String
 import tech.sourced.engine.iterator._
 
 /**
@@ -19,10 +16,10 @@ import tech.sourced.engine.iterator._
   */
 class MetadataSource extends RelationProvider with DataSourceRegister {
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def shortName: String = "metadata"
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def createRelation(sqlContext: SQLContext,
                               parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(
@@ -70,25 +67,7 @@ case class MetadataRelation(session: SparkSession,
     super.unhandledFilters(filters)
   }
 
-  /**
-    * Returns the number of executors that are active right now.
-    *
-    * @return number of active executors
-    */
-  def currentActiveExecutors(): Int = {
-    val sc = session.sparkContext
-    val driver = sc.getConf.get("spark.driver.host")
-    val executors = sc.getExecutorMemoryStatus
-      .keys
-      .filter(ex => ex.split(":").head != driver)
-      .toArray
-      .distinct
-      .length
 
-    // If there are no executors, it means it's a local job
-    // so there's just one node to get the data from.
-    if (executors > 0) executors else 1
-  }
 
   override def buildScan(requiredColumns: Seq[Attribute],
                          filters: Seq[Expression]): RDD[Row] = {
@@ -99,7 +78,7 @@ case class MetadataRelation(session: SparkSession,
     val reposRDD = RepositoryRDDProvider(sc).get(path)
 
     val metadataRDD = sc.emptyRDD[Unit]
-      .repartition(currentActiveExecutors())
+      .repartition(session.currentActiveExecutors())
       .mapPartitions[Map[String, Any]](_ => {
       val iter = new MetadataIterator(metadataCols.value, dbPath, sql.value)
       new CleanupIterator[Map[String, Any]](iter, iter.close())
@@ -146,31 +125,32 @@ case class MetadataRelation(session: SparkSession,
 
   def getQueryBuilder(requiredColumns: Seq[Attribute],
                       filters: Seq[Expression]): (QueryBuilder, Boolean) = {
-    var shouldGetBlobs = false
-    val queryBuilder = Sources.getSources(tableSource, schema)
+    val sources = Sources.getSources(tableSource, schema)
+    val queryBuilder = sources
       .foldLeft(QueryBuilder().addFields(requiredColumns)) {
         case (builder, "repositories") =>
-          builder.addTable("repositories")
+          builder.addTable(RepositoriesTable)
         case (builder, "references") =>
-          builder.addTable("references")
-            .join("repositories", "references", Seq(
-              JoinCondition("repositories", "id", "references", "repository_id")
+          builder.addTable(ReferencesTable)
+            .join(RepositoriesTable, ReferencesTable, Seq(
+              JoinCondition(RepositoriesTable, "id", ReferencesTable, "repository_id")
             ))
         case (builder, "commits") =>
-          builder.addTable("commits")
-            .join("references", "commits", Seq(
-              JoinCondition("references", "name", "commits", "reference_name"),
-              JoinCondition("repositories", "id", "commits", "repository_id")
+          builder.addTable(RepositoryHasCommitsTable)
+            .join(ReferencesTable, RepositoryHasCommitsTable, Seq(
+              JoinCondition(ReferencesTable, "name", RepositoryHasCommitsTable, "reference_name"),
+              JoinCondition(RepositoriesTable, "id", RepositoryHasCommitsTable, "repository_id")
+            ))
+            .addTable(CommitsTable)
+            .join(RepositoryHasCommitsTable, CommitsTable, Seq(
+              JoinCondition(RepositoryHasCommitsTable, "hash", CommitsTable, "hash")
             ))
         case (builder, "tree_entries") =>
-          builder.addTable("tree_entries")
-            .join("commits", "tree_entries", Seq(
-              JoinCondition("references", "name", "tree_entries", "reference_name"),
-              JoinCondition("repositories", "id", "tree_entries", "repository_id"),
-              JoinCondition("commits", "hash", "tree_entries", "commit_hash")
+          builder.addTable(TreeEntriesTable)
+            .join(CommitsTable, TreeEntriesTable, Seq(
+              JoinCondition(CommitsTable, "hash", TreeEntriesTable, "commit_hash")
             ))
         case (QueryBuilder(_, tables, joinConds, f), "blobs") =>
-          shouldGetBlobs = true
           // we're getting the blobs, so that means the fields will be those of the blobs table
           // which we cant retrieve because metadata only stores until the tree_entries level.
           // So we need to remove all the columns that are from blobs (IMPORTANT: not the others)
@@ -180,7 +160,8 @@ case class MetadataRelation(session: SparkSession,
             .filterNot(_.metadata.getString(Sources.SourceKey) == "blobs")
           val repoPathField = Schema.repositories(Schema.repositories.fieldIndex("repository_path"))
           val fields = nonBlobsColumns ++
-            (Schema.treeEntries.map((_, "tree_entries")) ++ Array((repoPathField, "repositories")))
+            (Schema.treeEntries.map((_, TreeEntriesTable))
+              ++ Array((repoPathField, RepositoriesTable)))
               .map {
                 case (sf, table) =>
                   AttributeReference(
@@ -206,13 +187,13 @@ case class MetadataRelation(session: SparkSession,
 
     // if there is one step missing the query can't be correctly built
     // as there is no data to join all the steps
-    if (!Sources.orderedSources.slice(0, queryBuilder.tables.length)
-      .sameElements(queryBuilder.tables)) {
+    if (!Sources.orderedSources.slice(0, sources.length)
+      .sameElements(sources)) {
       throw new SparkException(s"unable to build a query with the following " +
         s"tables: ${queryBuilder.tables.mkString(",")}")
     }
 
-    (queryBuilder, shouldGetBlobs)
+    (queryBuilder, sources.contains(BlobsTable))
   }
 }
 
