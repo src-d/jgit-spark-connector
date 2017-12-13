@@ -21,7 +21,7 @@ class DefaultSource extends RelationProvider with DataSourceRegister {
   override def createRelation(sqlContext: SQLContext,
                               parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(
-      DefaultSource.tableNameKey,
+      DefaultSource.TableNameKey,
       throw new SparkException("parameter 'table' must be provided")
     )
 
@@ -36,8 +36,8 @@ class DefaultSource extends RelationProvider with DataSourceRegister {
   * Just contains some useful constants for the DefaultSource class to use.
   */
 object DefaultSource {
-  val tableNameKey = "table"
-  val pathKey = "path"
+  val TableNameKey = "table"
+  val PathKey = "path"
 }
 
 /**

@@ -58,7 +58,7 @@ class Engine(session: SparkSession, repositoriesPath: String) extends Logging {
   private def registerViews(): Unit = {
     Sources.orderedSources.foreach(table => {
       session.read.format(DefaultSourceName)
-        .option(DefaultSource.tableNameKey, table)
+        .option(DefaultSource.TableNameKey, table)
         .load(session.sqlContext.getConf(RepositoriesPathKey))
         .createOrReplaceTempView(table)
     })
@@ -75,7 +75,7 @@ class Engine(session: SparkSession, repositoriesPath: String) extends Logging {
   def fromMetadata(dbPath: String, dbName: String = MetadataSource.DefaultDbName): Engine = {
     Seq(RepositoriesTable, ReferencesTable, CommitsTable, TreeEntriesTable).foreach(table => {
       session.read.format(MetadataSourceName)
-        .option(DefaultSource.tableNameKey, table)
+        .option(DefaultSource.TableNameKey, table)
         .option(MetadataSource.DbPathKey, dbPath)
         .option(MetadataSource.DbNameKey, dbName)
         .load()

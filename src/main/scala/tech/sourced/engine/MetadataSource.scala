@@ -26,8 +26,8 @@ class MetadataSource extends RelationProvider with DataSourceRegister {
   override def createRelation(sqlContext: SQLContext,
                               parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(
-      DefaultSource.tableNameKey,
-      throw new SparkException(s"parameter '${DefaultSource.tableNameKey}' must be provided")
+      DefaultSource.TableNameKey,
+      throw new SparkException(s"parameter '${DefaultSource.TableNameKey}' must be provided")
     )
 
     val dbPath = Paths.get(
