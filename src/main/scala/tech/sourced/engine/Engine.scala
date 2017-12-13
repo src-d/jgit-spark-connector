@@ -6,7 +6,7 @@ import java.util.Properties
 import org.apache.spark.sql.functions.{lit, when}
 import org.apache.spark.SparkException
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import tech.sourced.engine.rule._
 import tech.sourced.engine.udf.ConcatArrayUDF
 
@@ -270,7 +270,9 @@ class Engine(session: SparkSession, repositoriesPath: String) extends Logging {
           case (_, d) => d
         }
 
-        df.write.jdbc(s"jdbc:sqlite:$dbFile", s"engine_$table", properties)
+        Tables(table).create(dbFile.toString, df.schema)
+        df.write.mode(SaveMode.Append)
+          .jdbc(s"jdbc:sqlite:$dbFile", Tables.prefix(table), properties)
     }
   }
 
