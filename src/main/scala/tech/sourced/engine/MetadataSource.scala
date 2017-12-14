@@ -58,6 +58,7 @@ case class MetadataRelation(session: SparkSession,
 
   private val localPath: String = UtilsWrapper.getLocalDir(session.sparkContext.getConf)
   private val path: String = session.conf.get(RepositoriesPathKey)
+  private val repositoriesFormat: String = session.conf.get(RepositoriesFormatKey)
   private val skipCleanup: Boolean = session.conf.
     get(SkipCleanupKey, default = "false").toBoolean
 
@@ -67,15 +68,13 @@ case class MetadataRelation(session: SparkSession,
     super.unhandledFilters(filters)
   }
 
-
-
   override def buildScan(requiredColumns: Seq[Attribute],
                          filters: Seq[Expression]): RDD[Row] = {
     val sc = session.sparkContext
     val (qb, shouldGetBlobs) = getQueryBuilder(requiredColumns, filters)
     val metadataCols = sc.broadcast(qb.fields)
     val sql = sc.broadcast(qb.sql)
-    val reposRDD = RepositoryRDDProvider(sc).get(path)
+    val reposRDD = RepositoryRDDProvider(sc).get(path, repositoriesFormat)
 
     val metadataRDD = sc.emptyRDD[Unit]
       .repartition(session.currentActiveExecutors())

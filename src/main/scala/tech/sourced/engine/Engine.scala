@@ -41,9 +41,12 @@ import scala.collection.JavaConversions.asScalaBuffer
   * @constructor creates a Engine instance with the given Spark session.
   * @param session Spark session to be used
   */
-class Engine(session: SparkSession, repositoriesPath: String) extends Logging {
+class Engine(session: SparkSession,
+             repositoriesPath: String,
+             repositoriesFormat: String) extends Logging {
 
   this.setRepositoriesPath(repositoriesPath)
+  this.setRepositoriesFormat(repositoriesFormat)
   session.registerUDFs()
   session.experimental.extraOptimizations = Seq(
     AddSourceToAttributes,
@@ -311,8 +314,6 @@ object Engine {
     * @return Engine instance
     */
   def apply(session: SparkSession, repositoriesPath: String, repositoriesFormat: String): Engine = {
-    new Engine(session, repositoriesPath)
-      .setRepositoriesPath(repositoriesPath)
-      .setRepositoriesFormat(repositoriesFormat)
+    new Engine(session, repositoriesPath, repositoriesFormat)
   }
 }

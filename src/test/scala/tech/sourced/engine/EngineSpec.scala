@@ -14,7 +14,7 @@ class EngineSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSpark
   override protected def beforeAll(): Unit = {
     super.beforeAll()
 
-    engine = Engine(ss, resourcePath)
+    engine = Engine(ss, resourcePath, "siva")
     tmpPath = Paths.get(System.getProperty("java.io.tmpdir"))
       .resolve(UUID.randomUUID.toString)
     tmpPath.toFile.mkdir()

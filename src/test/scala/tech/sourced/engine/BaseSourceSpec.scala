@@ -10,7 +10,7 @@ class BaseSourceSpec(source: String)
   override protected def beforeAll(): Unit = {
     super.beforeAll()
 
-    engine = Engine(ss, resourcePath)
+    engine = Engine(ss, resourcePath, "siva")
   }
 
   source should "get heads of all repositories and count the files" in {
@@ -87,7 +87,7 @@ class BaseSourceSpec(source: String)
   it should "filter by reference from repos dataframe" in {
     val spark = ss
 
-    val df = Engine(spark, resourcePath)
+    val df = Engine(spark, resourcePath, "siva")
       .getRepositories
       .getReference("refs/heads/develop")
     assert(df.count == 2)
@@ -95,7 +95,7 @@ class BaseSourceSpec(source: String)
 
   "Filter by HEAD reference" should "return only HEAD references" in {
     val spark = ss
-    val df = Engine(spark, resourcePath).getRepositories.getHEAD
+    val df = Engine(spark, resourcePath, "siva").getRepositories.getHEAD
     assert(df.count == 5)
   }
 
