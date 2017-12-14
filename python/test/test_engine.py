@@ -32,7 +32,8 @@ class EngineTestCase(BaseTestCase):
         BaseTestCase.setUp(self)
         file_path = path.dirname(path.realpath(__file__))
         repos_path = path.join(file_path, '..', '..', 'src', 'test', 'resources', 'siva-files')
-        self.engine = Engine(self.session, repos_path)
+        repos_format = 'siva'
+        self.engine = Engine(self.session, repos_path, repos_format)
 
 
     def test_repositories(self):
@@ -50,20 +51,20 @@ class EngineTestCase(BaseTestCase):
     def test_references_head(self):
         df = self.engine.repositories.references.head_ref
         hashes = [r.hash for r in df.distinct().sort(df.hash).collect()]
-        self.assertEqual(hashes,['202ceb4d3efd2294544583a7d4dc92899aa0181f', 
-                                  '2060ee6252a64337c404a4fb44baf374c0bc7f7a', 
-                                  'dbfab055c70379219cbcf422f05316fdf4e1aed3', 
-                                  'fff7062de8474d10a67d417ccea87ba6f58ca81d', 
+        self.assertEqual(hashes,['202ceb4d3efd2294544583a7d4dc92899aa0181f',
+                                  '2060ee6252a64337c404a4fb44baf374c0bc7f7a',
+                                  'dbfab055c70379219cbcf422f05316fdf4e1aed3',
+                                  'fff7062de8474d10a67d417ccea87ba6f58ca81d',
                                   'fff7062de8474d10a67d417ccea87ba6f58ca81d'])
 
 
     def test_references_master(self):
         df = self.engine.repositories.references.master_ref
         hashes = [r.hash for r in df.distinct().sort(df.hash).collect()]
-        self.assertEqual(hashes, ['202ceb4d3efd2294544583a7d4dc92899aa0181f', 
-                                  '2060ee6252a64337c404a4fb44baf374c0bc7f7a', 
-                                  'dbfab055c70379219cbcf422f05316fdf4e1aed3', 
-                                  'fff7062de8474d10a67d417ccea87ba6f58ca81d', 
+        self.assertEqual(hashes, ['202ceb4d3efd2294544583a7d4dc92899aa0181f',
+                                  '2060ee6252a64337c404a4fb44baf374c0bc7f7a',
+                                  'dbfab055c70379219cbcf422f05316fdf4e1aed3',
+                                  'fff7062de8474d10a67d417ccea87ba6f58ca81d',
                                   'fff7062de8474d10a67d417ccea87ba6f58ca81d'])
 
 
@@ -80,7 +81,7 @@ class EngineTestCase(BaseTestCase):
 
         self.assertEqual(len(repo_commits), len(REPOSITORIES))
         for repo in repo_commits:
-            self.assertEqual(repo['count'], 
+            self.assertEqual(repo['count'],
                              REPOSITORY_COMMITS[repo.repository_id])
 
 

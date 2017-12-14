@@ -17,20 +17,24 @@ class Engine(object):
     :type session: pyspark.sql.SparkSession
     :param repos_path: path to the folder where siva files are stored
     :type repos_path: str
+    :param repos_format: format of the repositories inside the provided folder.
+    It can be siva, bare or standard.
+    :type repos_format: str
     :param skip_cleanup: don't delete unpacked siva files after using them
     :type skip_cleanup: bool
     """
 
-    def __init__(self, session, repos_path, skip_cleanup=False):
+    def __init__(self, session, repos_path, repos_format, skip_cleanup=False):
         self.session = session
         self.__jsparkSession = session._jsparkSession
         self.session.conf.set('spark.tech.sourced.engine.repositories.path', repos_path)
+        self.session.conf.set('spark.tech.sourced.engine.repositories.format', repos_format)
         self.__jvm = self.session.sparkContext._gateway.jvm
         java_import(self.__jvm, 'tech.sourced.engine.Engine')
         java_import(self.__jvm, 'tech.sourced.engine.package$')
 
         try:
-            self.__engine = self.__jvm.tech.sourced.engine.Engine.apply(self.__jsparkSession, repos_path)
+            self.__engine = self.__jvm.tech.sourced.engine.Engine.apply(self.__jsparkSession, repos_path, repos_format)
         except TypeError as e:
             if 'JavaPackage' in e.message:
                 raise Exception("package \"tech.sourced:engine:<version>\" cannot be found. Please, provide a jar with the package or install the package using --packages")

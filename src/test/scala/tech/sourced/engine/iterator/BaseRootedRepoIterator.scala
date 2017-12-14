@@ -9,7 +9,7 @@ import tech.sourced.engine.{BaseSivaSpec, BaseSparkSpec}
 
 trait BaseRootedRepoIterator extends Suite with BaseSparkSpec with BaseSivaSpec with Matchers {
   lazy val prov: RepositoryRDDProvider = RepositoryRDDProvider(ss.sparkContext)
-  lazy val rdd: RDD[RepositorySource] = prov.get(resourcePath)
+  lazy val rdd: RDD[RepositorySource] = prov.get(resourcePath, RepositoryRDDProvider.SivaFormat)
 
   lazy val source: RepositorySource = rdd.filter(source => source.pds.getPath()
     .contains("fff7062de8474d10a67d417ccea87ba6f58ca81d.siva")).first()

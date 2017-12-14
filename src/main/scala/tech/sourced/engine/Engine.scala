@@ -127,11 +127,28 @@ class Engine(session: SparkSession) {
     * engine.setRepositoriesPath("/path/to/repositories")
     * }}}
     *
-    * @param path of the siva files.
+    * @param path of the repositories.
     * @return instance of the engine itself
     */
   def setRepositoriesPath(path: String): Engine = {
     session.conf.set(repositoriesPathKey, path)
+    this
+  }
+
+  /**
+    * Sets the format of the stored repositories on the specified path.
+    *
+    * Actual compatible formats are:
+    *
+    * - siva: to read siva files
+    * - bare: to read bare repositories
+    * - standard: to read standard git repositories (with workspace)
+    *
+    * @param format of the repositories.
+    * @return instance of the engine itself
+    */
+  def setRepositoriesFormat(format: String): Engine = {
+    session.conf.set(repositoriesFormatKey, format)
     this
   }
 
@@ -171,12 +188,15 @@ object Engine {
     * val engine = Engine(sparkSession, "/path/to/repositories")
     * }}}
     *
-    * @param session          spark session to use
-    * @param repositoriesPath the path to the repositories' siva files
+    * @param session            spark session to use
+    * @param repositoriesPath   the path to the repositories
+    * @param repositoriesFormat format of the repositories inside the provided path.
+    *                           It can be siva, bare or standard.
     * @return Engine instance
     */
-  def apply(session: SparkSession, repositoriesPath: String): Engine = {
+  def apply(session: SparkSession, repositoriesPath: String, repositoriesFormat: String): Engine = {
     new Engine(session)
       .setRepositoriesPath(repositoriesPath)
+      .setRepositoriesFormat(repositoriesFormat)
   }
 }

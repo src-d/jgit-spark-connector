@@ -16,7 +16,7 @@ $ pyspark --packages "tech.sourced:engine:[version]"
 Code:
 ```python
 from sourced.engine import Engine
-engine = Engine(spark, '/path/to/siva-files')
+engine = Engine(spark, '/path/to/siva-files', 'siva')
 
 engine.repositories.references.head_ref.commits.tree_entries.blobs.classify_languages().where('lang = "Python"').extract_uasts().query_uast('//*[@roleIdentifier]').extract_tokens('result', 'tokens').select('blob_id', 'path', 'lang', 'uast', 'tokens').show()
 
