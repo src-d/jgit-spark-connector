@@ -6,24 +6,26 @@ import tech.sourced.engine.util.{CompiledFilter, Filter}
 /**
   * Iterator that will return rows of repositories in a repository.
   *
-  * @param finalColumns final columns that must be in the resultant row
-  * @param repo         repository to get the data from
-  * @param filters      filters for the iterator
+  * @param repositoryPath path of the given repository
+  * @param finalColumns   final columns that must be in the resultant row
+  * @param repo           repository to get the data from
+  * @param filters        filters for the iterator
   */
-class RepositoryIterator(finalColumns: Array[String],
+class RepositoryIterator(repositoryPath: String,
+                         finalColumns: Array[String],
                          repo: Repository,
                          filters: Seq[CompiledFilter])
-  extends RootedRepoIterator[String](finalColumns, repo, null, filters) {
+  extends ChainableIterator[String](finalColumns, null, filters) {
 
   // since this iterator does not override getFilters method of RootedRepository
   // we can cache here the matching cases, because they are not going to change.
   private val matchingFilters = filters.flatMap(_.matchingCases)
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[String] =
     RepositoryIterator.loadIterator(repo, matchingFilters)
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override protected def mapColumns(id: String): RawRow = {
     val c = repo.getConfig
     val remote = RootedRepo.getRepositoryRemote(repo, id)
@@ -35,7 +37,8 @@ class RepositoryIterator(finalColumns: Array[String],
     Map[String, Any](
       "id" -> id,
       "urls" -> urls,
-      "is_fork" -> isFork
+      "is_fork" -> isFork,
+      "repository_path" -> repositoryPath
     )
   }
 

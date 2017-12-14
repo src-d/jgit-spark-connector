@@ -102,13 +102,28 @@ object RepositoryRDDProvider {
       case other => throw new RuntimeException(s"Repository format $other is not supported")
     }
   }
+
 }
 
 /**
   * RepositorySource is a repository that comes from a certain source.
   */
 sealed trait RepositorySource extends Serializable {
+  /**
+    * Returns the portable data stream of one of the repository files. In the case
+    * of siva files, of the siva file itself.
+    *
+    * @return portable data stream
+    */
   def pds: PortableDataStream
+
+  /**
+    * Returns the path to the root of the repository. In the case of siva files, the
+    * path to the siva file itself.
+    *
+    * @return path to the repository root
+    */
+  def root: String
 }
 
 /**
@@ -116,7 +131,9 @@ sealed trait RepositorySource extends Serializable {
   *
   * @param pds portable data stream of the siva file
   */
-case class SivaRepository(pds: PortableDataStream) extends RepositorySource
+case class SivaRepository(pds: PortableDataStream) extends RepositorySource {
+  def root: String = pds.getPath
+}
 
 /**
   * Repository coming from a bare repository.

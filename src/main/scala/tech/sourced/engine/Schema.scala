@@ -1,5 +1,7 @@
 package tech.sourced.engine
 
+import org.apache.spark.SparkException
+import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.types._
 
 /**
@@ -15,6 +17,7 @@ private[engine] object Schema {
     StructField("id", StringType, nullable = false) ::
       StructField("urls", ArrayType(StringType, containsNull = false), nullable = false) ::
       StructField("is_fork", BooleanType) ::
+      StructField("repository_path", StringType) ::
       Nil
   )
 
@@ -76,5 +79,59 @@ private[engine] object Schema {
       StructField("is_binary", BooleanType, nullable = false) ::
       Nil
   )
+
+  /**
+    * Return the schema for the table with the given name. Throws a SparkException
+    * if there is no schema for the given table.
+    *
+    * @param table name
+    * @return schema for the table
+    * @throws SparkException if the table does not exist
+    */
+  def apply(table: String): StructType = table match {
+    case "repositories" => Schema.repositories
+    case "references" => Schema.references
+    case "commits" => Schema.commits
+    case "tree_entries" => Schema.treeEntries
+    case "blobs" => Schema.blobs
+    case other => throw new SparkException(s"table '$other' is not supported")
+  }
+
+  /**
+    * Returns a tuple with the table and column names for the given attribute.
+    * Because metadata tables are different from git relation tables, some fields
+    * need to be mapped to match one schema with the other.
+    *
+    * @param attr attribute from the git relation schema
+    * @return table and column names
+    */
+  def metadataTableAndCol(attr: Attribute): (String, String) = {
+    val name = attr.name
+    val table = attr.metadata.getString(Sources.SourceKey)
+    metadataMappings(table, name).getOrElse((table, name))
+  }
+
+  /**
+    * Mappings between a table name and column name in the git relation schema
+    * and their counterpart in the metadata schema.
+    *
+    * @param table table name
+    * @param name  column name
+    * @return a tuple with table and column name or None if there is no mapping
+    */
+  def metadataMappings(table: String, name: String): Option[(String, String)] =
+    Option((table, name) match {
+      case ("commits", "index") =>
+        (RepositoryHasCommitsTable, "index")
+      case ("commits", "repository_id") =>
+        (RepositoryHasCommitsTable, "repository_id")
+      case ("commits", "reference_name") =>
+        (RepositoryHasCommitsTable, "reference_name")
+      case ("tree_entries", "repository_id") =>
+        (RepositoryHasCommitsTable, "repository_id")
+      case ("tree_entries", "reference_name") =>
+        (RepositoryHasCommitsTable, "reference_name")
+      case _ => null
+    })
 
 }

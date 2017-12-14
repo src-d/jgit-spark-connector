@@ -3,7 +3,7 @@ package tech.sourced.engine.iterator
 import org.scalatest.FlatSpec
 import tech.sourced.engine.util.{Attr, EqualFilter}
 
-class ReferenceIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
+class ReferenceIteratorSpec extends FlatSpec with BaseChainableIterator {
 
   "ReferenceIterator" should "return all references from all repositories into a siva file" in {
     testIterator(
@@ -66,6 +66,7 @@ class ReferenceIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
         Array("repository_id", "name"),
         repo,
         new RepositoryIterator(
+          "/foo/bar",
           Array("id"),
           repo,
           Seq(EqualFilter(Attr("id", "repository"), "github.com/xiyou-linuxer/faq-xiyoulinux"))

@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets
 import org.scalatest.FlatSpec
 import tech.sourced.engine.util.{Attr, CompiledFilter, EqualFilter, InFilter}
 
-class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
+class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
 
   val columns = Array(
     "blob_id",
@@ -46,7 +46,7 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
           row.getBoolean(5) should be(false)
         case _ =>
       }, total = 22187, columnsCount = columns.length
-      // NOTE: it differs from the number of tree entries in TreeEntryIteratorSpec because
+      // NOTE: it differs from the number of tree entries in GitTreeEntryIteratorSpec because
       // Blob Objects can be missing
     )
   }
@@ -149,7 +149,7 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
       new BlobIterator(
         columns,
         repo,
-        new TreeEntryIterator(
+        new GitTreeEntryIterator(
           Array("blob"),
           repo,
           new CommitIterator(
@@ -179,7 +179,7 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
       new BlobIterator(
         columns,
         repo,
-        new TreeEntryIterator(
+        new GitTreeEntryIterator(
           Array("blob"),
           repo,
           new CommitIterator(
@@ -189,6 +189,7 @@ class BlobIteratorSpec extends FlatSpec with BaseRootedRepoIterator {
               Array("name"),
               repo,
               new RepositoryIterator(
+                "/foo/bar",
                 Array("id"),
                 repo,
                 Seq(EqualFilter(
