@@ -84,7 +84,7 @@ object RootedRepo {
 
           ("file://" + repoPath, ref)
         } else {
-          (repoId, ref)
+          (repoId, ref.replace(s"refs/remotes/$refRemote", "refs/heads"))
         }
     }
   }

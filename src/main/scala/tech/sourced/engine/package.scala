@@ -238,6 +238,9 @@ package object engine {
       }
     }
 
+    private val HeadRef = "refs/heads/HEAD"
+    private val LocalHeadRef = "HEAD"
+
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] containing only the rows
       * with a HEAD reference.
@@ -248,7 +251,15 @@ package object engine {
       *
       * @return new dataframe with only HEAD reference rows
       */
-    def getHEAD: DataFrame = getReference("refs/heads/HEAD")
+    def getHEAD: DataFrame = {
+      if (df.schema.fieldNames.contains("reference_name")) {
+        df.filter(($"reference_name" === HeadRef).or($"reference_name" === LocalHeadRef))
+      } else if (df.schema.fieldNames.contains("name")) {
+        df.filter(($"name" === HeadRef).or($"name" === LocalHeadRef))
+      } else {
+        df.getReferences.getHEAD
+      }
+    }
 
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] containing only the rows
