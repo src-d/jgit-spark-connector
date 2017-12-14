@@ -161,7 +161,7 @@ Welcome to
 Using Python version 3.6.2 (default, Jul 20 2017 03:52:27)
 SparkSession available as 'spark'.
 >>> from sourced.engine import Engine
->>> engine = Engine(spark, '/path/to/siva/files')
+>>> engine = Engine(spark, '/path/to/siva/files', 'siva')
 >>> engine.repositories.filter('id = "github.com/mingrammer/funmath.git"').references.filter("name = 'refs/heads/HEAD'").show()
 +--------------------+---------------+--------------------+
 |       repository_id|           name|                hash|
@@ -189,7 +189,7 @@ import tech.sourced.engine._
 Now, you need to create an instance of `Engine` and give it the spark session and the path of the directory containing the siva files:
 
 ```bash
-scala> val engine = Engine(spark, "/path/to/siva-files")
+scala> val engine = Engine(spark, "/path/to/siva-files", "siva")
 ```
 
 Then, you will be able to perform queries over the repositories:
@@ -242,7 +242,7 @@ from sourced.engine import Engine
 
 siva_folder = "/path/to/siva-files"
 spark = SparkSession.builder.appName("test").master("local[*]").getOrCreate()
-engine = Engine(spark, siva_folder)
+engine = Engine(spark, siva_folder, 'siva')
 ```
 
 # Development
