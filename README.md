@@ -46,6 +46,14 @@ $ pyspark --packages "tech.sourced:engine:[version]"
 
 Run [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can start it easily in a container following its [quick start guide](https://github.com/bblfsh/bblfshd#quick-start).
 
+If you run **engine** in an UNIX like environment, you should set the `LANG` variable properly:
+
+    export LANG="en_US.UTF-8"
+
+The rationale behind this is that UNIX file systems don't keep the encoding for each file name, they are just plain bytes,
+so the `Java API for FS` looks for the `LANG` environment variable to apply certain encoding.
+
+Either in case the `LANG` variable wouldn't be set to a UTF-8 encoding or it wouldn't be set at all (which results in handle encoding in C locale) you could get an exception during the ***engine*** execution similar to `java.nio.file.InvalidPathException: Malformed input or input contains unmappable characters`.
 
 # Pre-requisites
 
