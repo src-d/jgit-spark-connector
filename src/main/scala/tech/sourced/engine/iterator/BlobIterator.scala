@@ -5,8 +5,6 @@ import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.lib.{ObjectId, ObjectReader, Repository}
 import tech.sourced.engine.util.CompiledFilter
 
-import scala.collection.mutable
-
 /**
   * Iterator that will return rows of blobs in a repository.
   *
@@ -24,9 +22,6 @@ class BlobIterator(finalColumns: Array[String],
     Option(prevIter).orNull,
     filters
   ) with Logging {
-
-  // stores the references to the blob, so we only have to read the blob once
-  val blobCache: mutable.HashMap[ObjectId, Array[Byte]] = mutable.HashMap()
 
   /** @inheritdoc */
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[Blob] = {
@@ -62,17 +57,11 @@ class BlobIterator(finalColumns: Array[String],
   }
 
   override protected def mapColumns(blob: Blob): RawRow = {
-    // Don't read the blob again if it's already in the blob cache
-    val content = if (blobCache.contains(blob.id)) {
-      blobCache.getOrElse(blob.id, Array.emptyByteArray)
-    } else {
-      val c = BlobIterator.readFile(
-        blob.id,
-        repo.newObjectReader()
-      )
-      blobCache.put(blob.id, c)
-      c
-    }
+    val content = BlobIterator.readFile(
+      blob.id,
+      repo.newObjectReader()
+    )
+
     val isBinary = RawText.isBinary(content)
 
     Map[String, Any](
