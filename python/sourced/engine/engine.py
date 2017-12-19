@@ -36,7 +36,7 @@ class Engine(object):
         try:
             self.__engine = self.__jvm.tech.sourced.engine.Engine.apply(self.__jsparkSession, repos_path, repos_format)
         except TypeError as e:
-            if 'JavaPackage' in e.message:
+            if 'JavaPackage' in e.args[0]:
                 raise Exception("package \"tech.sourced:engine:<version>\" cannot be found. Please, provide a jar with the package or install the package using --packages")
             else:
                 raise e
