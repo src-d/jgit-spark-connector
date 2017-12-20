@@ -208,6 +208,16 @@ scala> engine.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
 
 ```
 
+## Supported repository formats
+
+As you might have seen, you need to provide the repository format you will be reading when you create the `Engine` instance. Although the documentation always uses the `siva` format, there are more repository formats available.
+
+This are all the supported formats at the moment:
+
+- `siva`: rooted repositories packed in a single `.siva` file.
+- `standard`: regular git repositories with a `.git` folder. Each in a folder of their own under the given repository path.
+- `bare`: git bare repositories. Each in a folder of their own under the given repository path.
+
 # Playing around with **engine** on Jupyter
 
 You can launch our docker container which contains some Notebooks examples just running:
