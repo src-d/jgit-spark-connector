@@ -1,5 +1,6 @@
 package tech.sourced.engine.rule
 
+import org.apache.spark.SparkException
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions._
@@ -115,8 +116,7 @@ private[rule] object MetadataOptimizer extends Logging {
         if (jm == j) {
           MetadataJoinData(valid = true, joinCondition = condition)
         } else {
-          logWarning(s"Join cannot be optimized. Invalid node: $jm")
-          MetadataJoinData()
+          throw new SparkException(s"Join cannot be optimized. Invalid node: $jm")
         }
       case Filter(cond, _) =>
         MetadataJoinData(Some(cond), valid = true)
@@ -140,8 +140,7 @@ private[rule] object MetadataOptimizer extends Logging {
           session = Some(session)
         )
       case other =>
-        logWarning(s"Join cannot be optimized. Invalid node: $other")
-        MetadataJoinData()
+        throw new SparkException(s"Join cannot be optimized. Invalid node: $other")
     }
 
     mergeMetadataJoinData(jd)

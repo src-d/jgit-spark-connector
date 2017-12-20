@@ -1,5 +1,6 @@
 package tech.sourced.engine
 
+import org.apache.spark.SparkException
 import org.scalatest._
 
 class BaseSourceSpec(source: String)
@@ -29,6 +30,15 @@ class BaseSourceSpec(source: String)
     val commits = engine.getRepositories.filter("is_fork = false").getMaster.getCommits
     val df = commits.select("message").filter(commits("message").startsWith("a"))
     df.count should be(7)
+  }
+
+  it should "throw an error if the plan cannot be optimized" in {
+    val ex = intercept[SparkException] {
+      val refs = engine.getRepositories.limit(1).getReferences.limit(1)
+      refs.count
+    }
+
+    ex.getMessage should startWith("Join cannot be optimized. Invalid node: ")
   }
 
   it should "count all commits messages from all references that are not forks" in {

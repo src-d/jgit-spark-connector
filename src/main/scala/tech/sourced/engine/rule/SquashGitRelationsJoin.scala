@@ -1,5 +1,6 @@
 package tech.sourced.engine.rule
 
+import org.apache.spark.SparkException
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions._
@@ -119,8 +120,7 @@ private[rule] object GitOptimizer extends Logging {
         if (jm == j) {
           JoinData(valid = true, joinCondition = condition)
         } else {
-          logWarning(s"Join cannot be optimized. Invalid node: $jm")
-          JoinData()
+          throw new SparkException(s"Join cannot be optimized. Invalid node: $jm")
         }
       case Filter(cond, _) =>
         JoinData(Some(cond), valid = true)
@@ -135,8 +135,7 @@ private[rule] object GitOptimizer extends Logging {
           session = Some(session)
         )
       case other =>
-        logWarning(s"Join cannot be optimized. Invalid node: $other")
-        JoinData()
+        throw new SparkException(s"Join cannot be optimized. Invalid node: $other")
     }
 
     mergeJoinData(jd)
