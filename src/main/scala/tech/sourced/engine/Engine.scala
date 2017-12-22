@@ -1,8 +1,14 @@
 package tech.sourced.engine
 
-import org.apache.hadoop.fs.{FileSystem, Path}
+import java.nio.file.Paths
+import java.util.Properties
+
+import org.apache.spark.sql.functions.{lit, when}
 import org.apache.spark.SparkException
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.internal.Logging
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import tech.sourced.engine.rule._
+import tech.sourced.engine.udf.ConcatArrayUDF
 
 import scala.collection.JavaConversions.asScalaBuffer
 
@@ -35,10 +41,63 @@ import scala.collection.JavaConversions.asScalaBuffer
   * @constructor creates a Engine instance with the given Spark session.
   * @param session Spark session to be used
   */
-class Engine(session: SparkSession) {
+class Engine(session: SparkSession,
+             repositoriesPath: String,
+             repositoriesFormat: String) extends Logging {
 
+  this.setRepositoriesPath(repositoriesPath)
+  this.setRepositoriesFormat(repositoriesFormat)
   session.registerUDFs()
-  session.experimental.extraOptimizations = Seq(SquashGitRelationJoin)
+  session.experimental.extraOptimizations = Seq(
+    AddSourceToAttributes,
+    SquashGitRelationsJoin,
+    SquashMetadataRelationsJoin
+  )
+  registerViews()
+
+  /**
+    * Register the initial views with the DefaultSource.
+    */
+  private def registerViews(): Unit = {
+    Sources.orderedSources.foreach(table => {
+      session.read.format(DefaultSourceName)
+        .option(DefaultSource.TableNameKey, table)
+        .load(session.sqlContext.getConf(RepositoriesPathKey))
+        .createOrReplaceTempView(table)
+    })
+  }
+
+  /**
+    * Registers in the current session the views of the MetadataSource so the data is obtained
+    * from the metadata database instead of reading the repositories with the DefaultSource.
+    *
+    * @param dbPath path to the folder that contains the database.
+    * @param dbName name of the database file (engine_metadata.db) by default.
+    * @return the same instance of the engine
+    */
+  def fromMetadata(dbPath: String, dbName: String = MetadataSource.DefaultDbName): Engine = {
+    Seq(RepositoriesTable, ReferencesTable, CommitsTable, TreeEntriesTable).foreach(table => {
+      session.read.format(MetadataSourceName)
+        .option(DefaultSource.TableNameKey, table)
+        .option(MetadataSource.DbPathKey, dbPath)
+        .option(MetadataSource.DbNameKey, dbName)
+        .load()
+        .createOrReplaceTempView(table)
+    })
+    this
+  }
+
+  /**
+    * Registers in the current session the views of the DefaultSource so the data is obtained
+    * by reading the repositories instead of reading from the MetadataSource. This has no effect
+    * if [[Engine#fromMetadata]] has not been called before.
+    *
+    * @return the same instance of the engine
+    */
+  def fromRepositories(): Engine = {
+    registerViews()
+    this
+  }
 
   /**
     * Returns a DataFrame with the data about the repositories found at
@@ -56,59 +115,58 @@ class Engine(session: SparkSession) {
   def getRepositories: DataFrame = getDataSource("repositories", session)
 
   /**
-    * Retrieves the files of a list of repositories, reference names and commit hashes.
-    * So the result will be a [[org.apache.spark.sql.DataFrame]] of all the files in
+    * Retrieves the blobs of a list of repositories, reference names and commit hashes.
+    * So the result will be a [[org.apache.spark.sql.DataFrame]] of all the blobs in
     * the given commits that are in the given references that belong to the given
     * repositories.
     *
     * {{{
-    * val filesDfFast = engine.getFiles(repoIds, refNames, hashes)
+    * val blobsDf = engine.getBlobs(repoIds, refNames, hashes)
     * }}}
     *
     * Calling this function with no arguments is the same as:
     *
     * {{{
-    * engine.getRepositories.getReferences.getCommits.getFiles
+    * engine.getRepositories.getReferences.getCommits.getTreeEntries.getBlobs
     * }}}
     *
     * @param repositoryIds  List of the repository ids to filter by (optional)
     * @param referenceNames List of reference names to filter by (optional)
     * @param commitHashes   List of commit hashes to filter by (optional)
-    * @return [[org.apache.spark.sql.DataFrame]] with files of the given commits, refs and repos.
+    * @return [[org.apache.spark.sql.DataFrame]] with blobs of the given commits, refs and repos.
     */
-  def getFiles(repositoryIds: Seq[String] = Seq(),
+  def getBlobs(repositoryIds: Seq[String] = Seq(),
                referenceNames: Seq[String] = Seq(),
                commitHashes: Seq[String] = Seq()): DataFrame = {
     val df = getRepositories
-    import df.sparkSession.implicits._
 
     var reposDf = df
     if (repositoryIds.nonEmpty) {
-      reposDf = reposDf.filter($"id".isin(repositoryIds: _*))
+      reposDf = reposDf.filter(reposDf("id").isin(repositoryIds: _*))
     }
 
     var refsDf = reposDf.getReferences
     if (referenceNames.nonEmpty) {
-      refsDf = refsDf.filter($"name".isin(referenceNames: _*))
+      refsDf = refsDf.filter(refsDf("name").isin(referenceNames: _*))
     }
 
     var commitsDf = refsDf.getCommits
     commitsDf = if (commitHashes.nonEmpty) {
-      commitsDf.filter($"hash".isin(commitHashes: _*))
+      commitsDf.filter(commitsDf("hash").isin(commitHashes: _*))
     } else {
       commitsDf.getFirstReferenceCommit
     }
 
-    commitsDf.getFiles
+    commitsDf.getTreeEntries.getBlobs
   }
 
   /**
     * This method is only offered for easier usage from Python.
     */
-  private[engine] def getFiles(repositoryIds: java.util.List[String],
+  private[engine] def getBlobs(repositoryIds: java.util.List[String],
                                referenceNames: java.util.List[String],
                                commitHashes: java.util.List[String]): DataFrame =
-    getFiles(
+    getBlobs(
       asScalaBuffer(repositoryIds),
       asScalaBuffer(referenceNames),
       asScalaBuffer(commitHashes)
@@ -128,16 +186,28 @@ class Engine(session: SparkSession) {
     * engine.setRepositoriesPath("/path/to/repositories")
     * }}}
     *
-    * @param path of the siva files.
+    * @param path of the repositories.
     * @return instance of the engine itself
     */
   def setRepositoriesPath(path: String): Engine = {
-    if (!FileSystem.get(session.sparkContext.hadoopConfiguration).exists(new Path(path))) {
-      throw new SparkException(s"the given repositories path ($path) does not exist, " +
-        s"so siva files can't be read from there")
-    }
+    session.conf.set(RepositoriesPathKey, path)
+    this
+  }
 
-    session.conf.set(repositoriesPathKey, path)
+  /**
+    * Sets the format of the stored repositories on the specified path.
+    *
+    * Actual compatible formats are:
+    *
+    * - siva: to read siva files
+    * - bare: to read bare repositories
+    * - standard: to read standard git repositories (with workspace)
+    *
+    * @param format of the repositories.
+    * @return instance of the engine itself
+    */
+  def setRepositoriesFormat(format: String): Engine = {
+    session.conf.set(RepositoriesFormatKey, format)
     this
   }
 
@@ -157,8 +227,68 @@ class Engine(session: SparkSession) {
     * @return instance of the engine itself
     */
   def skipCleanup(skip: Boolean): Engine = {
-    session.conf.set(skipCleanupKey, skip)
+    session.conf.set(SkipCleanupKey, skip)
     this
+  }
+
+  /**
+    * Saves all the metadata in a SQLite database on the given path as "engine_metadata.db".
+    * If the database already exists, it will be overwritten. The given path must exist and
+    * must be a directory, otherwise it will throw a [[SparkException]].
+    * Saved tables are repositories, references, commits and tree_entries. Blobs are not saved.
+    *
+    * @param path   where database with the metadata will be stored.
+    * @param dbName name of the database file
+    * @throws SparkException when the given path is not a folder or does not exist.
+    */
+  def saveMetadata(path: String, dbName: String = MetadataSource.DefaultDbName): Unit = {
+    val folder = Paths.get(path)
+    if (!folder.toFile.exists() || !folder.toFile.isDirectory) {
+      throw new SparkException("folder given to saveMetadata is not a directory " +
+        "or does not exist")
+    }
+
+    val dbFile = folder.resolve(dbName)
+    if (dbFile.toFile.exists) {
+      log.warn(s"metadata file '$dbFile' already exists, it will be deleted")
+      dbFile.toFile.delete()
+    }
+
+    implicit val session: SparkSession = this.session
+
+    val properties = new Properties()
+    properties.put("driver", "org.sqlite.JDBC")
+
+    val repositoriesDf = getDataSource(RepositoriesTable, session)
+    val referencesDf = repositoriesDf.getReferences
+    val commitsDf = referencesDf.getCommits
+    val treeEntriesDf = commitsDf.getTreeEntries
+
+    Seq(
+      (RepositoriesTable, repositoriesDf
+        .withColumn("urls", ConcatArrayUDF(repositoriesDf("urls"), lit("|")))
+        .withColumn(
+          "is_fork",
+          when(repositoriesDf("is_fork") === false, 0)
+            .otherwise(when(repositoriesDf("is_fork") === true, 1).otherwise(null))
+        )),
+      (ReferencesTable, referencesDf),
+      (CommitsTable, commitsDf
+        .drop("reference_name", "repository_id", "index")
+        .withColumn("parents", ConcatArrayUDF(commitsDf("parents"), lit("|")))
+        .distinct()),
+      (RepositoryHasCommitsTable, commitsDf
+        .select("hash", "reference_name", "repository_id", "index")),
+      (TreeEntriesTable, treeEntriesDf
+        .drop("reference_name", "repository_id").distinct())
+    ).foreach {
+      case (table, df) =>
+        Tables(table).create(dbFile.toString, df.schema)
+        df.repartition(session.currentActiveExecutors())
+          .write
+          .mode(SaveMode.Append)
+          .jdbc(s"jdbc:sqlite:$dbFile", Tables.prefix(table), properties)
+    }
   }
 
 }
@@ -177,12 +307,13 @@ object Engine {
     * val engine = Engine(sparkSession, "/path/to/repositories")
     * }}}
     *
-    * @param session          spark session to use
-    * @param repositoriesPath the path to the repositories' siva files
+    * @param session            spark session to use
+    * @param repositoriesPath   the path to the repositories
+    * @param repositoriesFormat format of the repositories inside the provided path.
+    *                           It can be siva, bare or standard.
     * @return Engine instance
     */
-  def apply(session: SparkSession, repositoriesPath: String): Engine = {
-    new Engine(session)
-      .setRepositoriesPath(repositoriesPath)
+  def apply(session: SparkSession, repositoriesPath: String, repositoriesFormat: String): Engine = {
+    new Engine(session, repositoriesPath, repositoriesFormat)
   }
 }

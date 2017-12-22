@@ -1,4 +1,4 @@
-# engine [![Build Status](https://travis-ci.org/src-d/engine.svg?branch=master)](https://travis-ci.org/src-d/engine) [![codecov](https://codecov.io/gh/src-d/engine/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/engine) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine/badge.svg)](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine)
+# engine [![Build Status](https://travis-ci.org/src-d/engine.svg?branch=master)](https://travis-ci.org/src-d/engine) [![codecov](https://codecov.io/gh/src-d/engine/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/engine) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine/badge.svg)](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fsrc-d%2Fengine.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fsrc-d%2Fengine?ref=badge_shield)
 
 **engine** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
 
@@ -46,9 +46,18 @@ $ pyspark --packages "tech.sourced:engine:[version]"
 
 Run [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can start it easily in a container following its [quick start guide](https://github.com/bblfsh/bblfshd#quick-start).
 
+If you run **engine** in an UNIX like environment, you should set the `LANG` variable properly:
+
+    export LANG="en_US.UTF-8"
+
+The rationale behind this is that UNIX file systems don't keep the encoding for each file name, they are just plain bytes,
+so the `Java API for FS` looks for the `LANG` environment variable to apply certain encoding.
+
+Either in case the `LANG` variable wouldn't be set to a UTF-8 encoding or it wouldn't be set at all (which results in handle encoding in C locale) you could get an exception during the ***engine*** execution similar to `java.nio.file.InvalidPathException: Malformed input or input contains unmappable characters`.
 
 # Pre-requisites
 
+* Scala 2.11.x
 * [Apache Spark Installation](http://spark.apache.org/docs/latest/) >= 2.2.0
 * [bblfsh](https://github.com/bblfsh/bblfshd): Used for UAST extraction
 
@@ -71,6 +80,42 @@ For [sbt](http://www.scala-sbt.org/) managed projects add the dependency:
     libraryDependencies += "tech.sourced" % "engine" % "[version]"
 
 In both cases, replace `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced)
+
+### Usage in applications as a dependency
+
+The default jar published is a fatjar containing all the dependencies required by the engine. It's meant to be used directly as a jar or through `--packages` for Spark usage.
+
+If you want to use it in an application and built a fatjar with that you need to follow these steps to use what we call the "slim" jar:
+
+With maven:
+
+```xml
+<dependency>
+    <groupId>tech.sourced</groupId>
+    <artifactId>engine</artifactId>
+    <version>[version]</version>
+    <classifier>slim</classifier>
+</dependency>
+```
+
+Or (for sbt):
+
+```scala
+libraryDependencies += "tech.sourced" % "engine" % "[version]" % Compile classifier "slim"
+```
+
+If you run into problems with `io.netty.versions.properties` on sbt, you can add the following snippet to solve it:
+
+In sbt:
+
+```scala
+assemblyMergeStrategy in assembly := {
+  case "META-INF/io.netty.versions.properties" => MergeStrategy.last
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}
+```
 
 ## pyspark
 
@@ -115,7 +160,7 @@ Welcome to
 Using Python version 3.6.2 (default, Jul 20 2017 03:52:27)
 SparkSession available as 'spark'.
 >>> from sourced.engine import Engine
->>> engine = Engine(spark, '/path/to/siva/files')
+>>> engine = Engine(spark, '/path/to/siva/files', 'siva')
 >>> engine.repositories.filter('id = "github.com/mingrammer/funmath.git"').references.filter("name = 'refs/heads/HEAD'").show()
 +--------------------+---------------+--------------------+
 |       repository_id|           name|                hash|
@@ -143,7 +188,7 @@ import tech.sourced.engine._
 Now, you need to create an instance of `Engine` and give it the spark session and the path of the directory containing the siva files:
 
 ```bash
-scala> val engine = Engine(spark, "/path/to/siva-files")
+scala> val engine = Engine(spark, "/path/to/siva-files", "siva")
 ```
 
 Then, you will be able to perform queries over the repositories:
@@ -163,6 +208,16 @@ scala> engine.getRepositories.filter('id === "github.com/mawag/faq-xiyoulinux").
 
 ```
 
+## Supported repository formats
+
+As you might have seen, you need to provide the repository format you will be reading when you create the `Engine` instance. Although the documentation always uses the `siva` format, there are more repository formats available.
+
+These are all the supported formats at the moment:
+
+- `siva`: rooted repositories packed in a single `.siva` file.
+- `standard`: regular git repositories with a `.git` folder. Each in a folder of their own under the given repository path.
+- `bare`: git bare repositories. Each in a folder of their own under the given repository path.
+
 # Playing around with **engine** on Jupyter
 
 You can launch our docker container which contains some Notebooks examples just running:
@@ -180,7 +235,7 @@ When the `engine-jupyter` container starts it will show you an URL that you can 
 If you are using engine directly from Python and are unable to modify the `PYTHON_SUBMIT_ARGS` you can copy the engine jar to the pyspark jars to make it available there.
 
 ```
-cp engine.jar "$(python -c 'import pyspark; print(pyspark.__path__[0])'/jars"
+cp engine.jar "$(python -c 'import pyspark; print(pyspark.__path__[0])')/jars"
 ```
 
 This way, you can use it in the following way:
@@ -196,7 +251,7 @@ from sourced.engine import Engine
 
 siva_folder = "/path/to/siva-files"
 spark = SparkSession.builder.appName("test").master("local[*]").getOrCreate()
-engine = Engine(spark, siva_folder)
+engine = Engine(spark, siva_folder, 'siva')
 ```
 
 # Development
@@ -278,3 +333,6 @@ There is no windows support in enry-java or bblfsh's client-scala right now, so 
 # License
 
 Apache License Version 2.0, see [LICENSE](LICENSE)
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fsrc-d%2Fengine.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fsrc-d%2Fengine?ref=badge_large)

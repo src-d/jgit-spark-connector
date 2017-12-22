@@ -1,7 +1,7 @@
 package tech.sourced.engine.iterator
 
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
-import tech.sourced.engine.util.{Attr, CompiledFilter, EqualFilter, Filter}
+import tech.sourced.engine.util.{CompiledFilter, Filter}
 
 import scala.collection.JavaConverters._
 
@@ -17,32 +17,23 @@ class ReferenceIterator(finalColumns: Array[String],
                         repo: Repository,
                         prevIter: RepositoryIterator,
                         filters: Seq[CompiledFilter])
-  extends RootedRepoIterator[Ref](finalColumns, repo, prevIter, filters) {
+  extends ChainableIterator[Ref](finalColumns, prevIter, filters) {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[Ref] =
     ReferenceIterator.loadIterator(
       repo,
-      Option(prevIter) match {
-        case Some(it) => Option(it.currentRow)
-        case None => None
-      },
+      Option(prevIter).map(_.currentRow),
       filters.flatMap(_.matchingCases)
     )
 
-  /** @inheritdoc*/
-  override protected def mapColumns(ref: Ref): Map[String, () => Any] = {
+  /** @inheritdoc */
+  override protected def mapColumns(ref: Ref): RawRow = {
     val (repoId, refName) = RootedRepo.parseRef(repo, ref.getName)
-    Map[String, () => Any](
-      "repository_id" -> (() => {
-        repoId
-      }),
-      "name" -> (() => {
-        refName
-      }),
-      "hash" -> (() => {
-        ObjectId.toString(Option(ref.getPeeledObjectId).getOrElse(ref.getObjectId))
-      })
+    Map[String, Any](
+      "repository_id" -> repoId,
+      "name" -> refName,
+      "hash" -> ObjectId.toString(Option(ref.getPeeledObjectId).getOrElse(ref.getObjectId))
     )
   }
 
@@ -68,6 +59,7 @@ object ReferenceIterator {
                    refNameKey: String = "name"): Iterator[Ref] = {
     val referenceNames = filters.flatMap {
       case (k, refNames) if k == refNameKey => refNames.map(_.toString)
+      case ("name", refNames) => refNames.map(_.toString)
       case _ => Seq()
     }
 
@@ -80,7 +72,7 @@ object ReferenceIterator {
 
         if (filterRepos.isEmpty || filterRepos.contains(id)) Array(id) else Array()
       case None =>
-        RepositoryIterator.loadIterator(repo, filters, "repository_id").toArray
+        RepositoryIterator.loadIterator(repo, filters, repoKey).toArray
     }
 
     val out = repo.getAllRefs.asScala.values.filter(ref => {

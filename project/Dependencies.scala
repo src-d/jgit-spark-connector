@@ -9,8 +9,9 @@ object Dependencies {
   lazy val jgit = "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r"
   lazy val siva = "tech.sourced" % "siva-java" % "0.1.1"
   lazy val bblfsh = "org.bblfsh" % "bblfsh-client" % "1.3.3"
-  lazy val enry = "tech.sourced" % "enry-java" % "1.6.1"
+  lazy val enry = "tech.sourced" % "enry-java" % "1.6.2"
   lazy val commonsIO = "commons-io" % "commons-io" % "2.5"
   lazy val commonsPool = "org.apache.commons" % "commons-pool2" % "2.4.3"
-
+  lazy val scalaLib = "org.scala-lang" % "scala-library" % "2.11.11"
+  lazy val sqlite = "org.xerial" % "sqlite-jdbc" % "3.21.0"
 }

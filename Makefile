@@ -100,6 +100,5 @@ docker-bblfsh-list-drivers:
 	$(DOCKER_EXEC) $(BBLFSH_LIST_DRIVERS)
 
 maven-release:
-	$(SBT) publishLocal && \
-	$(SBT) publishSigned && \
+	$(SBT) clean publishSigned && \
 	$(SBT) sonatypeRelease

@@ -1,32 +1,24 @@
 package tech.sourced.engine.iterator
 
 import org.apache.spark.sql.Row
-import org.eclipse.jgit.lib.{Repository, StoredConfig}
-import tech.sourced.engine.util.{CompiledFilter, GitUrlsParser}
+import tech.sourced.engine.util.CompiledFilter
 
 import scala.annotation.tailrec
-import scala.collection.JavaConverters.collectionAsScalaIterableConverter
 
 /**
-  * Common functionality shared by all git relation iterators. A RootedRepoIterator
-  * is an iterator that generates rows of a certain data type extracted from a rooted
-  * repository.
-  * Multiple RootedRepoIterators can be chained to use the result of the previous iterator
-  * in order to have a better performance and compute less data.
+  * Iterator that can have a previous iterator to output chained values.
   *
   * @param finalColumns final columns that must be in the resultant row
-  * @param repo         repository to get the data from
   * @param prevIter     previous iterator, if the iterator is chained
   * @param filters      filters for the iterator
   * @tparam T type of data returned by the internal iterator
   */
-abstract class RootedRepoIterator[T](finalColumns: Array[String],
-                                     repo: Repository,
-                                     prevIter: RootedRepoIterator[_],
-                                     filters: Seq[CompiledFilter]) extends Iterator[Row] {
+abstract class ChainableIterator[T](finalColumns: Array[String],
+                                    prevIter: ChainableIterator[_],
+                                    filters: Seq[CompiledFilter]) extends Iterator[Row] {
 
   /** Raw values of the row. */
-  type RawRow = Map[String, () => Any]
+  type RawRow = Map[String, Any]
 
   /** Instance of the internal iterator. */
   private var iter: Iterator[T] = _
@@ -60,10 +52,6 @@ abstract class RootedRepoIterator[T](finalColumns: Array[String],
     * @return raw row
     */
   protected def mapColumns(obj: T): RawRow
-
-  private val repoConfig = repo.getConfig
-
-  private val remotes = repoConfig.getSubsections("remote").asScala
 
   //final private def isEmpty: Boolean = !hasNext
 
@@ -114,13 +102,16 @@ abstract class RootedRepoIterator[T](finalColumns: Array[String],
 
   override def next: Row = {
     currentRow = iter.next
+    // FIXME: if there's a repeated column name, value
+    // will be the last one added. This could be solved by
+    // qualifying all column names with their source.
     val mappedValues = if (prevIterCurrentRow != null) {
       prevIterCurrentRow ++ mapColumns(currentRow)
     } else {
       mapColumns(currentRow)
     }
 
-    val values = finalColumns.map(c => mappedValues(c)())
+    val values = finalColumns.map(c => mappedValues(c))
     Row(values: _*)
   }
 
@@ -134,60 +125,4 @@ abstract class RootedRepoIterator[T](finalColumns: Array[String],
       row
     }
   }
-}
-
-object RootedRepo {
-
-  /**
-    * Returns the ID of a repository given its UUID.
-    *
-    * @param repo repository
-    * @param uuid repository UUID
-    * @return repository ID
-    */
-  private[iterator] def getRepositoryId(repo: Repository, uuid: String): Option[String] = {
-    // TODO: maybe a cache here could improve performance
-    val c: StoredConfig = repo.getConfig
-    c.getSubsections("remote").asScala.find(i => i == uuid) match {
-      case None => None
-      case Some(i) => Some(GitUrlsParser.getIdFromUrls(
-        c.getStringList("remote", i, "url")
-      ))
-    }
-  }
-
-  /**
-    * Returns the UUID of a repository given its ID.
-    *
-    * @param repo repository
-    * @param id   repository id
-    * @return UUID of the repo
-    */
-  private[iterator] def getRepositoryUUID(repo: Repository, id: String): Option[String] = {
-    // TODO: maybe a cache here could improve performance
-    val c: StoredConfig = repo.getConfig
-    c.getSubsections("remote").asScala.find(uuid => {
-      val actualId: String =
-        GitUrlsParser.getIdFromUrls(c.getStringList("remote", uuid, "url"))
-
-      actualId == id
-    })
-  }
-
-  /**
-    * Parses a reference name and returns a tuple with the repository id and the reference name.
-    *
-    * @param repo repository
-    * @param ref  reference name
-    * @return tuple with repository id and reference name
-    */
-  private[iterator] def parseRef(repo: Repository, ref: String): (String, String) = {
-    val split: Array[String] = ref.split("/")
-    val uuid: String = split.last
-    val repoId: String = getRepositoryId(repo, uuid).get
-    val refName: String = split.init.mkString("/")
-
-    (repoId, refName)
-  }
-
 }

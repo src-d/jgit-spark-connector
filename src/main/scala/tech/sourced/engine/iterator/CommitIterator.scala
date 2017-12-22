@@ -6,7 +6,6 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.errors.IncorrectObjectTypeException
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
 import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.treewalk.TreeWalk
 import tech.sourced.engine.util.{CompiledFilter, Filter}
 
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
@@ -23,68 +22,40 @@ class CommitIterator(finalColumns: Array[String],
                      repo: Repository,
                      prevIter: ReferenceIterator,
                      filters: Seq[CompiledFilter])
-  extends RootedRepoIterator[ReferenceWithCommit](finalColumns, repo, prevIter, filters) {
+  extends ChainableIterator[ReferenceWithCommit](finalColumns, prevIter, filters) {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[ReferenceWithCommit] =
     CommitIterator.loadIterator(
       repo,
-      Option(prevIter) match {
-        case Some(it) => Option(it.currentRow)
-        case None => None
-      },
+      Option(prevIter).map(_.currentRow),
       filters.flatMap(_.matchingCases)
     )
 
-  /** @inheritdoc */
-  override protected def mapColumns(obj: ReferenceWithCommit): Map[String, () => Any] = {
+  /** @inheritdoc*/
+  override protected def mapColumns(obj: ReferenceWithCommit): RawRow = {
     val (repoId, refName) = RootedRepo.parseRef(repo, obj.ref.getName)
 
     val c: RevCommit = obj.commit
-    lazy val files: Map[String, String] = this.getFiles(obj.commit)
+    Map[String, Any](
+      "repository_id" -> repoId,
+      "reference_name" -> refName,
+      "index" -> obj.index,
+      "hash" -> ObjectId.toString(c.getId),
+      "message" -> c.getFullMessage,
+      "parents" -> c.getParents.map(p => ObjectId.toString(p.getId)),
+      "parents_count" -> c.getParentCount,
 
-    Map[String, () => Any](
-      "repository_id" -> (() => repoId),
-      "reference_name" -> (() => refName),
-      "index" -> (() => obj.index),
-      "hash" -> (() => ObjectId.toString(c.getId)),
-      "message" -> (() => c.getFullMessage),
-      "parents" -> (() => c.getParents.map(p => ObjectId.toString(p.getId))),
-      "tree" -> (() => files),
-      "blobs" -> (() => files.values.toArray),
-      "parents_count" -> (() => c.getParentCount),
+      "author_email" -> c.getAuthorIdent.getEmailAddress,
+      "author_name" -> c.getAuthorIdent.getName,
+      "author_date" -> new Timestamp(c.getAuthorIdent.getWhen.getTime),
 
-      "author_email" -> (() => c.getAuthorIdent.getEmailAddress),
-      "author_name" -> (() => c.getAuthorIdent.getName),
-      "author_date" -> (() => new Timestamp(c.getAuthorIdent.getWhen.getTime)),
-
-      "committer_email" -> (() => c.getCommitterIdent.getEmailAddress),
-      "committer_name" -> (() => c.getCommitterIdent.getName),
-      "committer_date" -> (() => new Timestamp(c.getCommitterIdent.getWhen.getTime))
+      "committer_email" -> c.getCommitterIdent.getEmailAddress,
+      "committer_name" -> c.getCommitterIdent.getName,
+      "committer_date" -> new Timestamp(c.getCommitterIdent.getWhen.getTime)
     )
   }
 
-  /**
-    * Retrieves the files for a commit.
-    *
-    * @param c commit
-    * @return map of files
-    */
-  private def getFiles(c: RevCommit): Map[String, String] = {
-    val treeWalk: TreeWalk = new TreeWalk(repo)
-    val nth: Int = treeWalk.addTree(c.getTree.getId)
-    treeWalk.setRecursive(false)
-
-    Stream.continually(treeWalk)
-      .takeWhile(_.next()).map(tree => {
-      if (tree.isSubtree) {
-        tree.enterSubtree()
-      }
-      tree
-    }).filter(!_.isSubtree)
-      .map(
-        walker => new String(walker.getRawPath) -> ObjectId.toString(walker.getObjectId(nth))).toMap
-  }
 }
 
 case class ReferenceWithCommit(ref: Ref, commit: RevCommit, index: Int)
@@ -132,6 +103,7 @@ object CommitIterator {
 
     val hashes = filters.flatMap {
       case (k, h) if k == hashKey => h.map(_.toString)
+      case ("hash", h) => h.map(_.toString)
       case _ => Seq()
     }
 
@@ -162,7 +134,7 @@ class RefWithCommitIterator(repo: Repository,
   private var commits: Iterator[RevCommit] = _
   private var index: Int = 0
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def hasNext: Boolean = {
     while ((commits == null || !commits.hasNext) && refs.hasNext) {
       actualRef = refs.next()
@@ -181,7 +153,7 @@ class RefWithCommitIterator(repo: Repository,
     refs.hasNext || (commits != null && commits.hasNext)
   }
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def next(): ReferenceWithCommit = {
     val result: ReferenceWithCommit = ReferenceWithCommit(actualRef, commits.next(), index)
     index += 1

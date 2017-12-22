@@ -8,7 +8,7 @@ class StorageLevelSpec  extends FlatSpec with Matchers with BaseSivaSpec with Ba
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    engine = Engine(ss, resourcePath)
+    engine = Engine(ss, resourcePath, "siva")
   }
 
   "A Dataframe" should "work with all storage levels" in {

@@ -5,14 +5,16 @@ import sbt.Keys.libraryDependencies
 
 organization := "tech.sourced"
 scalaVersion := "2.11.11"
-version := "0.1.8"
 name := "engine"
+
+git.useGitDescribe := true
+enablePlugins(GitVersioning)
 
 libraryDependencies += scalaTest % Test
 libraryDependencies += scoverage % Test
 libraryDependencies += sparkSql % Provided
 libraryDependencies += newerHadoopClient % Provided //due to newer v. of guava in bblfsh
-// grpc for bblfsh/client-scala needs to be newer then in Spark
+// grpc for bblfsh/client-scala needs to be newer than in Spark
 libraryDependencies += fixNettyForGrpc
 libraryDependencies += jgit % Compile
 libraryDependencies += siva % Compile
@@ -20,6 +22,9 @@ libraryDependencies += bblfsh % Compile
 libraryDependencies += commonsIO % Compile
 libraryDependencies += commonsPool % Compile
 libraryDependencies += enry % Compile
+libraryDependencies += scalaLib % Provided
+libraryDependencies += sqlite % Compile
+libraryDependencies += sqlite % Test
 
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oUT")
 
@@ -29,6 +34,7 @@ assemblyJarName in assembly := s"${name.value}-${version.value}.jar"
 parallelExecution in Test := false
 logBuffered in Test := false
 
+// Shade everything but tech.sourced.engine so the user does not have conflicts
 assemblyShadeRules in assembly := Seq(
   ShadeRule.rename("com.google.common.**" -> "com.google.shadedcommon.@1").inAll,
   ShadeRule.rename("io.netty.**" -> "io.shadednetty.@1").inAll
@@ -84,7 +90,25 @@ pgpSecretRing := baseDirectory.value / "project" / ".gnupg" / "secring.gpg"
 pgpPublicRing := baseDirectory.value / "project" / ".gnupg" / "pubring.gpg"
 pgpPassphrase := Some(SONATYPE_PASSPHRASE.toArray)
 
-publishArtifact in(Compile, packageBin) := false
+packageBin in Compile := {
+  val file = (packageBin in Compile).value
+  val dest = new java.io.File(file.getParent, s"${name.value}-${version.value}-slim.jar")
+  Files.copy(
+    new java.io.File(file.getAbsolutePath).toPath,
+    dest.toPath,
+    StandardCopyOption.REPLACE_EXISTING
+  )
+  Files.delete(file.toPath)
+  dest
+}
+
+publishArtifact in (Compile, packageBin) := false
+
+val packageSlim = taskKey[File]("package-slim")
+
+packageSlim := (packageBin in Compile).value
+
+addArtifact(Artifact("engine", "jar", "jar", "slim"), packageSlim)
 
 assembly := {
   val file = assembly.value
@@ -96,6 +120,8 @@ assembly := {
   )
   file
 }
+
+assembly := assembly.dependsOn(packageBin in Compile).value
 
 addArtifact(artifact in(Compile, assembly), assembly)
 

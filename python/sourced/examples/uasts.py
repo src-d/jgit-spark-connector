@@ -6,10 +6,10 @@ def main():
     file_path = os.path.dirname(os.path.realpath(__file__))
     repos_path = os.path.join(file_path, '..', '..', '..', 'src', 'test', 'resources', 'siva-files')
     session = SparkSession.builder.appName("test").master('local[*]').getOrCreate()
-    engine = Engine(session, repos_path)
+    engine = Engine(session, repos_path, "siva")
     engine.repositories.references\
         .filter('name = "refs/heads/develop"')\
-        .commits.files\
+        .commits.first_reference_commit.tree_entries.blobs\
         .classify_languages()\
         .filter('lang = "Ruby"')\
         .extract_uasts()\
