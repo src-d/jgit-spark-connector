@@ -47,7 +47,7 @@ func (fi bindataFileInfo) Sys() interface{} {
 var _dockerComposeYmlTmpl = []byte(`version: '2'
 services:
   bblfshd:
-    image: bblfsh/bblfshd:v2.2.0
+    image: bblfsh/bblfshd:v2.2.2
     volumes:
 {{- if eq .OS "linux"}}
       - {{.Home}}/.bblfshd:/var/lib/bblfshd
@@ -57,11 +57,12 @@ services:
     restart: always
     privileged: true
   jupyter:
-    image: srcd/engine-playground:dev-4f3f6bc-dirty
+    image: srcd/engine-playground:dev-d130174-dirty
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
-      - {{.Home}}/.engine:/opt/engine/workspace
+      - {{.Home}}/.engine/repositories:/opt/engine/workspace/repositories
+      - {{.Home}}/.engine/notebooks:/opt/engine/workspace/notebooks
 `)
 
 func dockerComposeYmlTmplBytes() ([]byte, error) {
@@ -74,7 +75,7 @@ func dockerComposeYmlTmpl() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "docker-compose.yml.tmpl", size: 400, mode: os.FileMode(420), modTime: time.Unix(1, 0)}
+	info := bindataFileInfo{name: "docker-compose.yml.tmpl", size: 494, mode: os.FileMode(420), modTime: time.Unix(1, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
