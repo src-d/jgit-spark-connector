@@ -108,6 +108,51 @@ class Engine(object):
         """
         return self.__implicits.parseUASTNode(data)
 
+    def from_metadata(self, db_path, db_name='engine_metadata.db'):
+        """
+        Registers in the current session the views of the MetadataSource so the
+        data is obtained from the metadata database instead of reading the
+        repositories with the DefaultSource.
+
+        :param db_path: path to the folder that contains the database.
+        :type db_path: str
+        :param db_name: name of the database file (engine_metadata.db) by default.
+        :type db_name: str
+        :returns: the same instance of the engine
+        :rtype: Engine
+        """
+
+        self.__engine.fromMetadata(db_path, db_name)
+        return self
+
+    def from_repositories(self):
+        """
+        Registers in the current session the views of the DefaultSource so the
+        data is obtained by reading the repositories instead of reading from
+        the MetadataSource. This has no effect if :method:`fromMetadata` has
+        not been called before.
+
+        :returns: the same instance of the engine
+        :rtype: Engine
+        """
+
+        return self.__engine.fromRepositories()
+
+    def save_metadata(self, path, db_name='engine_metadata.db'):
+        """
+        Saves all the metadata in a SQLite database on the given path with the given filename
+        (which if not given is "engine_metadata.db". If the database already exists, it will be
+        overwritten. The given path must exist and must be a directory, otherwise it will throw
+        a [[SparkException]].
+        Saved tables are repositories, references, commits and tree_entries. Blobs are not saved.
+
+        :param path:   where database with the metadata will be stored.
+        :param db_name: name of the database file (default is "engine_metadata.db")
+        :raise Exception: when the given path is not a folder or does not exist.
+        """
+
+        self.__engine.saveMetadata(path, db_name)
+
 
 class SourcedDataFrame(DataFrame):
     """

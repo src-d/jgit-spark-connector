@@ -1,9 +1,9 @@
+from os import path
+import shutil
+import tempfile
 from sourced.engine import Engine
 from sourced.engine.engine import BlobsDataFrame
 from .base import BaseTestCase
-from os import path
-import json
-
 
 REPOSITORIES = ['anongit.kde.org/purpose.git',
                 'anongit.kde.org/scratch/apol/purpose.git',
@@ -217,3 +217,17 @@ class EngineTestCase(BaseTestCase):
             .extract_tokens().first()
 
         self.assertEqual(row["tokens"], ["contents", "read", "f", "open", "f"])
+
+    def test_metadata(self):
+        tmpdir = tempfile.mkdtemp()
+
+        self.engine.save_metadata(tmpdir)
+        db_path = path.join(tmpdir, 'engine_metadata.db')
+        self.assertTrue(path.exists(db_path))
+
+        engine = self.engine.from_metadata(tmpdir)
+        expected = self.engine.repositories.count()
+        obtained = engine.repositories.count()
+        self.assertEqual(obtained, expected)
+
+        shutil.rmtree(tmpdir)
