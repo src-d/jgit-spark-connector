@@ -31,7 +31,8 @@ object SquashGitRelationsJoin extends Rule[LogicalPlan] {
           val relation = LogicalRelation(
             GitRelation(
               session,
-              RelationOptimizer.attributesToSchema(attributes), joinConditions
+              RelationOptimizer.attributesToSchema(attributes),
+              joinConditions
             ),
             attributes,
             None
@@ -44,7 +45,7 @@ object SquashGitRelationsJoin extends Rule[LogicalPlan] {
 
           val filteredNode = filters match {
             case Some(filter) => Filter(filter, node)
-            case None => relation
+            case None => node
           }
 
           // If the projection is empty, just return the filter
