@@ -140,13 +140,14 @@ class Engine(object):
 
     def save_metadata(self, path, db_name='engine_metadata.db'):
         """
-        Saves all the metadata in a SQLite database on the given path as "engine_metadata.db".
-        If the database already exists, it will be overwritten. The given path must exist and
-        must be a directory, otherwise it will throw a [[SparkException]].
+        Saves all the metadata in a SQLite database on the given path with the given filename
+        (which if not given is "engine_metadata.db". If the database already exists, it will be
+        overwritten. The given path must exist and must be a directory, otherwise it will throw
+        a [[SparkException]].
         Saved tables are repositories, references, commits and tree_entries. Blobs are not saved.
 
         :param path:   where database with the metadata will be stored.
-        :param db_name: name of the database file
+        :param db_name: name of the database file (default is "engine_metadata.db")
         :raise Exception: when the given path is not a folder or does not exist.
         """
 
