@@ -1,5 +1,6 @@
 from os import path
-from tempfile import TemporaryDirectory
+import shutil
+import tempfile
 from sourced.engine import Engine
 from sourced.engine.engine import BlobsDataFrame
 from .base import BaseTestCase
@@ -218,10 +219,13 @@ class EngineTestCase(BaseTestCase):
         self.assertEqual(row["tokens"], ["contents", "read", "f", "open", "f"])
 
     def test_metadata(self):
-        with TemporaryDirectory() as tmpdir:
-            self.engine.save_metadata(tmpdir)
-            db_path = path.join(tmpdir, 'engine_metadata.db')
-            self.assertTrue(path.exists(db_path))
+        tmpdir = tempfile.mkdtemp()
 
-            engine = self.engine.from_metadata(tmpdir)
-            self.assertEqual(self.engine.session, engine.session)
+        self.engine.save_metadata(tmpdir)
+        db_path = path.join(tmpdir, 'engine_metadata.db')
+        self.assertTrue(path.exists(db_path))
+
+        engine = self.engine.from_metadata(tmpdir)
+        self.assertEqual(self.engine.session, engine.session)
+
+        shutil.rmtree(tmpdir)
