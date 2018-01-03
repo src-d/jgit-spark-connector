@@ -226,6 +226,8 @@ class EngineTestCase(BaseTestCase):
         self.assertTrue(path.exists(db_path))
 
         engine = self.engine.from_metadata(tmpdir)
-        self.assertEqual(self.engine.session, engine.session)
+        expected = self.engine.repositories.count()
+        obtained = engine.repositories.count()
+        self.assertEqual(obtained, expected)
 
         shutil.rmtree(tmpdir)
