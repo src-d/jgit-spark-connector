@@ -1,8 +1,11 @@
 package tech.sourced.engine.util
 
-import java.nio.file.Path
+import java.nio.file.{Path, Paths}
 
+import org.apache.commons.io.FileUtils
+import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.transport.URIish
 
 object RepoUtils {
@@ -21,4 +24,12 @@ object RepoUtils {
     cmd.setUri(new URIish(url))
     cmd.call()
   }
+
+  def commitFile(repo: Git, name: String, content: String, msg: String): RevCommit = {
+    val file = Paths.get(repo.getRepository.getDirectory.getParent, name)
+    FileUtils.write(file.toFile, content)
+    repo.add().addFilepattern(name).call()
+    repo.commit().setMessage(msg).call()
+  }
+
 }

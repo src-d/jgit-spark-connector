@@ -218,6 +218,13 @@ These are all the supported formats at the moment:
 - `standard`: regular git repositories with a `.git` folder. Each in a folder of their own under the given repository path.
 - `bare`: git bare repositories. Each in a folder of their own under the given repository path.
 
+### Processing local repositories with the engine
+
+There are some design decisions that may surprise the user when processing local repositories, instead of siva files. This is the list of things you should take into account when doing so:
+
+- All local branches will belong to a repository whose id is `file://$REPOSITORY_PATH`. So, if you clone `https://github.com/foo/bar.git` at `/home/foo/bar`, you will see two repositories `file:///home/foo/bar` and `github.com/foo/bar`, even if you only have one.
+- Remote branches are transformed from `refs/remote/$REMOTE_NAME/$BRANCH_NAME` to `refs/heads/$BRANCH_NAME` as they will only belong to the repository id of their corresponding remote. So `refs/remote/origin/HEAD` becomes `refs/heads/HEAD`.
+
 # Playing around with **engine** on Jupyter
 
 You can launch our docker container which contains some Notebooks examples just running:
