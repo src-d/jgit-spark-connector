@@ -29,6 +29,7 @@ root
  |-- repository_id: string (nullable = false)
  |-- name: string (nullable = false)
  |-- hash: string (nullable = false)
+ |-- is_remote: boolean (nullable = false)
 */
 
 engine.getRepositories.getReferences.getCommits.printSchema

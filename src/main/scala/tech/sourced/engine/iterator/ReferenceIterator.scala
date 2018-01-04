@@ -33,7 +33,8 @@ class ReferenceIterator(finalColumns: Array[String],
     Map[String, Any](
       "repository_id" -> repoId,
       "name" -> refName,
-      "hash" -> ObjectId.toString(Option(ref.getPeeledObjectId).getOrElse(ref.getObjectId))
+      "hash" -> ObjectId.toString(Option(ref.getPeeledObjectId).getOrElse(ref.getObjectId)),
+      "is_remote" -> Option(repo.getRemoteName(ref.getName)).isDefined
     )
   }
 
