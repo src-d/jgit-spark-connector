@@ -284,7 +284,8 @@ class RepositoriesDataFrame(SourcedDataFrame):
 
         :rtype: ReferencesDataFrame
         """
-        return self.references.ref('refs/heads/HEAD')
+        return ReferencesDataFrame(self._engine_dataframe.getReferences().getHEAD(),
+                                   self._session, self._implicits)
 
 
     @property
@@ -296,7 +297,8 @@ class RepositoriesDataFrame(SourcedDataFrame):
 
         :rtype: ReferencesDataFrame
         """
-        return self.references.ref('refs/heads/master')
+        return ReferencesDataFrame(self._engine_dataframe.getReferences().getHEAD(),
+                                   self._session, self._implicits)
 
 
 class ReferencesDataFrame(SourcedDataFrame):
@@ -326,7 +328,8 @@ class ReferencesDataFrame(SourcedDataFrame):
 
         :rtype: ReferencesDataFrame
         """
-        return self.ref('refs/heads/HEAD')
+        return ReferencesDataFrame(self._engine_dataframe.getHEAD(),
+                                   self._session, self._implicits)
 
 
     @property
@@ -338,6 +341,8 @@ class ReferencesDataFrame(SourcedDataFrame):
 
         :rtype: ReferencesDataFrame
         """
+        return ReferencesDataFrame(self._engine_dataframe.getMaster(),
+                                   self._session, self._implicits)
         return self.ref('refs/heads/master')
 
 
