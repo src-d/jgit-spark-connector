@@ -254,8 +254,6 @@ class Engine(session: SparkSession,
       dbFile.toFile.delete()
     }
 
-    implicit val session: SparkSession = this.session
-
     val properties = new Properties()
     properties.put("driver", "org.sqlite.JDBC")
 
@@ -264,24 +262,22 @@ class Engine(session: SparkSession,
     val commitsDf = referencesDf.getCommits
     val treeEntriesDf = commitsDf.getTreeEntries
 
+    import MetadataDataFrameCompat._
+
     Seq(
       (RepositoriesTable, repositoriesDf
-        .withColumn("urls", ConcatArrayUDF(repositoriesDf("urls"), lit("|")))
-        .withColumn(
-          "is_fork",
-          when(repositoriesDf("is_fork") === false, 0)
-            .otherwise(when(repositoriesDf("is_fork") === true, 1).otherwise(null))
-        )),
-      (ReferencesTable, referencesDf),
+        .withStringArrayColumnAsString("urls")
+        .withBooleanColumnAsInt("is_fork")),
+      (ReferencesTable, referencesDf.withBooleanColumnAsInt("is_remote")),
       (CommitsTable, commitsDf
         .drop("reference_name", "repository_id", "index")
-        .withColumn("parents", ConcatArrayUDF(commitsDf("parents"), lit("|")))
+        .withStringArrayColumnAsString("parents")
         .distinct()),
       (RepositoryHasCommitsTable, commitsDf
         .select("hash", "reference_name", "repository_id", "index")),
       (TreeEntriesTable, treeEntriesDf
         .drop("reference_name", "repository_id").distinct())
-    ).foreach {
+    ) foreach {
       case (table, df) =>
         Tables(table).create(dbFile.toString, df.schema)
         df.repartition(session.currentActiveExecutors())
@@ -316,4 +312,36 @@ object Engine {
   def apply(session: SparkSession, repositoriesPath: String, repositoriesFormat: String): Engine = {
     new Engine(session, repositoriesPath, repositoriesFormat)
   }
+}
+
+/**
+  * Contains the Convert implicit class that gives DataFrame some methods to
+  * deal with compatibility between the regular DefaultSource dataframe and the
+  * MetadataSource one.
+  */
+private object MetadataDataFrameCompat {
+
+  implicit class Convert(df: DataFrame) {
+    /**
+      * Returns a new DataFrame with the given boolean column converted to
+      * an int column, being 0 the value for false and 1 for true.
+      *
+      * @param column column name
+      * @return new DataFrame
+      */
+    def withBooleanColumnAsInt(column: String): DataFrame =
+      df.withColumn(column, when(df(column) === false, 0)
+        .otherwise(when(df(column) === true, 1).otherwise(null)))
+
+    /**
+      * Returns a new DataFrame with the given string array column converted to
+      * a column with the content of the array joined by "|".
+      *
+      * @param column column name
+      * @return new dataframe
+      */
+    def withStringArrayColumnAsString(column: String): DataFrame =
+      df.withColumn(column, ConcatArrayUDF(df(column), lit("|"))(df.sparkSession))
+  }
+
 }

@@ -12,7 +12,7 @@ trait BaseChainableIterator extends Suite with BaseSparkSpec with BaseSivaSpec w
   lazy val rdd: RDD[RepositorySource] = prov.get(resourcePath, RepositoryRDDProvider.SivaFormat)
 
   lazy val source: RepositorySource = rdd.filter(source => source.pds.getPath()
-    .contains("fff7062de8474d10a67d417ccea87ba6f58ca81d.siva")).first()
+    .endsWith("fff7062de8474d10a67d417ccea87ba6f58ca81d.siva")).first()
   lazy val repo: Repository = RepositoryProvider("/tmp").get(source)
 
   def testIterator(iterator: (Repository) => Iterator[Row],

@@ -29,6 +29,7 @@ private[engine] object Schema {
     StructField("repository_id", StringType, nullable = false) ::
       StructField("name", StringType, nullable = false) ::
       StructField("hash", StringType, nullable = false) ::
+      StructField("is_remote", BooleanType, nullable = false) ::
       Nil
   )
 
