@@ -11,16 +11,17 @@ class FilterUDFSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSp
     engine = Engine(ss, resourcePath, "siva")
   }
 
-  "Filter by language" should "works properly" in {
+  "Filter by language" should "work properly" in {
     val langDf = engine
       .getRepositories
       .getReferences
       .getCommits
+      .getFirstReferenceCommit
       .getBlobs
       .classifyLanguages
 
     val filteredLang = langDf.select("repository_id", "path", "lang").where("lang='Python'")
-    filteredLang.count() should be(14)
+    filteredLang.count() should be(6)
   }
 
   override protected def afterAll(): Unit = {
