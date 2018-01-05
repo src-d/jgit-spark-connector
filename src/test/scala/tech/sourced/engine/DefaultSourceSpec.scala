@@ -40,8 +40,8 @@ class DefaultSourceSpec extends BaseSourceSpec("DefaultSource") {
       .setDirectory(repoDir.toFile)
       .call()
 
-    val masters = Engine(ss, tmpPath.toString, "standard")
-      .getRepositories
+    val engine = Engine(ss, tmpPath.toString, "standard")
+    val masters = engine.getRepositories
       .getMaster
       .collect()
       .sortBy(_.getAs[String]("repository_id"))
@@ -52,6 +52,8 @@ class DefaultSourceSpec extends BaseSourceSpec("DefaultSource") {
 
     masters(1).getAs[String]("repository_id") should startWith("github")
     masters(1).getAs[Boolean]("is_remote") should be(true)
+
+    engine.getRepositories.getRemoteReferences.getMaster.count() should be(1)
   }
 
   it should "match HEAD and not just refs/heads/HEAD" in {
