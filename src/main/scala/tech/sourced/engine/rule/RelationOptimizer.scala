@@ -6,6 +6,7 @@ import org.apache.spark.sql.catalyst.plans.{Inner, JoinType}
 import org.apache.spark.sql.catalyst.plans.logical.Join
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.types.{StructField, StructType}
+import tech.sourced.engine.Sources
 
 private[rule] object RelationOptimizer extends Logging {
   private val supportedJoinTypes: Seq[JoinType] = Inner :: Nil
@@ -27,8 +28,8 @@ private[rule] object RelationOptimizer extends Logging {
     * @return unsupported conditions
     */
   def getUnsupportedConditions(join: Join,
-                                       left: LogicalRelation,
-                                       right: LogicalRelation): Set[_] = {
+                               left: LogicalRelation,
+                               right: LogicalRelation): Set[_] = {
     val leftReferences = left.references.baseSet
     val rightReferences = right.references.baseSet
     val joinReferences = join.references.baseSet
@@ -45,8 +46,8 @@ private[rule] object RelationOptimizer extends Logging {
     * @return an optional expression
     */
   def mixExpressions(l: Option[Expression],
-                             r: Option[Expression],
-                             joinFunction: (Expression, Expression) => Expression):
+                     r: Option[Expression],
+                     joinFunction: (Expression, Expression) => Expression):
   Option[Expression] = {
     (l, r) match {
       case (Some(expr1), Some(expr2)) => Some(joinFunction(expr1, expr2))
@@ -108,18 +109,37 @@ private[rule] object RelationOptimizer extends Logging {
     * @return is redundant or not
     */
   def isRedundantAttributeFilter(a: AttributeReference, b: AttributeReference): Boolean = {
-    val orderedNames = Seq(a.name, b.name).sorted
-    // TODO: compare with the source of the attribute as well
-    // both reference and commit have a "hash" column
-    (orderedNames.head, orderedNames(1)) match {
-      case ("id", "repository_id") => true
-      case ("repository_id", "repository_id") => true
-      case ("name", "reference_name") => true
-      case ("commit_hash", "hash") => true
-      case ("commit_hash", "commit_hash") => true
-      case ("blob", "blob_id") => true
+    // to avoid case (a, b) and case (b, a) we take left and right sorted by name and source
+    val (left, right) = a.name.compareTo(b.name) match {
+      case 0 =>
+        val sourceA = attributeSource(a).getOrElse("")
+        val sourceB = attributeSource(b).getOrElse("")
+        if (sourceA.compareTo(sourceB) <= 0) (a, b) else (b, a)
+      case n if n < 0 => (a, b)
+      case _ => (b, a)
+    }
+
+    (attributeQualifiedName(left), attributeQualifiedName(right)) match {
+      case (("repositories", "id"), ("references", "repository_id")) => true
+      case (("references", "name"), ("commits", "reference_name")) => true
+      case (("tree_entries", "commit_hash"), ("commits", "hash")) => true
+      case (("tree_entries", "blob"), ("blobs", "blob_id")) => true
+      // source does not matter in these cases
+      case ((_, "repository_id"), (_, "repository_id")) => true
+      case ((_, "reference_name"), (_, "reference_name")) => true
+      case ((_, "commit_hash"), (_, "commit_hash")) => true
       case _ => false
     }
   }
+
+  def attributeSource(a: AttributeReference): Option[String] =
+    if (a.metadata.contains(Sources.SourceKey)) {
+      Some(a.metadata.getString(Sources.SourceKey))
+    } else {
+      None
+    }
+
+  def attributeQualifiedName(a: AttributeReference): (String, String) =
+    (attributeSource(a).getOrElse(""), a.name)
 
 }

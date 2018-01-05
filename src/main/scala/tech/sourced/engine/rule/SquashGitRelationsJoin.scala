@@ -74,11 +74,11 @@ object SquashGitRelationsJoin extends Rule[LogicalPlan] {
   * @param valid              if the data is valid or not
   */
 private[rule] case class JoinData(filterExpression: Option[Expression] = None,
-                    joinCondition: Option[Expression] = None,
-                    projectExpressions: Seq[NamedExpression] = Nil,
-                    attributes: Seq[AttributeReference] = Nil,
-                    session: Option[SparkSession] = None,
-                    valid: Boolean = false)
+                                  joinCondition: Option[Expression] = None,
+                                  projectExpressions: Seq[NamedExpression] = Nil,
+                                  attributes: Seq[AttributeReference] = Nil,
+                                  session: Option[SparkSession] = None,
+                                  valid: Boolean = false)
 
 /**
   * Support methods for optimizing [[GitRelation]]s.
