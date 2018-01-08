@@ -1,0 +1,19 @@
+version: '2'
+services:
+  bblfshd:
+    image: bblfsh/bblfshd:v2.2.2
+    volumes:
+{{- if eq .OS "linux"}}
+      - {{.Home}}/.bblfshd:/var/lib/bblfshd
+{{- else}}
+      - /var/lib/bblfshd
+{{- end}}
+    restart: always
+    privileged: true
+  jupyter:
+    image: srcd/engine-playground:dev-d130174-dirty
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - {{.Home}}/.engine/repositories:/opt/engine/workspace/repositories
+      - {{.Home}}/.engine/notebooks:/opt/engine/workspace/notebooks
