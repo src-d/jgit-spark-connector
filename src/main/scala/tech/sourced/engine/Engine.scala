@@ -81,6 +81,7 @@ class Engine(session: SparkSession,
         .option(DefaultSource.TableNameKey, table)
         .option(MetadataSource.DbPathKey, dbPath)
         .option(MetadataSource.DbNameKey, dbName)
+        .option("driver", "org.sqlite.JDBC")
         .load()
         .createOrReplaceTempView(table)
     })
@@ -264,6 +265,7 @@ class Engine(session: SparkSession,
 
     import MetadataDataFrameCompat._
 
+    val dbFilePath = dbFile.toString
     Seq(
       (RepositoriesTable, repositoriesDf
         .withStringArrayColumnAsString("urls")
@@ -279,11 +281,21 @@ class Engine(session: SparkSession,
         .drop("reference_name", "repository_id").distinct())
     ) foreach {
       case (table, df) =>
-        Tables(table).create(dbFile.toString, df.schema)
-        df.repartition(session.currentActiveExecutors())
+        val schemaB = session.sparkContext.broadcast(df.schema)
+        val numExecutors = session.currentActiveExecutors()
+        session.sparkContext.emptyRDD[Unit]
+          .repartition(numExecutors)
+          .mapPartitions[Unit](_ => {
+          Tables(table).create(dbFilePath, schemaB.value)
+          Seq().toIterator
+        }, preservesPartitioning = true)
+          .collect()
+
+        df.repartition(numExecutors)
           .write
           .mode(SaveMode.Append)
-          .jdbc(s"jdbc:sqlite:$dbFile", Tables.prefix(table), properties)
+          .option("driver", "org.sqlite.JDBC")
+          .jdbc(s"jdbc:sqlite:$dbFilePath", Tables.prefix(table), properties)
     }
   }
 
