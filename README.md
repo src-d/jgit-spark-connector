@@ -337,6 +337,10 @@ $ make test
 
 There is no windows support in enry-java or bblfsh's client-scala right now, so all the language detection and UAST features are not available for the windows platform.
 
+# Code of Conduct
+
+See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+
 # License
 
 Apache License Version 2.0, see [LICENSE](LICENSE)
