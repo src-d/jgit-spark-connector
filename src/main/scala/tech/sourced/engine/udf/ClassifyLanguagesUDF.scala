@@ -1,12 +1,13 @@
 package tech.sourced.engine.udf
 
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.udf
 import org.apache.spark.sql.{Column, SparkSession}
 import tech.sourced.enry.Enry
 
 /** User defined function to guess languages of files. */
-case object ClassifyLanguagesUDF extends CustomUDF {
+case object ClassifyLanguagesUDF extends CustomUDF with Logging {
 
   override val name = "classifyLanguages"
 
@@ -29,7 +30,13 @@ case object ClassifyLanguagesUDF extends CustomUDF {
     if (isBinary) {
       None
     } else {
-      val lang = Enry.getLanguage(path, content)
+      val lang = try {
+        Enry.getLanguage(path, content)
+      } catch {
+        case e @ (_: RuntimeException | _: Exception) =>
+          log.error(s"get language for file '$path' failed", e)
+          null
+      }
       if (null == lang || lang.isEmpty) None else Some(lang)
     }
   }
