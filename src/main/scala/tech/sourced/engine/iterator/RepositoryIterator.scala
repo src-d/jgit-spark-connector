@@ -1,7 +1,7 @@
 package tech.sourced.engine.iterator
 
 import org.eclipse.jgit.lib.Repository
-import tech.sourced.engine.util.{CompiledFilter, Filter}
+import tech.sourced.engine.util.{CompiledFilter, Filters}
 
 /**
   * Iterator that will return rows of repositories in a repository.
@@ -19,13 +19,13 @@ class RepositoryIterator(repositoryPath: String,
 
   // since this iterator does not override getFilters method of RootedRepository
   // we can cache here the matching cases, because they are not going to change.
-  private val matchingFilters = filters.flatMap(_.matchingCases)
+  private val matchingFilters = Filters(filters)
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[String] =
     RepositoryIterator.loadIterator(repo, matchingFilters)
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def mapColumns(id: String): RawRow = {
     val c = repo.getConfig
     val remote = RootedRepo.getRepositoryRemote(repo, id)
@@ -59,14 +59,8 @@ object RepositoryIterator {
     * @return the iterator
     */
   def loadIterator(repo: Repository,
-                   filters: Seq[Filter.Match],
+                   filters: Filters,
                    repoKey: String = "id"): Iterator[String] = {
-    val ids = filters.flatMap {
-      case (k, repoIds) if k == repoKey => repoIds.map(_.toString)
-      case ("id", repoIds) => repoIds.map(_.toString)
-      case _ => Seq()
-    }
-
     // If there's any non-remote reference, it will show up here, thus
     // making the local repository appear. If we only take into account
     // the remotes the result will be different from the one returned by
@@ -82,8 +76,9 @@ object RepositoryIterator {
 
     val iter = repos.toList.distinct.toIterator
 
-    if (ids.nonEmpty) {
-      iter.filter(ids.contains(_))
+    val filterKeys = Seq("id", repoKey)
+    if (filters.hasFilters(filterKeys: _*)) {
+      iter.filter(filters.matches(filterKeys, _))
     } else {
       iter
     }

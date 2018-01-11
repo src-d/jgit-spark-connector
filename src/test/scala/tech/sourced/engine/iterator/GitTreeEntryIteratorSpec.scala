@@ -1,7 +1,7 @@
 package tech.sourced.engine.iterator
 
 import org.scalatest.FlatSpec
-import tech.sourced.engine.util.{Attr, EqualFilter}
+import tech.sourced.engine.util.{Attr, EqualFilter, NotFilter}
 
 class GitTreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
 
@@ -13,11 +13,13 @@ class GitTreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
     "blob"
   )
 
+  private val allCommitsFilter = NotFilter(EqualFilter(Attr("index", "commits"), -1))
+
   "GitTreeEntryIterator" should "return all tree entries from all commits " +
     "from all repositories into a siva file" in {
-    testIterator(
+    testIterator(repo =>
       new GitTreeEntryIterator(
-        cols, _, null, Seq()), {
+        cols, repo, new CommitIterator(cols, repo, null, Seq(allCommitsFilter)), Seq()), {
         case (0, row) =>
           row.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
           row.getString(1) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
@@ -53,9 +55,9 @@ class GitTreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
       "README.md")
     )
 
-    testIterator(
+    testIterator(repo =>
       new GitTreeEntryIterator(
-        cols, _, null, filters), {
+        cols, repo, new CommitIterator(cols, repo, null, Seq(allCommitsFilter)), filters), {
         case (_, r) =>
           r.getString(3) should be("README.md")
       }, total = 1062, columnsCount = cols.length
@@ -68,9 +70,9 @@ class GitTreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
       "733c072369ca77331f392c40da7404c85c36542c")
     )
 
-    testIterator(
+    testIterator(repo =>
       new GitTreeEntryIterator(
-        cols, _, null, filters), {
+        cols, repo, new CommitIterator(cols, repo, null, Seq(allCommitsFilter)), filters), {
         case (_, r) =>
           r.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")
       }, total = 1062, columnsCount = cols.length
@@ -80,7 +82,8 @@ class GitTreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
   it should "work when it's chained" in {
     val filters = Seq(EqualFilter(
       Attr("hash", "commits"),
-      "fff7062de8474d10a67d417ccea87ba6f58ca81d")
+      "fff7062de8474d10a67d417ccea87ba6f58ca81d"),
+      allCommitsFilter
     )
 
     testIterator(repo =>
@@ -109,9 +112,9 @@ class GitTreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
       "fff7062de8474d10a67d417ccea87ba6f58ca81d")
     )
 
-    testIterator(
+    testIterator(repo =>
       new GitTreeEntryIterator(
-        cols, _, null, filters), {
+        cols, repo, new CommitIterator(cols, repo, null, Seq(allCommitsFilter)), filters), {
         case (i, r) if i % 2 == 0 =>
           r.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")
           r.getString(3) should be("LICENSE")

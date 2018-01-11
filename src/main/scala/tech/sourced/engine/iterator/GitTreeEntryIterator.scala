@@ -2,7 +2,7 @@ package tech.sourced.engine.iterator
 
 import org.eclipse.jgit.lib.{ObjectId, Repository}
 import org.eclipse.jgit.treewalk.TreeWalk
-import tech.sourced.engine.util.{CompiledFilter, Filter}
+import tech.sourced.engine.util.{CompiledFilter, Filters}
 
 abstract class TreeEntryIterator(finalColumns: Array[String],
                                  prevIter: CommitIterator,
@@ -29,7 +29,7 @@ class GitTreeEntryIterator(finalColumns: Array[String],
     GitTreeEntryIterator.loadIterator(
       repo,
       Option(prevIter).map(_.currentRow),
-      filters.flatMap(_.matchingCases)
+      Filters(filters)
     )
 
   /** @inheritdoc */
@@ -100,16 +100,12 @@ object GitTreeEntryIterator {
     */
   def loadIterator(repo: Repository,
                    commit: Option[ReferenceWithCommit],
-                   filters: Seq[Filter.Match],
+                   filters: Filters,
                    blobIdKey: String = "blob"): Iterator[TreeEntry] = {
     val commits = commit match {
       case Some(c) =>
-        val filterCommits = filters.flatMap {
-          case ("commit_hash", cs) => cs.map(_.toString)
-          case _ => Seq()
-        }
-
-        if (filterCommits.isEmpty || filterCommits.contains(c.commit.getId.getName)) {
+        if (!filters.hasFilters("commit_hash")
+          || filters.matches(Seq("commit_hash"), c.commit.getId.getName)) {
           Seq(c).toIterator
         } else {
           Seq().toIterator
@@ -122,24 +118,14 @@ object GitTreeEntryIterator {
       )
     }
 
-    val paths = filters.flatMap {
-      case ("path", p) => p.map(_.toString)
-      case _ => Seq()
-    }
-
-    val blobs = filters.flatMap {
-      case (k, ids) if k == blobIdKey => ids.map(id => ObjectId.fromString(id.toString))
-      case ("blob", ids) => ids.map(id => ObjectId.fromString(id.toString))
-      case _ => Seq()
-    }
-
     var iter: Iterator[TreeEntry] = commits.flatMap(c => getTreeEntries(repo, c))
-    if (paths.nonEmpty) {
-      iter = iter.filter(te => paths.contains(te.path))
+    if (filters.hasFilters("path")) {
+      iter = iter.filter(te => filters.matches(Seq("path"), te.path))
     }
 
-    if (blobs.nonEmpty) {
-      iter = iter.filter(te => blobs.contains(te.blob))
+    val blobKeys = Seq("blob", blobIdKey)
+    if (filters.hasFilters(blobKeys: _*)) {
+      iter = iter.filter(te => filters.matches(blobKeys, te.blob.getName))
     }
 
     iter

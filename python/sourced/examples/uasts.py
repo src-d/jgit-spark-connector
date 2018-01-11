@@ -9,7 +9,7 @@ def main():
     engine = Engine(session, repos_path, "siva")
     engine.repositories.references\
         .filter('name = "refs/heads/develop"')\
-        .commits.first_reference_commit.tree_entries.blobs\
+        .commits.tree_entries.blobs\
         .classify_languages()\
         .filter('lang = "Ruby"')\
         .extract_uasts()\

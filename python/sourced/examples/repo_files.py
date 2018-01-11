@@ -9,7 +9,7 @@ def main():
     repos_path = os.path.join(file_path, '..', '..', '..', 'src', 'test', 'resources', 'siva-files')
     session = SparkSession.builder.appName("test").master('local[*]').getOrCreate()
     engine = Engine(session, repos_path, "siva")
-    rows = engine.repositories.references.head_ref.commits.first_reference_commit\
+    rows = engine.repositories.references.head_ref.commits\
         .tree_entries.select('path').collect()
 
     files = [r['path'] for r in rows]

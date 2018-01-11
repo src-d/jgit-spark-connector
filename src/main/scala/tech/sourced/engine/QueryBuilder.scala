@@ -188,7 +188,8 @@ private[engine] object QueryBuilder {
         // If we can make sure compileFilter supports all filters, we can remove this check.
         val or = Seq(f1, f2).flatMap(compileFilter)
         if (or.size == 2) {
-          or.map(p => s"($p)").mkString(" OR ")
+          val clause = or.map(p => s"($p)").mkString(" OR ")
+          s"($clause)"
         } else {
           null
         }

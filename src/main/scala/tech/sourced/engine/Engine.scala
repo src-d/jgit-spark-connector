@@ -154,10 +154,8 @@ class Engine(val session: SparkSession,
     }
 
     var commitsDf = refsDf.getCommits
-    commitsDf = if (commitHashes.nonEmpty) {
-      commitsDf.filter(commitsDf("hash").isin(commitHashes: _*))
-    } else {
-      commitsDf.getFirstReferenceCommit
+    if (commitHashes.nonEmpty) {
+      commitsDf = commitsDf.getAllReferenceCommits.filter(commitsDf("hash").isin(commitHashes: _*))
     }
 
     commitsDf.getTreeEntries.getBlobs
@@ -262,7 +260,7 @@ class Engine(val session: SparkSession,
 
     val repositoriesDf = getDataSource(RepositoriesTable, session)
     val referencesDf = repositoriesDf.getReferences
-    val commitsDf = referencesDf.getCommits
+    val commitsDf = referencesDf.getAllReferenceCommits
     val treeEntriesDf = commitsDf.getTreeEntries
 
     import MetadataDataFrameCompat._

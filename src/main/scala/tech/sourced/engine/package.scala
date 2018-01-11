@@ -162,7 +162,8 @@ package object engine {
 
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
-      * current dataframe with the commits dataframe.
+      * current dataframe with the commits dataframe, returning only the last commit in a
+      * reference (aka the current state).
       * It requires the current dataframe to have a "repository_id" column, which is the
       * identifier of the repository.
       *
@@ -170,16 +171,11 @@ package object engine {
       * val commitDf = refsDf.getCommits
       * }}}
       *
-      * Take into account that getting all the commits will lead to a lot of repeated tree
-      * entries and blobs, thus making your query very slow.
-      * Most of the time what you probably want is to get the latest state of the files in
-      * a specific reference.
-      * You can use [[tech.sourced.engine.EngineDataFrame#getFirstReferenceCommit]] for
-      * that purpose, which only gets the first commit of a reference, that is, the latest
-      * status of the reference.
+      * You can use [[tech.sourced.engine.EngineDataFrame#getAllReferenceCommits]] to
+      * get all the commits in the references, but do so knowing that is a very costly operation.
       *
       * {{{
-      * val commitsDf = refsDf.getCommits.getFirstReferenceCommit
+      * val allCommitsDf = refsDf.getCommits.getAllReferenceCommits
       * }}}
       *
       * @return new DataFrame containing also commits data.
@@ -194,25 +190,29 @@ package object engine {
     }
 
     /**
-      * Returns a new [[org.apache.spark.sql.DataFrame]] with only the first commit in a reference.
-      * Without calling this method, commits may appear multiple times in your [[DataFrame]],
-      * because most of your commits will be shared amongst references. Calling this, your
-      * [[DataFrame]] will only contain the HEAD commit of each reference.
+      * Returns a new [[org.apache.spark.sql.DataFrame]] with all the commits in a reference.
+      * After calling this method, commits may appear multiple times in your [[DataFrame]],
+      * because most of your commits will be shared amongst references. Take into account that
+      * calling this method will make all your further operations way slower, as there is much
+      * more data, specially if you query blobs, which will be repeated over and over.
       *
       * For the next example, consider we have a master branch with 100 commits and a "foo" branch
       * whose parent is the HEAD of master and has two more commits.
       * {{{
       * > commitsDf.count()
-      * 202
-      * > commitsDf.getFirstReferenceCommit.count()
       * 2
+      * > commitsDf.getAllReferenceCommits.count()
+      * 202
       * }}}
       *
-      * @return dataframe with only the HEAD commits of each reference
+      * @return dataframe with all reference commits
       */
-    def getFirstReferenceCommit: DataFrame = {
-      checkCols(df, "index")
-      df.filter($"index" === 0)
+    def getAllReferenceCommits: DataFrame = {
+      if (df.columns.contains("index")) {
+        df.filter("index <> '-1'")
+      } else {
+        df.getCommits.getAllReferenceCommits
+      }
     }
 
     /**

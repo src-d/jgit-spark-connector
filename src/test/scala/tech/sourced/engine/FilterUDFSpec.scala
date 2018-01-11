@@ -16,7 +16,6 @@ class FilterUDFSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSp
       .getRepositories
       .getReferences
       .getCommits
-      .getFirstReferenceCommit
       .getBlobs
       .classifyLanguages
 

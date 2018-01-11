@@ -3,7 +3,7 @@ package tech.sourced.engine
 import org.apache.spark.SparkException
 import org.scalatest._
 
-class BaseSourceSpec(source: String)
+class BaseSourceSpec(source: String = "BaseSourceSpec")
   extends FlatSpec with Matchers with BaseSivaSpec with BaseSparkSpec {
 
   var engine: Engine = _
@@ -18,7 +18,6 @@ class BaseSourceSpec(source: String)
     val df = engine.getRepositories
       .getHEAD
       .getCommits
-      .getFirstReferenceCommit
       .getTreeEntries
       .getBlobs
       .select("commit_hash", "path", "content", "is_binary")
@@ -27,13 +26,14 @@ class BaseSourceSpec(source: String)
   }
 
   it should "count all the commit messages from all masters that are not forks" in {
-    val commits = engine.getRepositories.filter("is_fork = false").getMaster.getCommits
+    val commits = engine.getRepositories.filter("is_fork = false").getMaster.getAllReferenceCommits
     val df = commits.select("message").filter(commits("message").startsWith("a"))
     df.count should be(7)
   }
 
   it should "count all commits messages from all references that are not forks" in {
-    val commits = engine.getRepositories.filter("is_fork = false").getReferences.getCommits
+    val commits = engine.getRepositories.filter("is_fork = false").getReferences
+      .getAllReferenceCommits
     val df = commits.select("message", "reference_name", "hash").
       filter(commits("message").startsWith("a"))
     df.count should be(98)
@@ -43,7 +43,6 @@ class BaseSourceSpec(source: String)
     val blobs = engine.getRepositories.filter("is_fork = false")
       .getHEAD
       .getCommits
-      .getFirstReferenceCommit
       .getTreeEntries
       .getBlobs
       .classifyLanguages
@@ -52,37 +51,8 @@ class BaseSourceSpec(source: String)
   }
 
   it should "get all tree entries" in {
-    val df = engine.getRepositories.getReferences.getCommits.getTreeEntries
+    val df = engine.getRepositories.getReferences.getAllReferenceCommits.getTreeEntries
     df.count() should be(304362)
-  }
-
-  "Convenience for getting files" should "work without reading commits" in {
-    val spark = ss
-    import spark.implicits._
-
-    val blobsDf = engine
-      .getRepositories.filter($"id" === "github.com/mawag/faq-xiyoulinux")
-      .getReferences.getHEAD
-      .getCommits
-      .getBlobs
-      .select(
-        "path",
-        "commit_hash",
-        "blob_id",
-        "content",
-        "is_binary"
-      )
-
-    val cnt = blobsDf.count()
-    info(s"Total $cnt rows")
-    cnt should be(2)
-
-    info("UAST for files:\n")
-    val filesCols = blobsDf.columns.length
-    val uasts = blobsDf.classifyLanguages.extractUASTs()
-
-    val uastsCols = uasts.columns.length
-    assert(uastsCols - 2 == filesCols)
   }
 
   it should "filter by reference from repos dataframe" in {
@@ -107,7 +77,7 @@ class BaseSourceSpec(source: String)
 
   "Get develop commits" should "return only develop commits" in {
     val df = engine.getRepositories
-      .getReference("refs/heads/develop").getCommits
+      .getReference("refs/heads/develop").getAllReferenceCommits
       .select("hash", "repository_id")
     assert(df.count == 103)
   }
@@ -115,7 +85,7 @@ class BaseSourceSpec(source: String)
   "Get files after reading commits" should "return the correct files" in {
     val files = engine.getRepositories
       .getReferences
-      .getCommits
+      .getAllReferenceCommits
       .getBlobs
       .drop("repository_id", "reference_name")
       .distinct()
@@ -126,7 +96,7 @@ class BaseSourceSpec(source: String)
   "Get files without reading tree entries" should "return the correct files" in {
     val files = engine.getRepositories
       .getReferences
-      .getCommits
+      .getAllReferenceCommits
       .getBlobs
       .drop("repository_id", "reference_name")
       .distinct()
@@ -135,7 +105,7 @@ class BaseSourceSpec(source: String)
   }
 
   "Get files" should "return the correct files" in {
-    val df = engine.getRepositories.getHEAD.getCommits
+    val df = engine.getRepositories.getHEAD.getAllReferenceCommits
       .sort("hash").limit(10)
     val rows = df.collect()
       .map(row => (row.getString(row.fieldIndex("repository_id")),

@@ -33,6 +33,7 @@ root
 */
 
 engine.getRepositories.getReferences.getCommits.printSchema
+/* also engine.getRepositories.getReferences.getAllReferenceCommits.printSchema */
 /* Output:
 root
  |-- repository_id: string (nullable = false)

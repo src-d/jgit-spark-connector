@@ -49,10 +49,9 @@ object Sources {
     }
 
   def getFiltersBySource(filters: Seq[Expression]): Map[String, Seq[CompiledFilter]] =
-    filters.map(Filter.compile)
-      .flatMap(_.filters)
+    filters.flatMap(Filter.compile)
       .map(e => (e.sources.distinct, e))
-      .filter(_._1.length == 1)
+      .filter(_._1.lengthCompare(1) == 0)
       .groupBy(_._1)
       .map { case (k, v) => (k.head, v.map(_._2)) }
 

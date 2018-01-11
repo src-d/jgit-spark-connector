@@ -3,41 +3,94 @@ package tech.sourced.engine.util
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.unsafe.types.UTF8String
 
-object Filter {
+case class Filters(filters: Seq[CompiledFilter]) {
 
-  /** Match of an expression filter as a tuple with the column name and the matching values. */
-  type Match = (String, Seq[Any])
+  private val indexedFilters: Map[String, Seq[CompiledFilter]] = filters
+    .map(f => (f.field, f))
+    .groupBy(_._1)
+    .mapValues(_.map(_._2))
 
   /**
-    * Compiles expressions into filters.
+    * Returns whether the given values matches all the filters of all the given fields.
+    *
+    * @param fields field names
+    * @param value  values to check
+    * @return whether the value matches
+    */
+  def matches(fields: Seq[String], value: Any): Boolean = fields
+    .flatMap(f => indexedFilters.find {
+      case (field, _) => field == f
+    }.map(_._2).getOrElse(Seq()))
+    .forall(f => f.eval(value))
+
+  /**
+    * Returns whether the filter collection contains any filters for any of the fields.
+    *
+    * @param fields field names
+    * @return whether there's filters for any of the fields
+    */
+  def hasFilters(fields: String*): Boolean = fields.exists(indexedFilters.keySet.contains(_))
+
+  /**
+    * Returns all the sources in all the filters.
+    *
+    * @return sequence of sources
+    */
+  def sources: Seq[String] = filters.flatMap(_.sources).distinct
+
+}
+
+object Filter {
+
+  /**
+    * Compiles the given sequence of expressions and returns a collection of filters.
+    *
+    * @param e expressions
+    * @return filters
+    */
+  def compile(e: Seq[Expression]): Filters = Filters(e.flatMap(compile))
+
+  /**
+    * Compiles expressions into filters. All filters returned can be joined
+    * using ANDs. Ands are split in multiple filters.
     *
     * @param e expression to compile
-    * @return compiled expression
+    * @return compiled filters
     */
-  def compile(e: Expression): CompiledFilter = e match {
+  def compile(e: Expression): Seq[CompiledFilter] = e match {
     case Equality(attr: AttributeReference, Literal(value, _)) =>
-      EqualFilter(new Attr(attr.toAttribute), transformLiteral(value))
+      Seq(EqualFilter(new Attr(attr.toAttribute), transformLiteral(value)))
 
     case IsNull(attr: AttributeReference) =>
-      EqualFilter(new Attr(attr.toAttribute), null)
+      Seq(EqualFilter(new Attr(attr.toAttribute), null))
 
     case IsNotNull(attr: AttributeReference) =>
-      NotFilter(EqualFilter(new Attr(attr.toAttribute), null))
+      Seq(NotFilter(EqualFilter(new Attr(attr.toAttribute), null)))
 
-    case Not(expr) => NotFilter(compile(expr))
+    case Not(expr) => compile(expr).map(NotFilter)
+
+    case LessThan(attr: AttributeReference, Literal(value, _)) =>
+      Seq(LessThanFilter(new Attr(attr.toAttribute), value))
+
+    case GreaterThan(attr: AttributeReference, Literal(value, _)) =>
+      Seq(GreaterThanFilter(new Attr(attr.toAttribute), value))
+
+    case GreaterThanOrEqual(attr: AttributeReference, Literal(value, _)) =>
+      Seq(GreaterThanOrEqualFilter(new Attr(attr.toAttribute), value))
+
+    case LessThanOrEqual(attr: AttributeReference, Literal(value, _)) =>
+      Seq(LessThanOrEqualFilter(new Attr(attr.toAttribute), value))
 
     case In(attr: AttributeReference, values)
       if values.forall(_.isInstanceOf[Literal]) =>
-      InFilter(
+      Seq(InFilter(
         new Attr(attr.toAttribute),
         values.map({ case Literal(value, _) => transformLiteral(value) })
-      )
+      ))
 
-    case And(l, r) => AndFilter(compile(l), compile(r))
+    case And(l, r) => compile(l) ++ compile(r)
 
-    case Or(l, r) => OrFilter(compile(l), compile(r))
-
-    case _ => UnhandledFilter()
+    case _ => Seq()
   }
 
   private def transformLiteral(value: Any): Any = value match {
@@ -53,40 +106,12 @@ object Filter {
 sealed trait CompiledFilter {
 
   /**
-    * Returns if the filter matches or not. It's wrapped in an optional because
-    * there might be cases where the columns is not present.
+    * Evaluate the filter and check whether the value matches.
     *
-    * @param cols map of columns and their values
-    * @return match of the filter
+    * @param value value to check
+    * @return whether it matches
     */
-  def eval(cols: Map[String, Any]): Option[Boolean]
-
-  /**
-    * Returns all the matching cases in a map from column name to matching values.
-    *
-    * @return matchinh cases
-    */
-  def matchingCases: Map[String, Seq[Any]] =
-    getMatchingCases.groupBy(_._1).mapValues(_.map(_._2))
-
-  /**
-    * Returns an array of matching cases.
-    *
-    * @return matching cases
-    */
-  protected def getMatchingCases: Array[(String, Any)] = this match {
-    case EqualFilter(attr, value) => Array((attr.name, value))
-    case InFilter(attr, values) => values.toArray.map(v => (attr.name, v))
-    case BinaryFilter(left, right) => left.getMatchingCases ++ right.getMatchingCases
-    case _ => Array()
-  }
-
-  /**
-    * Returns the list of filters in this filter.
-    *
-    * @return filters
-    */
-  def filters: Seq[CompiledFilter] = Seq(this)
+  def eval(value: Any): Boolean
 
   /**
     * Returns the list of sources in this filter.
@@ -94,6 +119,27 @@ sealed trait CompiledFilter {
     * @return sources list
     */
   def sources: Seq[String]
+
+  /**
+    * Returns the name of the field being checked in the filter.
+    *
+    * @return field name
+    */
+  def field: String
+
+}
+
+abstract class AttrFilter(attr: Attr) extends CompiledFilter {
+
+  /**
+    * @inheritdoc
+    */
+  def sources: Seq[String] = Seq(attr.source)
+
+  /**
+    * @inheritdoc
+    */
+  def field: String = attr.name
 
 }
 
@@ -126,48 +172,17 @@ case class Attr(name: String, source: String) {
   * @param attr column attribute
   * @param vals values
   */
-case class InFilter(attr: Attr, vals: Seq[Any]) extends CompiledFilter {
-
-  /** @inheritdoc*/
-  override def toString: String = s"${attr.name} IN (${vals.mkString(", ")})"
-
-  /** @inheritdoc*/
-  def eval(cols: Map[String, Any]): Option[Boolean] = cols.get(attr.name).map(vals.contains)
-
-  /** @inheritdoc*/
-  def sources: Seq[String] = Seq(attr.source)
-
-}
-
-/**
-  * Binary expression with a left and right expression.
-  *
-  * @param left  left expression
-  * @param right right expression
-  */
-class BinaryFilter(val left: CompiledFilter, val right: CompiledFilter) extends CompiledFilter {
+case class InFilter(attr: Attr, vals: Seq[Any]) extends AttrFilter(attr) {
 
   /**
-    * Action to be executed with both branches of the expression that will return whether
-    * or not the expression matches. Meant to be overridden.
-    *
-    * @param l left expression
-    * @param r right expression
-    * @return match result
+    * @inheritdoc
     */
-  def action(l: Option[Boolean], r: Option[Boolean]): Option[Boolean] = None
+  override def toString: String = s"${attr.name} IN (${vals.mkString(", ")})"
 
-  /** @inheritdoc */
-  def eval(cols: Map[String, Any]): Option[Boolean] = action(left.eval(cols), right.eval(cols))
-
-  /** @inheritdoc */
-  def sources: Seq[String] = left.sources ++ right.sources
-
-}
-
-object BinaryFilter {
-
-  def unapply(e: BinaryFilter): Option[(CompiledFilter, CompiledFilter)] = Some((e.left, e.right))
+  /**
+    * @inheritdoc
+    */
+  def eval(value: Any): Boolean = vals.contains(value)
 
 }
 
@@ -177,16 +192,17 @@ object BinaryFilter {
   * @param attr  column attribute
   * @param value value to check
   */
-case class EqualFilter(attr: Attr, value: Any) extends CompiledFilter {
+case class EqualFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
 
-  /** @inheritdoc */
+  /**
+    * @inheritdoc
+    */
   override def toString: String = s"${attr.name} = '$value'"
 
-  /** @inheritdoc */
-  def eval(cols: Map[String, Any]): Option[Boolean] = cols.get(attr.name).map(_ == value)
-
-  /** @inheritdoc */
-  def sources: Seq[String] = Seq(attr.source)
+  /**
+    * @inheritdoc
+    */
+  def eval(v: Any): Boolean = value == v
 
 }
 
@@ -197,70 +213,100 @@ case class EqualFilter(attr: Attr, value: Any) extends CompiledFilter {
   */
 case class NotFilter(f: CompiledFilter) extends CompiledFilter {
 
+  /**
+    * @inheritdoc
+    */
   override def toString: String = s"NOT (${f.toString})"
 
-  def eval(cols: Map[String, Any]): Option[Boolean] = f.eval(cols).map(!_)
+  /**
+    * @inheritdoc
+    */
+  def eval(value: Any): Boolean = !f.eval(value)
 
+  /**
+    * @inheritdoc
+    */
   def sources: Seq[String] = f.sources
 
+  /**
+    * @inheritdoc
+    */
+  def field: String = f.field
+
 }
 
-/**
-  * Filter that checks both its left and right filter match.
-  *
-  * @param l left filter
-  * @param r right filter
-  */
-case class AndFilter(l: CompiledFilter, r: CompiledFilter) extends BinaryFilter(l, r) {
+case class GreaterThanFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
 
-  /** @inheritdoc */
-  override def toString: String = s"(${l.toString} AND ${r.toString})"
+  /**
+    * @inheritdoc
+    */
+  override def toString: String = s"${attr.name} > $value"
 
-  /** @inheritdoc */
-  override def action(l: Option[Boolean], r: Option[Boolean]): Option[Boolean] = {
-    Seq(l, r) match {
-      case seq if seq.flatten.isEmpty => None
-      case seq => seq.map({
-        case None => false
-        case Some(v) => v
-      }).reduceLeftOption((lb, rb) => lb && rb)
-    }
+  /**
+    * @inheritdoc
+    */
+  def eval(v: Any): Boolean = (v, value) match {
+    case (l: Int, r: Int) => l > r
+    case (l: Float, r: Float) => l > r
+    case (l: Double, r: Double) => l > r
+    case (l: Long, r: Long) => l > r
   }
 
-  /** @inheritdoc*/
-  override def filters: Seq[CompiledFilter] = Seq(l, r)
+}
+
+case class LessThanFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
+
+  /**
+    * @inheritdoc
+    */
+  override def toString: String = s"${attr.name} < $value"
+
+  /**
+    * @inheritdoc
+    */
+  def eval(v: Any): Boolean = (v, value) match {
+    case (l: Int, r: Int) => l < r
+    case (l: Float, r: Float) => l < r
+    case (l: Double, r: Double) => l < r
+    case (l: Long, r: Long) => l < r
+  }
 
 }
 
-/**
-  * Filter that checks either of its branches matches.
-  *
-  * @param l left filter
-  * @param r right filter
-  */
-case class OrFilter(l: CompiledFilter, r: CompiledFilter) extends BinaryFilter(l, r) {
+case class GreaterThanOrEqualFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
 
-  /** @inheritdoc*/
-  override def toString: String = s"(${l.toString} OR ${r.toString})"
+  /**
+    * @inheritdoc
+    */
+  override def toString: String = s"${attr.name} >= $value"
 
-  /** @inheritdoc*/
-  override def action(l: Option[Boolean], r: Option[Boolean]): Option[Boolean] =
-    Seq(l, r).flatten.reduceLeftOption((lb, rb) => lb || rb)
-
-  /** @inheritdoc*/
-  override def filters: Seq[CompiledFilter] = Seq(l, r)
+  /**
+    * @inheritdoc
+    */
+  def eval(v: Any): Boolean = (v, value) match {
+    case (l: Int, r: Int) => l >= r
+    case (l: Float, r: Float) => l >= r
+    case (l: Double, r: Double) => l >= r
+    case (l: Long, r: Long) => l >= r
+  }
 
 }
 
-/**
-  * Filter that is not handled.
-  */
-case class UnhandledFilter() extends CompiledFilter {
+case class LessThanOrEqualFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
 
-  /** @inheritdoc*/
-  override def eval(cols: Map[String, Any]): Option[Boolean] = None
+  /**
+    * @inheritdoc
+    */
+  override def toString: String = s"${attr.name} <= $value"
 
-  /** @inheritdoc*/
-  def sources: Seq[String] = Seq()
+  /**
+    * @inheritdoc
+    */
+  def eval(v: Any): Boolean = (v, value) match {
+    case (l: Int, r: Int) => l <= r
+    case (l: Float, r: Float) => l <= r
+    case (l: Double, r: Double) => l <= r
+    case (l: Long, r: Long) => l <= r
+  }
 
 }

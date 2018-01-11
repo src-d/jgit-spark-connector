@@ -34,14 +34,14 @@ class EngineSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSpark
     val properties = new Properties()
     properties.put("driver", "org.sqlite.JDBC")
 
-    val reposDf = getDataSource(RepositoriesTable, ss)
-    val refsDf = getDataSource(ReferencesTable, ss)
-    val repoHasCommitsDf = getDataSource(CommitsTable, ss)
+    val reposDf = engine.getRepositories
+    val refsDf = reposDf.getReferences
+    val repoHasCommitsDf = refsDf.getAllReferenceCommits
       .select("reference_name", "repository_id", "hash", "index")
-    val commitsDf = getDataSource(CommitsTable, ss)
+    val commitsDf = refsDf.getAllReferenceCommits
       .drop("index", "reference_name", "repository_id")
       .distinct()
-    val treeEntriesDf = getDataSource(TreeEntriesTable, ss)
+    val treeEntriesDf = refsDf.getAllReferenceCommits.getTreeEntries
       .drop("reference_name", "repository_id")
       .distinct()
 

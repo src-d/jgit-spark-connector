@@ -70,7 +70,7 @@ class Engine(object):
 
         Calling this function with no arguments is the same as:
 
-        >>> engine.repositories.references.commits.first_reference_commit.tree_entries.blobs
+        >>> engine.repositories.references.commits.tree_entries.blobs
 
         :param repository_ids: list of repository ids to filter by (optional)
         :type repository_ids: list of strings
@@ -390,20 +390,38 @@ class ReferencesDataFrame(SourcedDataFrame):
 
 
     @property
-    def commits(self):
+    def all_reference_commits(self):
         """
-        Returns the current DataFrame joined with the commits DataFrame.
+        Returns the current DataFrame joined with the commits DataFrame, with all of the commits
+        in all references.
 
-        >>> commits_df = refs_df.commits
+        >>> commits_df = refs_df.all_reference_commits
 
         Take into account that getting all the commits will lead to a lot of repeated tree
         entries and blobs, thus making your query very slow.
-        Most of the time what you probably want is to get the latest state of the files in
-        a specific reference.
-        You can use first_reference_commit for that purpose, which only gets the first
-        commit of a reference, that is, the latest status of the reference.
 
-        >>> commits_df = refs_df.commits.first_reference_commit
+        Most of the time, you just want the HEAD commit of each reference:
+
+        >>> commits_df = refs_df.commits
+
+        :rtype: CommitsDataFrame
+        """
+        return CommitsDataFrame(self._engine_dataframe.getAllReferenceCommits(), self._session, self._implicits)
+
+
+    @property
+    def commits(self):
+        """
+        Returns the current DataFrame joined with the commits DataFrame. It just returns
+        the last commit in a reference (aka the current state).
+
+        >>> commits_df = refs_df.commits
+
+        If you want all commits from the references, use the `all_reference_commits` method,
+        but take into account that getting all the commits will lead to a lot of repeated tree
+        entries and blobs, thus making your query very slow.
+
+        >>> commits_df = refs_df.all_reference_commits
 
         :rtype: CommitsDataFrame
         """
@@ -441,25 +459,22 @@ class CommitsDataFrame(SourcedDataFrame):
 
 
     @property
-    def first_reference_commit(self):
+    def all_reference_commits(self):
         """
-        Returns a new DataFrame with only the first commit in a reference.
-        Without calling this method, commits may appear multiple times in your DataFrame,
-        because most of your commits will be shared amongst references. Calling this, your
-        DataFrame will only contain the HEAD commit of each reference.
+        Returns all the commits in all references.
 
-        For the next example, consider we have a master branch with 100 commits and a "foo" branch
-        whose parent is the HEAD of master and has two more commits.
+        >>> all_commits_df = commits_df.all_reference_commits
 
-        >>> > commits_df.count()
-        >>> 102
-        >>> > commits_df.first_reference_commit.count()
-        >>> 2
+        Take into account that getting all the commits will lead to a lot of repeated tree
+        entries and blobs, thus making your query very slow.
+
+        Most of the time, you just want the HEAD commit of each reference:
+
+        >>> commits_df = refs_df.commits
 
         :rtype: CommitsDataFrame
         """
-        return CommitsDataFrame(self._engine_dataframe.getFirstReferenceCommit(), self._session,
-                                self._implicits)
+        return CommitsDataFrame(self._engine_dataframe.getAllReferenceCommits(), self._session, self._implicits)
 
 
     @property

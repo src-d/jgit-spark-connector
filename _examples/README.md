@@ -16,6 +16,8 @@ Here you can find a list of annotated *source{d} Engine* examples:
 
 - [pyspark's shell querying UASTs with XPath](pyspark/pyspark-shell-xpath-query.md)
 
+- [pyspark's shell raw repositories](pyspark/pyspark-shell-raw-repositories.md)
+
 ### scala
 
 - [spark-shell basic example](scala/spark-shell-basic.md)
@@ -29,6 +31,8 @@ Here you can find a list of annotated *source{d} Engine* examples:
 - [spark-shell classifying languages and extracting UASTs](scala/spark-shell-lang-and-uast.md)
 
 - [spark-shell querying UASTs with XPath](scala/spark-shell-xpath-query.md)
+
+- [spark-shell raw repositories](scala/spark-shell-raw-repositories.md)
 
 ### jupyter notebooks
 

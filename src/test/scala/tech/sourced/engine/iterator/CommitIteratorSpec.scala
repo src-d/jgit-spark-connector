@@ -3,7 +3,7 @@ package tech.sourced.engine.iterator
 import java.sql.Timestamp
 
 import org.scalatest.FlatSpec
-import tech.sourced.engine.util.{Attr, EqualFilter, InFilter}
+import tech.sourced.engine.util.{Attr, EqualFilter, InFilter, NotFilter}
 
 class CommitIteratorSpec extends FlatSpec with BaseChainableIterator {
 
@@ -23,10 +23,12 @@ class CommitIteratorSpec extends FlatSpec with BaseChainableIterator {
     "committer_date"
   )
 
+  private val allCommitsFilter = NotFilter(EqualFilter(Attr("index", "commits"), -1))
+
   "CommitIterator" should "return all commits from all repositories into a siva file" in {
     testIterator(
       new CommitIterator(
-        cols, _, null, Seq()), {
+        cols, _, null, Seq(allCommitsFilter)), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getString(1) should be("refs/heads/HEAD")
@@ -85,7 +87,7 @@ class CommitIteratorSpec extends FlatSpec with BaseChainableIterator {
         Array(
           "repository_id",
           "parents"
-        ), _, null, Seq()), {
+        ), _, null, Seq(allCommitsFilter)), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getAs[Array[String]](1) should be(Array())
@@ -118,7 +120,7 @@ class CommitIteratorSpec extends FlatSpec with BaseChainableIterator {
         ),
         _,
         null,
-        Seq(InFilter(Attr("hash", "commits"), commits))
+        Seq(InFilter(Attr("hash", "commits"), commits), allCommitsFilter)
       ), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
@@ -160,7 +162,7 @@ class CommitIteratorSpec extends FlatSpec with BaseChainableIterator {
             "refs/heads/master", "refs/heads/develop"
           )))
         ),
-        Seq()
+        Seq(allCommitsFilter)
       ), {
       case (0, row) =>
         row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")

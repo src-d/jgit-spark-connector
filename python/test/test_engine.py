@@ -73,8 +73,8 @@ class EngineTestCase(BaseTestCase):
         self.assertEqual(len(df.collect()), 2)
 
 
-    def test_commits(self):
-        df = self.engine.repositories.references.commits
+    def test_all_commits(self):
+        df = self.engine.repositories.references.all_reference_commits
         repo_commits = df.groupBy(df.repository_id)\
             .count()\
             .collect()
@@ -85,14 +85,14 @@ class EngineTestCase(BaseTestCase):
                              REPOSITORY_COMMITS[repo.repository_id])
 
 
-    def test_commits_first(self):
+    def test_commits(self):
         df = self.engine.repositories.references.filter("name not like 'refs/tags/%'")
         repo_refs = df.groupBy(df.repository_id).count().collect()
         repos = {}
         for repo in repo_refs:
             repos[repo["repository_id"]] = repo["count"]
 
-        df = self.engine.repositories.references.commits.first_reference_commit
+        df = self.engine.repositories.references.commits
         repo_commits = df.groupBy(df.repository_id) \
             .count() \
             .collect()
@@ -103,7 +103,7 @@ class EngineTestCase(BaseTestCase):
 
 
     def test_tree_entries(self):
-        df = self.engine.repositories.references.commits.tree_entries
+        df = self.engine.repositories.references.all_reference_commits.tree_entries
         self.assertEqual(df.count(), 304362)
         entry = df.sort(df.blob).limit(1).first()
         self.assertEqual(entry.blob, '0020a823b6e5b06c9adb7def76ccd7ed098a06b8')
@@ -111,7 +111,7 @@ class EngineTestCase(BaseTestCase):
 
 
     def test_blobs(self):
-        df = self.engine.repositories.references.commits\
+        df = self.engine.repositories.references.all_reference_commits\
             .tree_entries.blobs.drop("repository_id", "reference_name").distinct()
         self.assertEqual(df.count(), 91944)
         file = df.sort(df.blob_id).limit(1).first()
@@ -120,7 +120,7 @@ class EngineTestCase(BaseTestCase):
 
 
     def test_classify_languages(self):
-        df = self.engine.repositories.references.commits.tree_entries.blobs
+        df = self.engine.repositories.references.all_reference_commits.tree_entries.blobs
         row = df.sort(df.blob_id).limit(1).classify_languages().first()
         self.assertEqual(row.blob_id, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
         self.assertEqual(row.path, 'spec/database_spec.rb')
@@ -128,7 +128,7 @@ class EngineTestCase(BaseTestCase):
 
 
     def test_extract_uasts(self):
-        df = self.engine.repositories.references.commits.tree_entries.blobs
+        df = self.engine.repositories.references.all_reference_commits.tree_entries.blobs
         row = df.sort(df.blob_id).limit(1).classify_languages()\
             .extract_uasts().first()
         self.assertEqual(row.blob_id, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
@@ -136,7 +136,7 @@ class EngineTestCase(BaseTestCase):
         self.assertEqual(row.lang, "Ruby")
         self.assertEqual(row.uast, [])
 
-        df = self.engine.repositories.references.commits.tree_entries.blobs
+        df = self.engine.repositories.references.all_reference_commits.tree_entries.blobs
         row = df.sort(df.blob_id).limit(1).extract_uasts().first()
         self.assertEqual(row.blob_id, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
         self.assertEqual(row.path, 'spec/database_spec.rb')
@@ -144,7 +144,7 @@ class EngineTestCase(BaseTestCase):
 
 
     def test_engine_blobs(self):
-        rows = self.engine.repositories.references.head_ref.commits.sort('hash').limit(10).collect()
+        rows = self.engine.repositories.references.head_ref.all_reference_commits.sort('hash').limit(10).collect()
         repos = []
         hashes = []
         for row in rows:
