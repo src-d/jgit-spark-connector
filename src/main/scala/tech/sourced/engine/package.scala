@@ -143,6 +143,26 @@ package object engine {
     }
 
     /**
+      * Returns a new [[org.apache.spark.sql.DataFrame]] with only remote references in it.
+      * If the DataFrame contains repository data it will automatically get the references for
+      * those repositories.
+      *
+      * {{{
+      * val remoteRefs = reposDf.getRemoteReferences
+      * val remoteRefs2 = reposDf.getReferences.getRemoteReferences
+      * }}}
+      *
+      * @return
+      */
+    def getRemoteReferences: DataFrame = {
+      if (df.columns.contains("is_remote")) {
+        df.filter(df("is_remote") === true)
+      } else {
+        df.getReferences.getRemoteReferences
+      }
+    }
+
+    /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
       * current dataframe with the commits dataframe.
       * It requires the current dataframe to have a "repository_id" column, which is the

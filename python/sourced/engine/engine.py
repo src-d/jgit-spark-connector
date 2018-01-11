@@ -276,6 +276,20 @@ class RepositoriesDataFrame(SourcedDataFrame):
 
 
     @property
+    def remote_references(self):
+        """
+        Returns a new DataFrame with only the remote references of the
+        current repositories.
+
+        >>> remote_refs_df = repos_df.remote_references
+
+        :rtype: ReferencesDataFrame
+        """
+        return ReferencesDataFrame(self._engine_dataframe.getRemoteReferences(),
+                                   self._session, self._implicits)
+
+
+    @property
     def head_ref(self):
         """
         Filters the current DataFrame references to only contain those rows whose reference is HEAD.
@@ -317,6 +331,20 @@ class ReferencesDataFrame(SourcedDataFrame):
 
     def __init__(self, jdf, session, implicits):
         SourcedDataFrame.__init__(self, jdf, session, implicits)
+
+
+    @property
+    def remote_references(self):
+        """
+        Returns a new DataFrame with only the remote references of all the current
+        references.
+
+        >>> remote_refs_df = refs_df.remote_references
+
+        :rtype: ReferencesDataFrame
+        """
+        return ReferencesDataFrame(self._engine_dataframe.getRemoteReferences(),
+                                   self._session, self._implicits)
 
 
     @property
