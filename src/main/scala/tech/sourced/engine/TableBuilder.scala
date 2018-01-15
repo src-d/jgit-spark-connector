@@ -33,7 +33,7 @@ private[engine] object TableBuilder {
 
 private[engine] case class Table(name: String,
                                  pks: Seq[String],
-                                 indexes: Seq[String]) extends Logging {
+                                 indexes: Seq[String]) extends Logging with Serializable {
   private def sql(schema: StructType): Seq[String] = {
     Seq(s"CREATE TABLE $name (" +
       (schema.map(TableBuilder.columnSql) ++ TableBuilder.pkSql(pks)).mkString(",\n")
@@ -42,6 +42,7 @@ private[engine] case class Table(name: String,
   }
 
   def create(dbPath: String, schema: StructType): Unit = {
+    Class.forName("org.sqlite.JDBC")
     val conn = DriverManager.getConnection(s"jdbc:sqlite:$dbPath")
     conn.setAutoCommit(false)
     try {
