@@ -25,11 +25,8 @@ class DefaultSourceSpec extends BaseSourceSpec("DefaultSource") {
         .and(references("name").startsWith("refs/pull"))
     ).count()
 
-    info("Files/blobs with commit hashes:\n")
-    val blobsDf = references.getCommits.getBlobs.select(
-      "path", "commit_hash"
-    )
-    out should be(37)
+    val df = references.limit(1).getCommits
+    df.count() should be(1)
   }
 
   it should "return the remote branches renamed to refs/heads" in {
