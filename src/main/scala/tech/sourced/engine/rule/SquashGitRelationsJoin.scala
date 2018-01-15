@@ -98,7 +98,7 @@ private[rule] object GitOptimizer extends Logging {
 
     // Not a valid Join to optimize GitRelations
     if (leftRel.isEmpty || rightRel.isEmpty || !RelationOptimizer.isJoinSupported(j)) {
-      logWarning("Join cannot be optimized. It doesn't have GitRelations in both sides, " +
+      logUnableToOptimize("It doesn't have GitRelations in both sides, " +
         "or the Join type is not supported.")
       return JoinData()
     }
@@ -110,8 +110,7 @@ private[rule] object GitOptimizer extends Logging {
       rightRel.get
     )
     if (unsupportedConditions.nonEmpty) {
-      logWarning(s"Join cannot be optimized. Obtained unsupported " +
-        s"conditions: $unsupportedConditions")
+      logUnableToOptimize(s"Obtained unsupported conditions: $unsupportedConditions")
       return JoinData()
     }
 
@@ -121,7 +120,8 @@ private[rule] object GitOptimizer extends Logging {
         if (jm == j) {
           JoinData(valid = true, joinCondition = condition)
         } else {
-          throw new SparkException(s"Join cannot be optimized. Invalid node: $jm")
+          logUnableToOptimize(s"Invalid node: $jm")
+          JoinData()
         }
       case Filter(cond, _) =>
         JoinData(Some(cond), valid = true)
@@ -136,7 +136,8 @@ private[rule] object GitOptimizer extends Logging {
           session = Some(session)
         )
       case other =>
-        throw new SparkException(s"Join cannot be optimized. Invalid node: $other")
+        logUnableToOptimize(s"Invalid node: $other")
+        JoinData()
     }
 
     mergeJoinData(jd)
@@ -192,5 +193,28 @@ private[rule] object GitOptimizer extends Logging {
       case LogicalRelation(GitRelation(_, _, _, _), _, _) => true
       case _ => false
     } map (_.asInstanceOf[LogicalRelation])
+
+  private def logUnableToOptimize(msg: String = ""): Unit = {
+    logError("*" * 80)
+    logError("* This Join could not be optimized. This might severely impact the performance *")
+    logError("* of your query. This happened because there is an unexpected node between the *")
+    logError("* two relations of a Join, such as Limit or another kind of unknown relation.  *")
+    logError("* Note that this will not stop your query or make it fail, only make it slow.  *")
+    logError("*" * 80)
+    if (msg.nonEmpty) {
+      def split(str: String): Seq[String] = {
+        if (str.length > 76) {
+          Seq(str.substring(0, 76)) ++ split(str.substring(76))
+        } else {
+          Seq(str)
+        }
+      }
+      logError(s"* Reason:${" " * 70}*")
+      msg.lines.flatMap(split)
+        .map(line => s"* $line${" " * (76 - line.length)} *")
+        .foreach(logError(_))
+      logError("*" * 80)
+    }
+  }
 
 }

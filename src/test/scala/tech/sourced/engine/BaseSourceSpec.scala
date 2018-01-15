@@ -32,15 +32,6 @@ class BaseSourceSpec(source: String)
     df.count should be(7)
   }
 
-  it should "throw an error if the plan cannot be optimized" in {
-    val ex = intercept[SparkException] {
-      val refs = engine.getRepositories.limit(1).getReferences.limit(1)
-      refs.count
-    }
-
-    ex.getMessage should startWith("Join cannot be optimized. Invalid node: ")
-  }
-
   it should "count all commits messages from all references that are not forks" in {
     val commits = engine.getRepositories.filter("is_fork = false").getReferences.getCommits
     val df = commits.select("message", "reference_name", "hash").
