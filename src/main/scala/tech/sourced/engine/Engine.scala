@@ -5,6 +5,7 @@ import java.util.Properties
 
 import org.apache.spark.sql.functions.{lit, when}
 import org.apache.spark.SparkException
+import org.apache.spark.groupon.metrics.UserMetricsSystem
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import tech.sourced.engine.rule._
@@ -44,6 +45,8 @@ import scala.collection.JavaConversions.asScalaBuffer
 class Engine(session: SparkSession,
              repositoriesPath: String,
              repositoriesFormat: String) extends Logging {
+
+  UserMetricsSystem.initialize(session.sparkContext, "Engine")
 
   this.setRepositoriesPath(repositoriesPath)
   this.setRepositoriesFormat(repositoriesFormat)
@@ -341,7 +344,7 @@ private object MetadataDataFrameCompat {
       * @return new dataframe
       */
     def withStringArrayColumnAsString(column: String): DataFrame =
-      df.withColumn(column, ConcatArrayUDF(df(column), lit("|"))(df.sparkSession))
+      df.withColumn(column, ConcatArrayUDF(df.sparkSession)(df(column), lit("|")))
   }
 
 }

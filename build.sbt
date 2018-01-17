@@ -25,6 +25,7 @@ libraryDependencies += enry % Compile
 libraryDependencies += scalaLib % Provided
 libraryDependencies += sqlite % Compile
 libraryDependencies += sqlite % Test
+libraryDependencies += metrics % Compile
 
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oUT")
 

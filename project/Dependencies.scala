@@ -14,4 +14,5 @@ object Dependencies {
   lazy val commonsPool = "org.apache.commons" % "commons-pool2" % "2.4.3"
   lazy val scalaLib = "org.scala-lang" % "scala-library" % "2.11.11"
   lazy val sqlite = "org.xerial" % "sqlite-jdbc" % "3.21.0"
+  lazy val metrics = "com.groupon.dse" % "spark-metrics" % "2.0.0"
 }

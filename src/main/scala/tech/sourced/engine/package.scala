@@ -75,7 +75,7 @@ package object engine {
     def registerUDFs(): Unit = {
       SessionFunctions.UDFtoRegister.foreach(customUDF => session.udf.register(
         customUDF.name,
-        customUDF.function(session)
+        customUDF(session)
       ))
     }
 
@@ -119,8 +119,6 @@ package object engine {
   implicit class EngineDataFrame(df: DataFrame) {
 
     import df.sparkSession.implicits._
-
-    implicit val session: SparkSession = df.sparkSession
 
     /**
       * Returns a new [[org.apache.spark.sql.DataFrame]] with the product of joining the
@@ -327,7 +325,7 @@ package object engine {
       */
     def classifyLanguages: DataFrame = {
       checkCols(df, "is_binary", "path", "content")
-      df.withColumn("lang", ClassifyLanguagesUDF('is_binary, 'path, 'content))
+      df.withColumn("lang", ClassifyLanguagesUDF()('is_binary, 'path, 'content))
     }
 
     /**
@@ -347,10 +345,11 @@ package object engine {
       val lang: Column = if (df.columns.contains("lang")) {
         df("lang")
       } else {
-        null
+        import org.apache.spark.sql.functions.lit
+        lit(null)
       }
 
-      df.withColumn("uast", ExtractUASTsUDF('path, 'content, lang))
+      df.withColumn("uast", ExtractUASTsUDF(df.sparkSession)('path, 'content, lang))
     }
 
     /**
@@ -392,7 +391,7 @@ package object engine {
       }
 
       import org.apache.spark.sql.functions.lit
-      df.withColumn(outputColumn, QueryXPathUDF(df(queryColumn), lit(query)))
+      df.withColumn(outputColumn, QueryXPathUDF(df.sparkSession)(df(queryColumn), lit(query)))
     }
 
     /**
@@ -415,7 +414,7 @@ package object engine {
         throw new SparkException(s"DataFrame already contains a column named $outputColumn")
       }
 
-      df.withColumn(outputColumn, ExtractTokensUDF(df(queryColumn)))
+      df.withColumn(outputColumn, ExtractTokensUDF()(df(queryColumn)))
     }
 
   }
@@ -456,8 +455,7 @@ package object engine {
       */
     val UDFtoRegister: List[CustomUDF] = List(
       ClassifyLanguagesUDF,
-      ExtractUASTsWithoutLangUDF,
-      ExtractUASTsWithLangUDF,
+      ExtractUASTsUDF,
       QueryXPathUDF,
       ExtractTokensUDF,
       ConcatArrayUDF

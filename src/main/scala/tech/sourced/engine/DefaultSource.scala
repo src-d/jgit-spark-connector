@@ -1,5 +1,6 @@
 package tech.sourced.engine
 
+import org.apache.spark.groupon.metrics.UserMetricsSystem
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
 import org.apache.spark.sql.sources._
@@ -84,7 +85,10 @@ case class GitRelation(session: SparkSession,
 
     reposRDD.flatMap(source => {
       val provider = RepositoryProvider(reposLocalPath.value, skipCleanup)
-      val repo = provider.get(source)
+
+      val repo = UserMetricsSystem.timer("RepositoryProvider").time({
+        provider.get(source)
+      })
 
       // since the sources are ordered by their hierarchy, we can chain them like this
       // using the last used iterator as input for the current one
