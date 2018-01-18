@@ -42,7 +42,7 @@ import scala.collection.JavaConversions.asScalaBuffer
   * @constructor creates a Engine instance with the given Spark session.
   * @param session Spark session to be used
   */
-class Engine(session: SparkSession,
+class Engine(val session: SparkSession,
              repositoriesPath: String,
              repositoriesFormat: String) extends Logging {
 
