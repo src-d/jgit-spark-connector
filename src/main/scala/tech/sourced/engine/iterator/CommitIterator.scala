@@ -6,7 +6,7 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.errors.IncorrectObjectTypeException
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
 import org.eclipse.jgit.revwalk.RevCommit
-import tech.sourced.engine.util.{CompiledFilter, Filter}
+import tech.sourced.engine.util.{CompiledFilter, Filters}
 
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
@@ -24,15 +24,15 @@ class CommitIterator(finalColumns: Array[String],
                      filters: Seq[CompiledFilter])
   extends ChainableIterator[ReferenceWithCommit](finalColumns, prevIter, filters) {
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[ReferenceWithCommit] =
     CommitIterator.loadIterator(
       repo,
       Option(prevIter).map(_.currentRow),
-      filters.flatMap(_.matchingCases)
+      Filters(filters)
     )
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def mapColumns(obj: ReferenceWithCommit): RawRow = {
     val (repoId, refName) = RootedRepo.parseRef(repo, obj.ref.getName)
 
@@ -73,17 +73,13 @@ object CommitIterator {
     */
   def loadIterator(repo: Repository,
                    ref: Option[Ref],
-                   filters: Seq[Filter.Match],
+                   filters: Filters,
                    hashKey: String = "hash"): Iterator[ReferenceWithCommit] = {
     val refs = ref match {
       case Some(r) =>
-        val filterRefs = filters.flatMap {
-          case ("reference_name", references) => references.map(_.toString)
-          case _ => Seq()
-        }
-
         val (_, refName) = RootedRepo.parseRef(repo, r.getName)
-        if (filterRefs.isEmpty || filterRefs.contains(refName)) {
+        if (!filters.hasFilters("reference_name")
+          || filters.matches(Seq("reference_name"), refName)) {
           Seq(r).toIterator
         } else {
           Seq().toIterator
@@ -96,24 +92,19 @@ object CommitIterator {
       )
     }
 
-    val indexes = filters.flatMap {
-      case ("index", idx) => idx.map(_.asInstanceOf[Int])
-      case _ => Seq()
+    val hashKeys = Seq("hash", hashKey)
+    var iter: Iterator[ReferenceWithCommit] = new RefWithCommitIterator(
+      repo,
+      refs,
+      if (!filters.hasFilters("index")) 1 else 0
+    )
+
+    if (filters.hasFilters(hashKeys: _*)) {
+      iter = iter.filter(c => filters.matches(hashKeys, c.commit.getId.getName))
     }
 
-    val hashes = filters.flatMap {
-      case (k, h) if k == hashKey => h.map(_.toString)
-      case ("hash", h) => h.map(_.toString)
-      case _ => Seq()
-    }
-
-    var iter: Iterator[ReferenceWithCommit] = new RefWithCommitIterator(repo, refs)
-    if (hashes.nonEmpty) {
-      iter = iter.filter(c => hashes.contains(c.commit.getId.getName))
-    }
-
-    if (indexes.nonEmpty) {
-      iter = iter.filter(c => indexes.contains(c.index))
+    if (filters.hasFilters("index")) {
+      iter = iter.filter(c => filters.matches(Seq("index"), c.index))
     }
 
     iter
@@ -124,17 +115,19 @@ object CommitIterator {
 /**
   * Iterator that will return references with their commit and the commit index in the reference.
   *
-  * @param repo repository to get the data from
-  * @param refs iterator of references
+  * @param repo      repository to get the data from
+  * @param refs      iterator of references
+  * @param maxResults max results to return
   */
 class RefWithCommitIterator(repo: Repository,
-                            refs: Iterator[Ref]) extends Iterator[ReferenceWithCommit] {
+                            refs: Iterator[Ref],
+                            maxResults: Int = 0) extends Iterator[ReferenceWithCommit] {
 
   private var actualRef: Ref = _
   private var commits: Iterator[RevCommit] = _
   private var index: Int = 0
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def hasNext: Boolean = {
     while ((commits == null || !commits.hasNext) && refs.hasNext) {
       actualRef = refs.next()
@@ -148,12 +141,16 @@ class RefWithCommitIterator(repo: Repository,
           case _: IncorrectObjectTypeException => null
           // TODO: This reference is pointing to a non commit object, log this
         }
+
+      if (maxResults > 0 && commits != null) {
+        commits = commits.take(maxResults)
+      }
     }
 
     refs.hasNext || (commits != null && commits.hasNext)
   }
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def next(): ReferenceWithCommit = {
     val result: ReferenceWithCommit = ReferenceWithCommit(actualRef, commits.next(), index)
     index += 1

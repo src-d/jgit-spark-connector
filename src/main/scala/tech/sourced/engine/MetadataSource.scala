@@ -3,23 +3,26 @@ package tech.sourced.engine
 import java.nio.file.Paths
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.types.{MetadataBuilder, StructType}
+import org.apache.spark.sql.types.{IntegerType, MetadataBuilder, StructType}
 import org.apache.spark.sql.{Row, SQLContext, SparkSession}
 import org.apache.spark._
 import tech.sourced.engine.provider.{RepositoryProvider, RepositoryRDDProvider}
-import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, Expression}
+import org.apache.spark.sql.catalyst.expressions.{
+  EqualTo, Expression, Attribute, AttributeReference, Literal
+}
 import org.apache.spark.sql.sources._
 import tech.sourced.engine.iterator._
+import tech.sourced.engine.util.{Filter, Filters}
 
 /**
   * Data source to provide new metadata relations.
   */
 class MetadataSource extends RelationProvider with DataSourceRegister {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def shortName: String = "metadata"
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override def createRelation(sqlContext: SQLContext,
                               parameters: Map[String, String]): BaseRelation = {
     val table = parameters.getOrElse(
@@ -164,9 +167,7 @@ case class MetadataRelation(session: SparkSession,
               .map {
                 case (sf, table) =>
                   AttributeReference(
-                    sf.name,
-                    sf.dataType,
-                    sf.nullable,
+                    sf.name, sf.dataType, sf.nullable,
                     new MetadataBuilder().putString(Sources.SourceKey, table).build()
                   )().asInstanceOf[Attribute]
               }
@@ -182,7 +183,22 @@ case class MetadataRelation(session: SparkSession,
         case (_, other) =>
           throw new SparkException(s"unable to find source $other")
       }
-      .addFilters(filters ++ joinConditions)
+      .addFilters({
+        val fs = filters ++ joinConditions
+        // since we don't use the CommitIterator with the MetadataSource,
+        // we need to hack our way into making retrieving just the last commit
+        // the default thing returned by the engine
+        if (Filters(fs.flatMap(Filter.compile)).hasFilters("index")
+          || !sources.contains("commits")) {
+          fs
+        } else {
+          fs ++ Seq(EqualTo(
+            AttributeReference("index", IntegerType,
+              metadata = new MetadataBuilder().putString(Sources.SourceKey, "commits").build()
+            )(), Literal(0)
+          ))
+        }
+      })
 
     // if there is one step missing the query can't be correctly built
     // as there is no data to join all the steps

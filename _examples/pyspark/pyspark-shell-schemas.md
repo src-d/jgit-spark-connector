@@ -33,6 +33,9 @@ root
 '''
 
 engine.repositories.references.commits.printSchema()
+'''
+Also: engine.repositories.references.all_reference_commits.printSchema()
+'''
 ''' Output:
 root
  |-- repository_id: string (nullable = false)

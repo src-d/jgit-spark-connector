@@ -59,7 +59,7 @@ class QueryBuilderSpec extends FlatSpec with Matchers {
       (Or(EqualTo(attr("foo", "bar"), Literal(1, IntegerType)),
         EqualTo(attr("foo", "bar"), Literal(2, IntegerType))
       ),
-        s"($col = 1) OR ($col = 2)"),
+        s"(($col = 1) OR ($col = 2))"),
       (And(EqualTo(attr("foo", "bar"), Literal(1, IntegerType)),
         EqualTo(attr("foo", "bar"), Literal(2, IntegerType))
       ),

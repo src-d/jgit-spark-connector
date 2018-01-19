@@ -3,7 +3,7 @@ package tech.sourced.engine.iterator
 import org.apache.spark.internal.Logging
 import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.lib.{ObjectId, ObjectReader, Repository}
-import tech.sourced.engine.util.CompiledFilter
+import tech.sourced.engine.util.{CompiledFilter, Filters}
 
 /**
   * Iterator that will return rows of blobs in a repository.
@@ -24,21 +24,17 @@ class BlobIterator(finalColumns: Array[String],
   ) with Logging {
 
   /** @inheritdoc */
-  override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[Blob] = {
+  override protected def loadIterator(compiledFilters: Seq[CompiledFilter]): Iterator[Blob] = {
+    val filters = Filters(compiledFilters)
     val treeEntryIter = Option(prevIter) match {
       case Some(it) =>
         Seq(it.currentRow).toIterator
       case None => GitTreeEntryIterator.loadIterator(
         repo,
         None,
-        filters.flatMap(_.matchingCases),
+        filters,
         blobIdKey = "blob_id"
       )
-    }
-
-    val blobIds = filters.flatMap(_.matchingCases).flatMap {
-      case ("blob_id", ids) => ids.map(i => ObjectId.fromString(i.toString))
-      case _ => Seq()
     }
 
     val iter = treeEntryIter.flatMap(entry => {
@@ -49,8 +45,8 @@ class BlobIterator(finalColumns: Array[String],
       }
     })
 
-    if (blobIds.nonEmpty) {
-      iter.filter(b => blobIds.contains(b.id))
+    if (filters.hasFilters("blob_id")) {
+      iter.filter(b => filters.matches(Seq("blob_id"), b.id.getName))
     } else {
       iter
     }
