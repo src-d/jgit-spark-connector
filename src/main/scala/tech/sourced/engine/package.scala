@@ -2,8 +2,12 @@ package tech.sourced
 
 import gopkg.in.bblfsh.sdk.v1.uast.generated.Node
 import org.apache.spark.SparkException
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.api.java.function.MapFunction
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql._
+import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import tech.sourced.engine.udf._
+import tech.sourced.engine.util.Bblfsh
 
 /**
   * Provides the [[tech.sourced.engine.Engine]] class, which is the main entry point
@@ -324,8 +328,28 @@ package object engine {
       * @return new DataFrame containing also language data.
       */
     def classifyLanguages: DataFrame = {
-      checkCols(df, "is_binary", "path", "content")
-      df.withColumn("lang", ClassifyLanguagesUDF()('is_binary, 'path, 'content))
+      val newDf = df.withColumn("lang", typedLit(null: String))
+      val encoder = RowEncoder(newDf.schema)
+      newDf.map(new MapFunction[Row, Row] {
+        override def call(row: Row): Row = {
+          val (isBinaryIdx, pathIdx, contentIdx) = try {
+            (row.fieldIndex("is_binary"), row.fieldIndex("path"), row.fieldIndex("content"))
+          } catch {
+            case _: IllegalArgumentException =>
+              throw new SparkException(s"classifyLanguages can not be applied to this DataFrame: "
+                + "unable to find all these columns: is_binary, path, content")
+          }
+
+          val (isBinary, path, content) = (
+            row.getBoolean(isBinaryIdx),
+            row.getString(pathIdx),
+            row.getAs[Array[Byte]](contentIdx)
+          )
+
+          val lang = ClassifyLanguagesUDF.getLanguage(isBinary, path, content).orNull
+          Row(row.toSeq.dropRight(1) ++ Seq(lang): _*)
+        }
+      }, encoder)
     }
 
     /**
@@ -341,15 +365,31 @@ package object engine {
       * @return new DataFrame that contains Protobuf serialized UAST.
       */
     def extractUASTs(): DataFrame = {
-      checkCols(df, "path", "content")
-      val lang: Column = if (df.columns.contains("lang")) {
-        df("lang")
-      } else {
-        import org.apache.spark.sql.functions.lit
-        lit(null)
-      }
+      val newDf = df.withColumn("uast", typedLit(Seq[Array[Byte]]()))
+      val configB = df.sparkSession.sparkContext.broadcast(Bblfsh.getConfig(df.sparkSession))
+      val encoder = RowEncoder(newDf.schema)
+      newDf.map(new MapFunction[Row, Row] {
+        override def call(row: Row): Row = {
+          val lang = (try {
+            Some(row.fieldIndex("lang"))
+          } catch {
+            case _: IllegalArgumentException =>
+              None
+          }).map(row.getString).orNull
 
-      df.withColumn("uast", ExtractUASTsUDF(df.sparkSession)('path, 'content, lang))
+          val (pathIdx, contentIdx) = try {
+            (row.fieldIndex("path"), row.fieldIndex("content"))
+          } catch {
+            case _: IllegalArgumentException =>
+              throw new SparkException(s"extractUASTs can not be applied to this DataFrame: "
+                + "unable to find all these columns: path, content")
+          }
+
+          val (path, content) = (row.getString(pathIdx), row.getAs[Array[Byte]](contentIdx))
+          val uast = ExtractUASTsUDF.extractUASTs(path, content, lang, configB.value)
+          Row(row.toSeq.dropRight(1) ++ Seq(uast): _*)
+        }
+      }, encoder)
     }
 
     /**
