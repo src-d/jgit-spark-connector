@@ -62,43 +62,45 @@ object RepositoryRDDProvider {
 
   /**
     * Generates an RDD of [[RepositorySource]] with the repositories at the given path.
-    * Allows bucketting of siva files, but not bucketting of repositories or bare repoitories.
+    * Allows bucketing of siva files and raw repositories.
     *
     * @param sc                 Spark Context
     * @param path               path to get the repositories from
     * @param repositoriesFormat format of the repositories inside the provided path
     * @return generated RDD
     */
-  private def generateRDD(
-                           sc: SparkContext,
-                           path: String,
-                           repositoriesFormat: String): RDD[RepositorySource] = {
-    val binariesRDD = sc.binaryFiles(s"$path/*")
-    val groupedRDD = binariesRDD.map {
-      case (path: String, pds: PortableDataStream) => {
-        // returns a tuple of the root directory where it is contained, with a maximum depth
-        // of 1 under the given path, the file name, and the portable data stream
-        val idx = path.indexOf('/', path.length + 1)
-        if (idx < 0) {
-          val p = new Path(path)
-          (p.getParent.toString, (p.getName, pds))
-        } else {
-          val (parent, file) = path.splitAt(idx)
-          (parent, (file, pds))
-        }
-      }
-    }.groupByKey()
-
+  private def generateRDD(sc: SparkContext,
+                          path: String,
+                          repositoriesFormat: String): RDD[RepositorySource] = {
     repositoriesFormat match {
-      case SivaFormat => binariesRDD.map(b => SivaRepository(b._2))
-      case BareFormat => groupedRDD.map {
-        case (dir, files) =>
-          BareRepository(dir, files.head._2)
-      }
-      case StandardFormat => groupedRDD.map {
-        case (dir, files) =>
-          GitRepository(dir, files.head._2)
-      }
+      case SivaFormat =>
+        sc.binaryFiles(s"$path/*").flatMap(b => if (b._1.endsWith(".siva")) {
+          Some(SivaRepository(b._2))
+        } else {
+          None
+        })
+      case StandardFormat | BareFormat =>
+        sc.binaryFiles(s"$path/**/*").map {
+          case (path: String, pds: PortableDataStream) =>
+            // returns a tuple of the root directory where it is contained, with a maximum depth
+            // of 1 under the given path, the file name, and the portable data stream
+            val idx = path.indexOf('/', path.length + 1)
+            if (idx < 0) {
+              val p = new Path(path)
+              (p.getParent.toString, (p.getName, pds))
+            } else {
+              val (parent, file) = path.splitAt(idx)
+              (parent, (file, pds))
+            }
+        }.groupByKey()
+          .map {
+            case (dir, files) =>
+              if (repositoriesFormat == StandardFormat) {
+                GitRepository(dir, files.head._2)
+              } else {
+                BareRepository(dir, files.head._2)
+              }
+          }
       case other => throw new RuntimeException(s"Repository format $other is not supported")
     }
   }
