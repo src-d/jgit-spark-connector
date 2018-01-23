@@ -1,3 +1,9 @@
+FROM openjdk:8-jdk as builder
+RUN mkdir /engine
+WORKDIR /engine
+COPY . /engine
+RUN ./sbt assembly
+
 FROM srcd/jupyter-spark:5.2.1
 
 RUN mkdir -p /opt/
@@ -17,7 +23,7 @@ USER root
 
 COPY ./python /opt/python-engine/
 COPY ./examples/notebooks/* /home/$NB_USER/
-ADD ./target/engine-uber.jar /opt/jars/
+COPY --from=builder /engine/target/engine-uber.jar /opt/jars/
 
 
 RUN echo "local" > /opt/python-engine/version.txt \
