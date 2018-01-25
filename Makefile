@@ -130,7 +130,7 @@ docker-bblfsh-install-drivers:
 docker-bblfsh-list-drivers:
 	$(DOCKER_EXEC) $(BBLFSH_LIST_DRIVERS)
 
-docker-build: build
+docker-build:
 	$(DOCKER_BUILD) -t $(call unescape_docker_tag,$(JUPYTER_IMAGE_VERSIONED)) .
 
 docker-run:

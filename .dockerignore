@@ -1,6 +1,2 @@
 # Exclude all directories and files except those used by Dockerfile to build the image
-*
-!target/engine-uber.jar
-!examples/
-!python/
 
