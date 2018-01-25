@@ -22,7 +22,7 @@ case object ClassifyLanguagesUDF extends CustomUDF with Logging {
     * @param content  file content
     * @return `None` if no language could be guessed, `Some(language)` otherwise.
     */
-  private def getLanguage(isBinary: Boolean, path: String, content: Array[Byte]): Option[String] = {
+  def getLanguage(isBinary: Boolean, path: String, content: Array[Byte]): Option[String] = {
     timer.time({
       if (isBinary) {
         None
