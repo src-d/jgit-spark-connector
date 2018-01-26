@@ -89,4 +89,21 @@ object RootedRepo {
     }
   }
 
+  private[iterator] def isRemote(repo: Repository, ref: String): Boolean = {
+    val split: Array[String] = ref.split("/")
+    val uuid: String = split.last
+
+    // if it's a siva file, the last part will be the uuid of the repository, which
+    // is the name of the remote associated to that particular repository
+    getRepositoryId(repo, uuid) match {
+      case Some(_) =>
+        true // is a siva file
+
+      // If no uuid matches, it means this is not a siva file, so we should find this
+      // using the whole reference name
+      case None =>
+        Option(repo.getRemoteName(ref)).isDefined
+    }
+  }
+
 }
