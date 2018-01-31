@@ -64,6 +64,7 @@ case class GitRelation(session: SparkSession,
   private val repositoriesFormat: String = session.conf.get(RepositoriesFormatKey)
   private val skipCleanup: Boolean = session.conf.
     get(SkipCleanupKey, default = "false").toBoolean
+  private val parallelism: Int = session.sparkContext.defaultParallelism
 
   // this needs to be overridden to extend BaseRelataion,
   // though is not very useful since already we have the SparkSession
@@ -84,7 +85,7 @@ case class GitRelation(session: SparkSession,
     val filtersBySource = sc.broadcast(Sources.getFiltersBySource(filters))
 
     reposRDD.flatMap(source => {
-      val provider = RepositoryProvider(reposLocalPath.value, skipCleanup)
+      val provider = RepositoryProvider(reposLocalPath.value, skipCleanup, parallelism * 2)
 
       val repo = UserMetricsSystem.timer("RepositoryProvider").time({
         provider.get(source)

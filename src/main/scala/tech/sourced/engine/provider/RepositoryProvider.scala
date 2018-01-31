@@ -21,8 +21,11 @@ import scala.collection.JavaConverters._
   *
   * @param localPath   Local path where siva files are.
   * @param skipCleanup Skip deleting files after they reference count of a repository gets to 0.
+  * @param maxTotal    Maximum number of repositories to keep in the pool.
   */
-class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false)
+class RepositoryProvider(val localPath: String,
+                         val skipCleanup: Boolean = false,
+                         maxTotal: Int = 64)
   extends Logging {
   private val repositoryObjectFactory =
     new RepositoryObjectFactory(localPath, skipCleanup)
@@ -30,8 +33,9 @@ class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false
     new GenericKeyedObjectPool[RepositoryKey, Repository](repositoryObjectFactory)
 
   // TODO parametrize
-  repositoryPool.setMaxTotalPerKey(5)
-  repositoryPool.setMaxIdlePerKey(4)
+  repositoryPool.setMaxTotalPerKey(1)
+  repositoryPool.setMaxIdlePerKey(1)
+  repositoryPool.setMaxTotal(maxTotal)
   repositoryPool.setBlockWhenExhausted(true)
 
   /**
@@ -240,11 +244,14 @@ object RepositoryProvider {
     * @constructor
     * @param localPath   local path where rooted repositories are downloaded from the remote FS
     * @param skipCleanup skip cleanup after some operations
+    * @param maxTotal    Maximum number of repositories to keep in the pool
     * @return a new repository provider or an already existing one if there is one
     */
-  def apply(localPath: String, skipCleanup: Boolean = false): RepositoryProvider = {
+  def apply(localPath: String,
+            skipCleanup: Boolean = false,
+            maxTotal: Int = 64): RepositoryProvider = {
     if (provider == null) {
-      provider = new RepositoryProvider(localPath, skipCleanup = skipCleanup)
+      provider = new RepositoryProvider(localPath, skipCleanup = skipCleanup, maxTotal = maxTotal)
     }
 
     provider
