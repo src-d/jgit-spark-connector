@@ -44,7 +44,7 @@ class RepositoryProvider(val localPath: String,
 
   repositoryPool.setMaxTotalPerKey(numTables)
   repositoryPool.setMaxIdlePerKey(numTables)
-  repositoryPool.setMaxTotal(total)
+  /* repositoryPool.setMaxTotal(total) */
   repositoryPool.setBlockWhenExhausted(true)
 
   /**
