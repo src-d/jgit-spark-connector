@@ -42,7 +42,6 @@ class RepositoryProvider(val localPath: String,
     maxTotal
   }
 
-  // TODO parametrize
   repositoryPool.setMaxTotalPerKey(numTables)
   repositoryPool.setMaxIdlePerKey(numTables)
   repositoryPool.setMaxTotal(total)
