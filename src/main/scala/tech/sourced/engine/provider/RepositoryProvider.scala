@@ -10,6 +10,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.internal.Logging
 import org.eclipse.jgit.lib.{Repository, RepositoryBuilder}
+import tech.sourced.engine.Sources
 import tech.sourced.engine.util.MD5Gen
 import tech.sourced.siva.SivaReader
 
@@ -31,11 +32,20 @@ class RepositoryProvider(val localPath: String,
     new RepositoryObjectFactory(localPath, skipCleanup)
   private val repositoryPool =
     new GenericKeyedObjectPool[RepositoryKey, Repository](repositoryObjectFactory)
+  private val numTables = Sources.orderedSources.length
+
+  // The minimum number of total instances must be at least equal to the number of tables that
+  // can be processed at the same time.
+  private val total = if (maxTotal <= numTables) {
+    numTables
+  } else {
+    maxTotal
+  }
 
   // TODO parametrize
-  repositoryPool.setMaxTotalPerKey(1)
-  repositoryPool.setMaxIdlePerKey(1)
-  repositoryPool.setMaxTotal(maxTotal)
+  repositoryPool.setMaxTotalPerKey(numTables)
+  repositoryPool.setMaxIdlePerKey(numTables)
+  repositoryPool.setMaxTotal(total)
   repositoryPool.setBlockWhenExhausted(true)
 
   /**
