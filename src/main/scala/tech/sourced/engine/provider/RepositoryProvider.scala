@@ -36,15 +36,15 @@ class RepositoryProvider(val localPath: String,
 
   // The minimum number of total instances must be at least equal to the number of tables that
   // can be processed at the same time.
-  private val total = if (maxTotal <= numTables) {
-    numTables
+  private val total = if (maxTotal <= numTables * 10) {
+    numTables * 10
   } else {
     maxTotal
   }
 
   repositoryPool.setMaxTotalPerKey(numTables)
   repositoryPool.setMaxIdlePerKey(numTables)
-  /* repositoryPool.setMaxTotal(total) */
+  repositoryPool.setMaxTotal(total)
   repositoryPool.setBlockWhenExhausted(true)
 
   /**
