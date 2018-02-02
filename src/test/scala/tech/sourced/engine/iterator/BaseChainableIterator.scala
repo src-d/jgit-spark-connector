@@ -8,12 +8,18 @@ import tech.sourced.engine.provider.{RepositoryProvider, RepositorySource, Repos
 import tech.sourced.engine.{BaseSivaSpec, BaseSparkSpec}
 
 trait BaseChainableIterator extends Suite with BaseSparkSpec with BaseSivaSpec with Matchers {
+  override def afterAll(): Unit = {
+    super.afterAll()
+    provider.close(source, repo)
+  }
+
   lazy val prov: RepositoryRDDProvider = RepositoryRDDProvider(ss.sparkContext)
   lazy val rdd: RDD[RepositorySource] = prov.get(resourcePath, RepositoryRDDProvider.SivaFormat)
 
   lazy val source: RepositorySource = rdd.filter(source => source.pds.getPath()
     .endsWith("fff7062de8474d10a67d417ccea87ba6f58ca81d.siva")).first()
-  lazy val repo: Repository = RepositoryProvider("/tmp").get(source)
+  lazy val provider: RepositoryProvider = RepositoryProvider("/tmp")
+  lazy val repo: Repository = provider.get(source)
 
   def testIterator(iterator: (Repository) => Iterator[Row],
                    matcher: (Int, Row) => Unit,
@@ -31,5 +37,4 @@ trait BaseChainableIterator extends Suite with BaseSparkSpec with BaseSivaSpec w
 
     count should be(total)
   }
-
 }
