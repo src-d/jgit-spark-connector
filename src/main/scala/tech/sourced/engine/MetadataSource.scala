@@ -118,7 +118,7 @@ case class MetadataRelation(session: SparkSession,
               filtersBySource.value.getOrElse("blobs", Seq())
             )
 
-            new CleanupIterator[Row](iter, repo.close())
+            new CleanupIterator[Row](iter, provider.close(source, repo))
         }
     } else {
       metadataRDD
