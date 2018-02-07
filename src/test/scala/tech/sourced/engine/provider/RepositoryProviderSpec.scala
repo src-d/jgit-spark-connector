@@ -54,9 +54,13 @@ class RepositoryProviderSpec
     val reposRDD = prov.get(resourcePath, RepositoryRDDProvider.SivaFormat)
 
     val refs = reposRDD.flatMap(pds => {
-      val repo = RepositoryProvider("/tmp").get(pds)
+      val provider = RepositoryProvider("/tmp")
+      val repo = provider.get(pds)
 
-      repo.getAllRefs.asScala.mapValues(r => ObjectId.toString(r.getPeeledObjectId))
+      val res = repo.getAllRefs.asScala.mapValues(r => ObjectId.toString(r.getPeeledObjectId))
+      provider.close(pds, repo)
+
+      res
     }).collect()
 
     refs.length should be(56)
@@ -70,8 +74,11 @@ class RepositoryProviderSpec
       val repo = provider.get(source)
       val localSivaPath = new Path("/tmp",
         new Path(RepositoryProvider.temporalSivaFolder, source.pds.getPath()))
+
+      val res = FileSystem.get(source.pds.getConfiguration).exists(localSivaPath)
       provider.close(source, repo)
-      FileSystem.get(source.pds.getConfiguration).exists(localSivaPath)
+
+      res
     }).collect()
 
     assert(sivaFilesExist.length == 3)
@@ -146,6 +153,8 @@ class RepositoryProviderSpec
 
     val repo = provider.get(RepositoryProvider.keyForSource(source))
     repo.getAllRefs.size should not(be(0))
+
+    provider.close(source, repo)
   }
 
   "RepositoryProvider" should "return a repository given a BareRepository" in {
@@ -164,6 +173,8 @@ class RepositoryProviderSpec
 
     val repo = provider.get(RepositoryProvider.keyForSource(source))
     repo.getRemoteNames.size should be(1)
+
+    provider.close(source, repo)
   }
 
   "RepositoryProvider" should "return a repository given a GitRepository" in {
@@ -186,6 +197,8 @@ class RepositoryProviderSpec
 
     val repo = provider.get(RepositoryProvider.keyForSource(source))
     repo.getRemoteNames.size should be(1)
+
+    provider.close(source, repo)
   }
 
 }

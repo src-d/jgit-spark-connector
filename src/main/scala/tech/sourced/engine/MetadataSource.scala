@@ -64,6 +64,7 @@ case class MetadataRelation(session: SparkSession,
   private val repositoriesFormat: String = session.conf.get(RepositoriesFormatKey)
   private val skipCleanup: Boolean = session.conf.
     get(SkipCleanupKey, default = "false").toBoolean
+  private val parallelism: Int = session.sparkContext.defaultParallelism
 
   override def sqlContext: SQLContext = session.sqlContext
 
@@ -106,7 +107,7 @@ case class MetadataRelation(session: SparkSession,
             }
 
             val source = repoSources.head
-            val provider = RepositoryProvider(reposLocalPath.value, skipCleanup)
+            val provider = RepositoryProvider(reposLocalPath.value, skipCleanup, parallelism * 2)
             val repo = provider.get(source)
 
             val finalCols = requiredCols.value.map(_.name)
@@ -117,7 +118,7 @@ case class MetadataRelation(session: SparkSession,
               filtersBySource.value.getOrElse("blobs", Seq())
             )
 
-            new CleanupIterator[Row](iter, repo.close())
+            new CleanupIterator[Row](iter, provider.close(source, repo))
         }
     } else {
       metadataRDD

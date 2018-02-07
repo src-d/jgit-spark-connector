@@ -90,7 +90,8 @@ class RepositoryIteratorSpec extends FlatSpec with BaseChainableIterator with Be
     val rdd = RepositoryRDDProvider(ss.sparkContext)
       .get(tmpDir.toString, RepositoryRDDProvider.StandardFormat)
     val source = rdd.first()
-    val repo = RepositoryProvider(tmpDir.toString).get(source)
+    val provider = RepositoryProvider(tmpDir.toString)
+    val repo = provider.get(source)
 
     val iter = new RepositoryIterator("/foo/bar", Array("id"), repo, Seq())
     val repos = iter.toList
@@ -98,6 +99,8 @@ class RepositoryIteratorSpec extends FlatSpec with BaseChainableIterator with Be
     repos.length should be(2)
     repos.head(0).toString should be("github.com/git/repo")
     repos(1)(0).toString should startWith("file://")
+
+    provider.close(source, repo)
   }
 
 }

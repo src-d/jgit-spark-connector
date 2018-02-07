@@ -10,6 +10,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.internal.Logging
 import org.eclipse.jgit.lib.{Repository, RepositoryBuilder}
+import tech.sourced.engine.Sources
 import tech.sourced.engine.util.MD5Gen
 import tech.sourced.siva.SivaReader
 
@@ -21,17 +22,29 @@ import scala.collection.JavaConverters._
   *
   * @param localPath   Local path where siva files are.
   * @param skipCleanup Skip deleting files after they reference count of a repository gets to 0.
+  * @param maxTotal    Maximum number of repositories to keep in the pool.
   */
-class RepositoryProvider(val localPath: String, val skipCleanup: Boolean = false)
+class RepositoryProvider(val localPath: String,
+                         val skipCleanup: Boolean = false,
+                         maxTotal: Int = 64)
   extends Logging {
   private val repositoryObjectFactory =
     new RepositoryObjectFactory(localPath, skipCleanup)
   private val repositoryPool =
     new GenericKeyedObjectPool[RepositoryKey, Repository](repositoryObjectFactory)
+  private val numTables = Sources.orderedSources.length
 
-  // TODO parametrize
-  repositoryPool.setMaxTotalPerKey(5)
-  repositoryPool.setMaxIdlePerKey(4)
+  // The minimum number of total instances must be at least equal to the number of tables that
+  // can be processed at the same time.
+  private val total = if (maxTotal <= numTables) {
+    numTables
+  } else {
+    maxTotal
+  }
+
+  repositoryPool.setMaxTotalPerKey(numTables)
+  repositoryPool.setMaxIdlePerKey(numTables)
+  repositoryPool.setMaxTotal(total)
   repositoryPool.setBlockWhenExhausted(true)
 
   /**
@@ -240,11 +253,14 @@ object RepositoryProvider {
     * @constructor
     * @param localPath   local path where rooted repositories are downloaded from the remote FS
     * @param skipCleanup skip cleanup after some operations
+    * @param maxTotal    Maximum number of repositories to keep in the pool
     * @return a new repository provider or an already existing one if there is one
     */
-  def apply(localPath: String, skipCleanup: Boolean = false): RepositoryProvider = {
-    if (provider == null) {
-      provider = new RepositoryProvider(localPath, skipCleanup = skipCleanup)
+  def apply(localPath: String,
+            skipCleanup: Boolean = false,
+            maxTotal: Int = 64): RepositoryProvider = {
+    if (provider == null || provider.localPath != localPath) {
+      provider = new RepositoryProvider(localPath, skipCleanup = skipCleanup, maxTotal = maxTotal)
     }
 
     provider
