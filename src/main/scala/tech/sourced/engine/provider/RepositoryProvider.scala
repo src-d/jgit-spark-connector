@@ -259,7 +259,7 @@ object RepositoryProvider {
   def apply(localPath: String,
             skipCleanup: Boolean = false,
             maxTotal: Int = 64): RepositoryProvider = {
-    if (provider == null) {
+    if (provider == null || provider.localPath != localPath) {
       provider = new RepositoryProvider(localPath, skipCleanup = skipCleanup, maxTotal = maxTotal)
     }
 
