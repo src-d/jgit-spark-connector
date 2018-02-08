@@ -2,8 +2,9 @@ package tech.sourced.engine.iterator
 
 import java.sql.Timestamp
 
+import org.apache.spark.internal.Logging
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.errors.IncorrectObjectTypeException
+import org.eclipse.jgit.errors.{IncorrectObjectTypeException, MissingObjectException}
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
 import org.eclipse.jgit.revwalk.RevCommit
 import tech.sourced.engine.util.{CompiledFilter, Filters}
@@ -115,13 +116,14 @@ object CommitIterator {
 /**
   * Iterator that will return references with their commit and the commit index in the reference.
   *
-  * @param repo      repository to get the data from
-  * @param refs      iterator of references
+  * @param repo       repository to get the data from
+  * @param refs       iterator of references
   * @param maxResults max results to return
   */
 class RefWithCommitIterator(repo: Repository,
                             refs: Iterator[Ref],
-                            maxResults: Int = 0) extends Iterator[ReferenceWithCommit] {
+                            maxResults: Int = 0
+                           ) extends Iterator[ReferenceWithCommit] with Logging {
 
   private var actualRef: Ref = _
   private var commits: Iterator[RevCommit] = _
@@ -138,8 +140,12 @@ class RefWithCommitIterator(repo: Repository,
             .add(Option(actualRef.getPeeledObjectId).getOrElse(actualRef.getObjectId))
             .call().asScala.toIterator
         } catch {
-          case _: IncorrectObjectTypeException => null
-          // TODO: This reference is pointing to a non commit object, log this
+          case e: IncorrectObjectTypeException =>
+            log.warn("incorrect object found", e)
+            null
+          case e: MissingObjectException =>
+            log.warn("missing object", e)
+            null
         }
 
       if (maxResults > 0 && commits != null) {
