@@ -1,7 +1,10 @@
 package tech.sourced.engine.iterator
 
+import org.apache.spark.internal.Logging
+import org.eclipse.jgit.errors.{IncorrectObjectTypeException, MissingObjectException}
 import org.eclipse.jgit.lib.{ObjectId, Repository}
 import org.eclipse.jgit.treewalk.TreeWalk
+import tech.sourced.engine.iterator.GitTreeEntryIterator.log
 import tech.sourced.engine.util.{CompiledFilter, Filters}
 
 abstract class TreeEntryIterator(finalColumns: Array[String],
@@ -85,7 +88,7 @@ class MetadataTreeEntryIterator(finalColumns: Array[String],
 
 case class TreeEntry(commitHash: ObjectId, path: String, blob: ObjectId, ref: String, repo: String)
 
-object GitTreeEntryIterator {
+object GitTreeEntryIterator extends Logging {
 
   /**
     * Returns an iterator of references with commit.
@@ -148,9 +151,17 @@ object GitTreeEntryIterator {
     Stream.continually(treeWalk)
       .takeWhile(_.next())
       .map(tree => {
-        if (tree.isSubtree) {
-          tree.enterSubtree()
+        try {
+          if (tree.isSubtree) {
+            tree.enterSubtree()
+          }
+        } catch {
+          case e: IncorrectObjectTypeException =>
+            log.warn("incorrect object found", e)
+          case e: MissingObjectException =>
+            log.warn("missing object", e)
         }
+
         tree
       })
       .filter(!_.isSubtree)
