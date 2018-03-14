@@ -131,6 +131,8 @@ sealed trait CompiledFilter {
 
 abstract class AttrFilter(attr: Attr) extends CompiledFilter {
 
+  def this() = this(Attr("",""))
+
   /**
     * @inheritdoc
     */
@@ -150,6 +152,8 @@ abstract class AttrFilter(attr: Attr) extends CompiledFilter {
   * @param source table source
   */
 case class Attr(name: String, source: String) {
+
+  def this() = this("","")
 
   /**
     * Creates a new Attr from an Attribute
@@ -174,6 +178,8 @@ case class Attr(name: String, source: String) {
   */
 case class InFilter(attr: Attr, vals: Seq[Any]) extends AttrFilter(attr) {
 
+  def this() = this(Attr("",""), Seq())
+
   /**
     * @inheritdoc
     */
@@ -194,6 +200,8 @@ case class InFilter(attr: Attr, vals: Seq[Any]) extends AttrFilter(attr) {
   */
 case class EqualFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
 
+  def this() = this(Attr("",""), "")
+
   /**
     * @inheritdoc
     */
@@ -212,6 +220,8 @@ case class EqualFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
   * @param f filter to negate
   */
 case class NotFilter(f: CompiledFilter) extends CompiledFilter {
+
+  def this() = this(EqualFilter(Attr("",""), ""))
 
   /**
     * @inheritdoc
@@ -237,6 +247,8 @@ case class NotFilter(f: CompiledFilter) extends CompiledFilter {
 
 case class GreaterThanFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
 
+  def this() = this(Attr("",""), "")
+
   /**
     * @inheritdoc
     */
@@ -255,6 +267,8 @@ case class GreaterThanFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
 }
 
 case class LessThanFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
+
+  def this() = this(Attr("",""), "")
 
   /**
     * @inheritdoc
@@ -275,6 +289,8 @@ case class LessThanFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
 
 case class GreaterThanOrEqualFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
 
+  def this() = this(Attr("",""), "")
+
   /**
     * @inheritdoc
     */
@@ -293,6 +309,8 @@ case class GreaterThanOrEqualFilter(attr: Attr, value: Any) extends AttrFilter(a
 }
 
 case class LessThanOrEqualFilter(attr: Attr, value: Any) extends AttrFilter(attr) {
+
+  def this() = this(Attr("",""), "")
 
   /**
     * @inheritdoc
