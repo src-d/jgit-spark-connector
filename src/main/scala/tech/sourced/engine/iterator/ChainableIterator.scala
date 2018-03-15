@@ -1,6 +1,8 @@
 package tech.sourced.engine.iterator
 
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.Row
+import org.eclipse.jgit.errors.RevWalkException
 import tech.sourced.engine.util.CompiledFilter
 
 import scala.annotation.tailrec
@@ -15,7 +17,7 @@ import scala.annotation.tailrec
   */
 abstract class ChainableIterator[T](finalColumns: Array[String],
                                     prevIter: ChainableIterator[_],
-                                    filters: Seq[CompiledFilter]) extends Iterator[Row] {
+                                    filters: Seq[CompiledFilter]) extends Iterator[Row] with Logging {
 
   /** Raw values of the row. */
   type RawRow = Map[String, Any]
@@ -58,7 +60,6 @@ abstract class ChainableIterator[T](finalColumns: Array[String],
   /**
     * @inheritdoc
     */
-  @tailrec
   final override def hasNext: Boolean = {
     // If there is no previous iter just load the iterator the first pass
     // and use hasNext of iter all the times. We return here to get rid of
@@ -71,32 +72,38 @@ abstract class ChainableIterator[T](finalColumns: Array[String],
       return iter.hasNext
     }
 
-    // If the iter is not loaded, do so, but only if there are actually more
-    // rows in the prev iter. If there are, just load the iter and preload
-    // the prevIterCurrentRow.
-    if (iter == null) {
-      if (prevIter.isEmpty) {
-        return false
+    try {
+      // If the iter is not loaded, do so, but only if there are actually more
+      // rows in the prev iter. If there are, just load the iter and preload
+      // the prevIterCurrentRow.
+      if (iter == null) {
+        if (prevIter.isEmpty) {
+          return false
+        }
+
+        prevIterCurrentRow = prevIter.nextRaw
+        iter = loadIterator
       }
 
-      prevIterCurrentRow = prevIter.nextRaw
-      iter = loadIterator
-    }
+      // if iter is empty, we need to check if there are more rows in the prev iter
+      // if not, just finish. If there are, preload the next raw row of the prev iter
+      // and load the iterator again for the prev iter current row
+      iter.hasNext || {
+        if (prevIter.isEmpty) {
+          return false
+        }
 
-    // if iter is empty, we need to check if there are more rows in the prev iter
-    // if not, just finish. If there are, preload the next raw row of the prev iter
-    // and load the iterator again for the prev iter current row
-    iter.hasNext || {
-      if (prevIter.isEmpty) {
-        return false
+        prevIterCurrentRow = prevIter.nextRaw
+        iter = loadIterator
+
+        // recursively check if it has more items, maybe there are no results for
+        // this prevIter row but there are for the next
+        hasNext
       }
-
-      prevIterCurrentRow = prevIter.nextRaw
-      iter = loadIterator
-
-      // recursively check if it has more items, maybe there are no results for
-      // this prevIter row but there are for the next
-      hasNext
+    } catch {
+      case e: RevWalkException =>
+        log.warn("walk failed", e.getCause())
+        return false
     }
   }
 
