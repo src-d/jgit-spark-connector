@@ -17,9 +17,7 @@ import scala.annotation.tailrec
   */
 abstract class ChainableIterator[T](finalColumns: Array[String],
                                     prevIter: ChainableIterator[_],
-                                    filters: Seq[CompiledFilter])
-    extends Iterator[Row]
-    with Logging {
+                                    filters: Seq[CompiledFilter]) extends Iterator[Row] with Logging {
 
   /** Raw values of the row. */
   type RawRow = Map[String, Any]
@@ -123,6 +121,7 @@ abstract class ChainableIterator[T](finalColumns: Array[String],
     val values = finalColumns.map(c => mappedValues(c))
     Row(values: _*)
   }
+
 
   def nextRaw: RawRow = {
     currentRow = iter.next

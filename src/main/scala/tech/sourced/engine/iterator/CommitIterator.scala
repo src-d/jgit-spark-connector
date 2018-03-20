@@ -4,11 +4,7 @@ import java.sql.Timestamp
 
 import org.apache.spark.internal.Logging
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.errors.{
-  IncorrectObjectTypeException,
-  MissingObjectException,
-  RevWalkException
-}
+import org.eclipse.jgit.errors.{IncorrectObjectTypeException, MissingObjectException, RevWalkException}
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
 import org.eclipse.jgit.revwalk.RevCommit
 import tech.sourced.engine.util.{CompiledFilter, Filters}
