@@ -1,6 +1,8 @@
 package tech.sourced.engine.iterator
 
+import org.apache.spark.internal.Logging
 import org.apache.spark.{InterruptibleIterator, TaskContext}
+import org.eclipse.jgit.errors.RevWalkException
 
 /**
   * Iterator that calls a cleanup function after the given iterator has
@@ -11,7 +13,8 @@ import org.apache.spark.{InterruptibleIterator, TaskContext}
   * @tparam T type of the rows in the iterator
   */
 class CleanupIterator[T](it: Iterator[T], cleanup: => Unit)
-  extends InterruptibleIterator[T](TaskContext.get(), it) {
+    extends InterruptibleIterator[T](TaskContext.get(), it)
+    with Logging {
 
   /** @inheritdoc
     *
@@ -26,6 +29,10 @@ class CleanupIterator[T](it: Iterator[T], cleanup: => Unit)
       }
       hasNext
     } catch {
+      case e: RevWalkException =>
+        val _ = cleanup
+        log.warn("walk failed", e.getCause())
+        false
       case e: Throwable =>
         val _ = cleanup
         throw e
