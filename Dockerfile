@@ -21,6 +21,11 @@ ENV BBLFSH_PORT 9432
 
 USER root
 
+RUN apt-get update && \
+    apt-get install -y --no-install-suggests --no-install-recommends locales && \
+    apt-get clean && \
+    locale-gen en_US.UTF-8
+
 COPY ./python /opt/python-engine/
 COPY ./examples/notebooks/* /home/$NB_USER/
 COPY --from=builder /engine/target/engine-uber.jar /opt/jars/
