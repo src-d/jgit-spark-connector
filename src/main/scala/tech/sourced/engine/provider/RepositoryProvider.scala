@@ -229,7 +229,8 @@ class RepositoryObjectFactory(val localPath: String, val skipCleanup: Boolean)
     }
 
     // After copy create a repository instance using the local path
-    val repo = new RepositoryBuilder().setGitDir(new File(localUnpackedPath.toString)).build()
+    val gitDir = new File(localUnpackedPath.toString)
+    val repo = new ReadOnlyFileRepository(gitDir)
 
     // delete siva file
     if (!skipCleanup && !isLocalSivaFile) {
