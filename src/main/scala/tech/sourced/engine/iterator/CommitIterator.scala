@@ -4,11 +4,16 @@ import java.sql.Timestamp
 
 import org.apache.spark.internal.Logging
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.errors.{IncorrectObjectTypeException, MissingObjectException}
+import org.eclipse.jgit.errors.{
+  IncorrectObjectTypeException,
+  MissingObjectException,
+  RevWalkException
+}
 import org.eclipse.jgit.lib.{ObjectId, Ref, Repository}
 import org.eclipse.jgit.revwalk.RevCommit
 import tech.sourced.engine.util.{CompiledFilter, Filters}
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
 /**
@@ -120,7 +125,7 @@ object CommitIterator {
   * @param refs       iterator of references
   * @param maxResults max results to return
   */
-class RefWithCommitIterator(repo: Repository,
+private[iterator] class RefWithCommitIterator(repo: Repository,
                             refs: Iterator[Ref],
                             maxResults: Int = 0
                            ) extends Iterator[ReferenceWithCommit] with Logging {
@@ -128,9 +133,17 @@ class RefWithCommitIterator(repo: Repository,
   private var actualRef: Ref = _
   private var commits: Iterator[RevCommit] = _
   private var index: Int = 0
+  private var nextResult: ReferenceWithCommit = _
+  private var consumed: Int = 0
 
   /** @inheritdoc */
-  override def hasNext: Boolean = {
+  @tailrec
+  final override def hasNext: Boolean = {
+    // do not advance the iterator until the next result has been consumed
+    if (nextResult != null) {
+      return true
+    }
+
     while ((commits == null || !commits.hasNext) && refs.hasNext) {
       actualRef = refs.next()
       index = 0
@@ -147,19 +160,42 @@ class RefWithCommitIterator(repo: Repository,
             log.warn("missing object", e)
             null
         }
-
-      if (maxResults > 0 && commits != null) {
-        commits = commits.take(maxResults)
-      }
     }
 
-    refs.hasNext || (commits != null && commits.hasNext)
+
+    if (maxResults > 0 && consumed == maxResults) {
+      false
+    } else  if (refs.hasNext || (commits != null && commits.hasNext)) {
+      // Preload the result, so if there's an exception we can skip it and
+      // continue with the next. If we don't preload, the exception will
+      // happen in next, and that's an odd behaviour. This behaviour should
+      // be completely transparent to the iterator user.
+      try {
+        nextResult = ReferenceWithCommit(actualRef, commits.next(), index)
+        index += 1
+        true
+      } catch {
+        case e: RevWalkException =>
+          log.warn("rev walk error", e)
+          this.hasNext
+      }
+    } else {
+      false
+    }
   }
 
-  /** @inheritdoc */
+  /**
+    * Returns the next [[ReferenceWithCommit]]. It should never be called after
+    * hasNext has returned "false", since this can lead to incorrect results.
+    * It can only be called after a call to hasNext. Repeatedly calling this method
+    * will result in an error.
+    *
+    * @return a reference with commit
+    */
   override def next(): ReferenceWithCommit = {
-    val result: ReferenceWithCommit = ReferenceWithCommit(actualRef, commits.next(), index)
-    index += 1
+    val result = nextResult
+    nextResult = null
+    consumed += 1
     result
   }
 
