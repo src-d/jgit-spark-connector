@@ -17,20 +17,20 @@ Current implementation combines:
 First, you need to download [Apache Spark](https://spark.apache.org/) somewhere on your machine:
 
 ```bash
-$ cd /tmp && wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz" -O spark-2.2.0-bin-hadoop2.7.tgz
+$ cd /tmp && wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-2.2.1/spark-2.2.1-bin-hadoop2.7.tgz" -O spark-2.2.1-bin-hadoop2.7.tgz
 ```
-The Apache Software Foundation suggests you the better mirror where you can download `Spark` from. If you wish to take a look and find the best option in your case, you can [do it here](https://www.apache.org/dyn/closer.lua/spark/spark-2.2.0/spark-2.2.0-bin-hadoop2.7.tgz).
+The Apache Software Foundation suggests you the better mirror where you can download `Spark` from. If you wish to take a look and find the best option in your case, you can [do it here](https://www.apache.org/dyn/closer.lua/spark/spark-2.2.1/spark-2.2.1-bin-hadoop2.7.tgz).
 
 Then you must extract `Spark` from the downloaded tar file:
 
 ```bash
-$ tar -C ~/ -xvzf spark-2.2.0-bin-hadoop2.7.tgz
+$ tar -C ~/ -xvzf spark-2.2.1-bin-hadoop2.7.tgz
 ```
 
-Binaries and scripts to run `Spark` are located in spark-2.2.0-bin-hadoop2.7/bin, so should set `PATH` and `SPARK_HOME` to point to this directory. It's advised to add this to your shell profile:
+Binaries and scripts to run `Spark` are located in spark-2.2.1-bin-hadoop2.7/bin, so should set `PATH` and `SPARK_HOME` to point to this directory. It's advised to add this to your shell profile:
 
 ```bash
-$ export SPARK_HOME=$HOME/spark-2.2.0-bin-hadoop2.7
+$ export SPARK_HOME=$HOME/spark-2.2.1-bin-hadoop2.7
 $ export PATH=$PATH:$SPARK_HOME/bin
 ```
 
@@ -58,7 +58,7 @@ Either in case the `LANG` variable wouldn't be set to a UTF-8 encoding or it wou
 # Pre-requisites
 
 * Scala 2.11.x
-* [Apache Spark Installation](http://spark.apache.org/docs/latest/) >= 2.2.0
+* [Apache Spark Installation](http://spark.apache.org/docs/2.2.1/) 2.2.x
 * [bblfsh](https://github.com/bblfsh/bblfshd): Used for UAST extraction
 
 # Examples of engine usage
@@ -155,7 +155,7 @@ Run pyspark as explained before to start using the engine, replacing `[version]`
 $ $SPARK_HOME/bin/pyspark --packages "tech.sourced:engine:[version]"
 Welcome to
 
-   spark version 2.2.0
+   spark version 2.2.1
 
 Using Python version 3.6.2 (default, Jul 20 2017 03:52:27)
 SparkSession available as 'spark'.
