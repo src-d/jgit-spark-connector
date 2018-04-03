@@ -159,6 +159,9 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
           case e: MissingObjectException =>
             log.warn("missing object", e)
             null
+          case e: RevWalkException =>
+            log.warn("rev walk error", e)
+            null
         }
     }
 
