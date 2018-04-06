@@ -157,7 +157,7 @@ object GitTreeEntryIterator extends Logging {
           }
         } catch {
           case e: IncorrectObjectTypeException =>
-            log.warn("incorrect object found", e)
+            log.debug("incorrect object found", e)
           case e: MissingObjectException =>
             log.warn("missing object", e)
         }
