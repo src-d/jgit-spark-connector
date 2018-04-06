@@ -17,7 +17,7 @@ class ReferenceIterator(finalColumns: Array[String],
                         repo: Repository,
                         prevIter: RepositoryIterator,
                         filters: Seq[CompiledFilter])
-  extends ChainableIterator[Ref](finalColumns, prevIter, filters) {
+  extends ChainableIterator[Ref](finalColumns, prevIter, filters, repo) {
 
   /** @inheritdoc*/
   protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[Ref] =
@@ -37,7 +37,6 @@ class ReferenceIterator(finalColumns: Array[String],
       "is_remote" -> RootedRepo.isRemote(repo, ref.getName)
     )
   }
-
 }
 
 object ReferenceIterator {

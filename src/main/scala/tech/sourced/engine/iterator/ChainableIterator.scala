@@ -1,6 +1,7 @@
 package tech.sourced.engine.iterator
 
 import org.apache.spark.sql.Row
+import org.eclipse.jgit.lib.Repository
 import tech.sourced.engine.util.CompiledFilter
 
 import scala.annotation.tailrec
@@ -15,7 +16,8 @@ import scala.annotation.tailrec
   */
 abstract class ChainableIterator[T](finalColumns: Array[String],
                                     prevIter: ChainableIterator[_],
-                                    filters: Seq[CompiledFilter]) extends Iterator[Row] {
+                                    filters: Seq[CompiledFilter],
+                                    val repo:Repository) extends Iterator[Row] {
 
   /** Raw values of the row. */
   type RawRow = Map[String, Any]

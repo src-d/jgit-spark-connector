@@ -15,7 +15,7 @@ class RepositoryIterator(repositoryPath: String,
                          finalColumns: Array[String],
                          repo: Repository,
                          filters: Seq[CompiledFilter])
-  extends ChainableIterator[String](finalColumns, null, filters) {
+  extends ChainableIterator[String](finalColumns, null, filters, repo) {
 
   // since this iterator does not override getFilters method of RootedRepository
   // we can cache here the matching cases, because they are not going to change.
@@ -41,7 +41,6 @@ class RepositoryIterator(repositoryPath: String,
       "repository_path" -> repositoryPath
     )
   }
-
 }
 
 object RepositoryIterator {

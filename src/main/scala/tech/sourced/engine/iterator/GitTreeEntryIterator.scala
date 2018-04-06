@@ -10,7 +10,7 @@ import tech.sourced.engine.util.{CompiledFilter, Filters}
 abstract class TreeEntryIterator(finalColumns: Array[String],
                                  prevIter: CommitIterator,
                                  filters: Seq[CompiledFilter])
-  extends ChainableIterator[TreeEntry](finalColumns, prevIter, filters) {
+  extends ChainableIterator[TreeEntry](finalColumns, prevIter, filters, prevIter.repo) {
 }
 
 /**
@@ -45,7 +45,6 @@ class GitTreeEntryIterator(finalColumns: Array[String],
       "blob" -> obj.blob.getName
     )
   }
-
 }
 
 /**
@@ -157,9 +156,9 @@ object GitTreeEntryIterator extends Logging {
           }
         } catch {
           case e: IncorrectObjectTypeException =>
-            log.debug("incorrect object found", e)
+            log.debug(s"incorrect object found for ${RepositoryException.repoInfo(repo)}", e)
           case e: MissingObjectException =>
-            log.warn("missing object", e)
+            log.warn(s"missing object for ${RepositoryException.repoInfo(repo)}", e)
         }
 
         tree
