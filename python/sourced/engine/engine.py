@@ -24,7 +24,7 @@ class Engine(object):
     :type skip_cleanup: bool
     """
 
-    def __init__(self, session, repos_path, repos_format, skip_cleanup=False):
+    def __init__(self, session, repos_path, repos_format='siva', skip_cleanup=False):
         self.session = session
         self.__jsparkSession = session._jsparkSession
         self.session.conf.set('spark.tech.sourced.engine.repositories.path', repos_path)
