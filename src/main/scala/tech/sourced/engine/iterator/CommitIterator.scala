@@ -154,10 +154,13 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
             .call().asScala.toIterator
         } catch {
           case e: IncorrectObjectTypeException =>
-            log.warn("incorrect object found", e)
+            log.warn(s"incorrect object found for ${repoInfo}", e)
             null
           case e: MissingObjectException =>
-            log.warn("missing object", e)
+            log.warn(s"missing object for ${repoInfo}", e)
+            null
+          case e: RevWalkException =>
+            log.warn(s"rev walk error for ${repoInfo}", e)
             null
         }
     }
@@ -176,7 +179,7 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
         true
       } catch {
         case e: RevWalkException =>
-          log.warn("rev walk error", e)
+          log.warn(s"rev walk error for ${repoInfo}", e)
           this.hasNext
       }
     } else {
@@ -199,4 +202,11 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
     result
   }
 
+  private def repoInfo(): String = {
+    val c = repo.getConfig
+    val remotes = c.getSubsections("remote").asScala
+    val urls = remotes.flatMap(r => c.getStringList("remote", r, "url"))
+
+    s"${repo.toString}; urls ${urls.mkString(", ")}"
+  }
 }
