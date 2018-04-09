@@ -154,7 +154,7 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
             .call().asScala.toIterator
         } catch {
           case e: IncorrectObjectTypeException =>
-            log.warn(s"incorrect object found for ${repoInfo}", e)
+            log.debug(s"incorrect object found for ${repoInfo}", e)
             null
           case e: MissingObjectException =>
             log.warn(s"missing object for ${repoInfo}", e)
