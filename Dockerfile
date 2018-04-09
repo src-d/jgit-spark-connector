@@ -27,6 +27,8 @@ RUN apt-get update && \
     apt-get clean && \
     locale-gen en_US.UTF-8
 
+ENV LANG en_US.UTF-8
+
 COPY ./python /opt/python-engine/
 COPY ./examples/notebooks/* /home/$NB_USER/
 COPY --from=builder /engine/target/engine-uber.jar /opt/jars/
