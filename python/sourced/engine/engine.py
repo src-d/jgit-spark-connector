@@ -1,6 +1,7 @@
 import functools
 from py4j.java_gateway import java_import
 from pyspark.sql import DataFrame
+from bblfsh.sdkversion import VERSION
 
 
 class Engine(object):
@@ -106,7 +107,10 @@ class Engine(object):
         :type data: byte array
         :rtype: UAST node
         """
-        return self.__implicits.parseUASTNode(data)
+        return importlib.import_module(
+            "bblfsh.gopkg.in.bblfsh.sdk.%s.uast.generated_pb2" % VERSION)\
+            .Node.FromString(data)
+
 
     def from_metadata(self, db_path, db_name='engine_metadata.db'):
         """

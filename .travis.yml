@@ -48,6 +48,9 @@ matrix:
       python: 2.7
 
       install:
+        - sudo apt install libxml2-dev
+        - sudo apt install curl
+        - sudo apt install build-essential
         - make build
         - cd python
         - pip install -r requirements.txt
@@ -59,6 +62,9 @@ matrix:
       python: 3.6
 
       install:
+        - sudo apt install libxml2-dev
+        - sudo apt install curl
+        - sudo apt install build-essential
         - make build
         - cd python
         - pip install -r requirements.txt
