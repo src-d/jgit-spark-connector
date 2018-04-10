@@ -98,11 +98,12 @@ object CommitIterator {
       )
     }
 
+    val isChained = ref.isDefined
     val hashKeys = Seq("hash", hashKey)
     var iter: Iterator[ReferenceWithCommit] = new RefWithCommitIterator(
       repo,
       refs,
-      if (!filters.hasFilters("index")) 1 else 0
+      if (isChained && !filters.hasFilters("index")) 1 else 0
     )
 
     if (filters.hasFilters(hashKeys: _*)) {
@@ -147,6 +148,7 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
     while ((commits == null || !commits.hasNext) && refs.hasNext) {
       actualRef = refs.next()
       index = 0
+      consumed = 0
       commits =
         try {
           Git.wrap(repo).log()
