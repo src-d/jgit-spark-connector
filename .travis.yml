@@ -25,10 +25,11 @@ matrix:
         - gpg --no-default-keyring --primary-keyring ./project/.gnupg/pubring.gpg --secret-keyring ./project/.gnupg/secring.gpg --keyring ./project/.gnupg/pubring.gpg --fingerprint --import key.asc
         - make build
         - cp target/engine-uber.jar "engine-$TRAVIS_TAG.jar"
+        - make docker-push
 
       deploy:
         - provider: script
-          script: make docker-push && make maven-release
+          script: make maven-release
           skip_cleanup: true
           on:
             tags: true
