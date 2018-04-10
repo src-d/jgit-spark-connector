@@ -9,8 +9,9 @@ import tech.sourced.engine.util.{CompiledFilter, Filters}
 
 abstract class TreeEntryIterator(finalColumns: Array[String],
                                  prevIter: CommitIterator,
-                                 filters: Seq[CompiledFilter])
-  extends ChainableIterator[TreeEntry](finalColumns, prevIter, filters, prevIter.repo) {
+                                 filters: Seq[CompiledFilter],
+                                 repo: Repository)
+  extends ChainableIterator[TreeEntry](finalColumns, prevIter, filters, repo) {
 }
 
 /**
@@ -25,7 +26,7 @@ class GitTreeEntryIterator(finalColumns: Array[String],
                            repo: Repository,
                            prevIter: CommitIterator,
                            filters: Seq[CompiledFilter])
-  extends TreeEntryIterator(finalColumns, prevIter, filters) {
+  extends TreeEntryIterator(finalColumns, prevIter, filters, repo) {
 
   /** @inheritdoc*/
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[TreeEntry] =
@@ -58,7 +59,7 @@ class GitTreeEntryIterator(finalColumns: Array[String],
   */
 class MetadataTreeEntryIterator(finalColumns: Array[String],
                                 iter: Iterator[Map[String, Any]])
-  extends TreeEntryIterator(finalColumns, null, Seq()) {
+  extends TreeEntryIterator(finalColumns, null, Seq(), null) {
 
   // iter is converted to Iterator[TreeEntry] and mapColumns must receive a TreeEntry
   // in order to not lose all other columns that come from previous tables.

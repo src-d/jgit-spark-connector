@@ -26,17 +26,22 @@ class CleanupIterator[T](it: Iterator[T], cleanup: => Unit)
       }
       hasNext
     } catch {
-      case e: Exception =>
-        it match {
-          case it: ChainableIterator[_] =>
-            throw new RepositoryException(it.repo, e)
-          case _ =>
-            throw e
-        }
       case e: Throwable =>
-        throw e
-    } finally {
-      val _ = cleanup
+        val detailedException = (
+          e match {
+            case e: Exception =>
+              it match {
+                case it: ChainableIterator[_] =>
+                  new RepositoryException(it.repo, e)
+                case _ =>
+                  e
+              }
+            case _ =>
+              e
+          })
+
+        val _ = cleanup
+        throw detailedException
     }
   }
 
