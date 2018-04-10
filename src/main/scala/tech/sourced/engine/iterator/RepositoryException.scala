@@ -25,19 +25,25 @@ object RepositoryException {
     * @return
     */
   def repoInfo(repo: Repository): String = {
+    val repoPath = try {
+      repo.toString
+    } catch {
+      case _: Throwable => "Unknown repository path"
+    }
+
     try {
       val c = repo.getConfig
       val remotes = c.getSubsections("remote").asScala
       val urls = remotes.flatMap(r => c.getStringList("remote", r, "url"))
 
       if (urls.isEmpty) {
-        s"${repo.toString}"
+        repoPath
       } else {
-        s"${repo.toString}; urls ${urls.mkString(", ")}"
+        s"$repoPath; urls ${urls.toSet.mkString(", ")}"
       }
     } catch {
       case e: Throwable =>
-        s"Exception in RepositoryException.repoInfo ${e.getMessage}"
+        s"Exception in RepositoryException.repoInfo for $repoPath: ${e.getMessage}"
     }
   }
 }
