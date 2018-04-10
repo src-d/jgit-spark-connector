@@ -9,7 +9,7 @@ $(JARS_DIR):
 .PHONY: test clean
 test: clean $(JARS_DIR)
 	cp $(ENGINE_UBER_JAR_LOCATION) $(JARS_DIR) && \
-	python -m unittest discover -v
+	python -m unittest discover -v -s ./test -t .
 
 clean:
 	if [ -d $(JARS_DIR) ] ; \
