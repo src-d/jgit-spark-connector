@@ -64,6 +64,14 @@ class DefaultSourceSpec extends BaseSourceSpec("DefaultSource") {
     Engine(ss, tmpPath.toString, "standard").getRepositories.getHEAD.count() should be(1)
   }
 
+  it should "traverse all commits if it's not chained" in {
+    val row = engine.session.sql("SELECT COUNT(*) FROM commits").first()
+    row(0) should be(18107)
+
+    val row2 = engine.session.sql("SELECT COUNT(*) FROM commits WHERE index > 0").first()
+    row2(0) should be(18058)
+  }
+
   override protected def afterAll(): Unit = {
     super.afterAll()
 
