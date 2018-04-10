@@ -28,7 +28,7 @@ class CommitIterator(finalColumns: Array[String],
                      repo: Repository,
                      prevIter: ReferenceIterator,
                      filters: Seq[CompiledFilter])
-  extends ChainableIterator[ReferenceWithCommit](finalColumns, prevIter, filters) {
+  extends ChainableIterator[ReferenceWithCommit](finalColumns, prevIter, filters, repo) {
 
   /** @inheritdoc*/
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[ReferenceWithCommit] =
@@ -154,13 +154,13 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
             .call().asScala.toIterator
         } catch {
           case e: IncorrectObjectTypeException =>
-            log.debug(s"incorrect object found for ${repoInfo}", e)
+            log.debug(s"incorrect object found for ${RepositoryException.repoInfo(repo)}", e)
             null
           case e: MissingObjectException =>
-            log.warn(s"missing object for ${repoInfo}", e)
+            log.warn(s"missing object for ${RepositoryException.repoInfo(repo)}", e)
             null
           case e: RevWalkException =>
-            log.warn(s"rev walk error for ${repoInfo}", e)
+            log.warn(s"rev walk error for ${RepositoryException.repoInfo(repo)}", e)
             null
         }
     }
@@ -179,7 +179,7 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
         true
       } catch {
         case e: RevWalkException =>
-          log.warn(s"rev walk error for ${repoInfo}", e)
+          log.warn(s"rev walk error for ${RepositoryException.repoInfo(repo)}", e)
           this.hasNext
       }
     } else {
@@ -200,13 +200,5 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
     nextResult = null
     consumed += 1
     result
-  }
-
-  private def repoInfo(): String = {
-    val c = repo.getConfig
-    val remotes = c.getSubsections("remote").asScala
-    val urls = remotes.flatMap(r => c.getStringList("remote", r, "url"))
-
-    s"${repo.toString}; urls ${urls.mkString(", ")}"
   }
 }

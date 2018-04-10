@@ -11,7 +11,7 @@ import org.apache.spark.{InterruptibleIterator, TaskContext}
   * @tparam T type of the rows in the iterator
   */
 class CleanupIterator[T](it: Iterator[T], cleanup: => Unit)
-  extends InterruptibleIterator[T](TaskContext.get(), it) {
+    extends InterruptibleIterator[T](TaskContext.get(), it) {
 
   /** @inheritdoc
     *
@@ -27,8 +27,21 @@ class CleanupIterator[T](it: Iterator[T], cleanup: => Unit)
       hasNext
     } catch {
       case e: Throwable =>
+        val detailedException = (
+          e match {
+            case e: Exception =>
+              it match {
+                case it: ChainableIterator[_] =>
+                  new RepositoryException(it.repo, e)
+                case _ =>
+                  e
+              }
+            case _ =>
+              e
+          })
+
         val _ = cleanup
-        throw e
+        throw detailedException
     }
   }
 

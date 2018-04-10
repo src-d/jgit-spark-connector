@@ -20,7 +20,8 @@ class BlobIterator(finalColumns: Array[String],
   extends ChainableIterator[Blob](
     finalColumns,
     Option(prevIter).orNull,
-    filters
+    filters,
+    repo
   ) with Logging {
 
   /** @inheritdoc */
