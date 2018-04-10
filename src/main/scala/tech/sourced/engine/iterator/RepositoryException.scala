@@ -25,14 +25,19 @@ object RepositoryException {
     * @return
     */
   def repoInfo(repo: Repository): String = {
-    val c = repo.getConfig
-    val remotes = c.getSubsections("remote").asScala
-    val urls = remotes.flatMap(r => c.getStringList("remote", r, "url"))
+    try {
+      val c = repo.getConfig
+      val remotes = c.getSubsections("remote").asScala
+      val urls = remotes.flatMap(r => c.getStringList("remote", r, "url"))
 
-    if (urls.isEmpty) {
-      s"${repo.toString}"
-    } else {
-      s"${repo.toString}; urls ${urls.mkString(", ")}"
+      if (urls.isEmpty) {
+        s"${repo.toString}"
+      } else {
+        s"${repo.toString}; urls ${urls.mkString(", ")}"
+      }
+    } catch {
+      case e: Throwable =>
+        s"Exception in RepositoryException.repoInfo ${e.getMessage}"
     }
   }
 }
