@@ -4,11 +4,11 @@ import org.apache.spark.SparkException
 import org.scalatest._
 
 class BaseSourceSpec(source: String = "BaseSourceSpec")
-  extends FlatSpec with Matchers with BaseSivaSpec with BaseSparkSpec {
+  extends FlatSpec with Matchers with BaseSivaSpec with BaseSparkSpec with BeforeAndAfterEach {
 
   var engine: Engine = _
 
-  override protected def beforeAll(): Unit = {
+  override protected def beforeEach(): Unit = {
     super.beforeAll()
 
     engine = Engine(ss, resourcePath, "siva")
@@ -147,8 +147,8 @@ class BaseSourceSpec(source: String = "BaseSourceSpec")
     assert(files.count == 2)
   }
 
-  override protected def afterAll(): Unit = {
-    super.afterAll()
+  override protected def afterEach(): Unit = {
+    super.afterEach()
 
     engine = _: Engine
   }
