@@ -131,6 +131,8 @@ docker-bblfsh-list-drivers:
 	$(DOCKER_EXEC) $(BBLFSH_LIST_DRIVERS)
 
 docker-build:
+	$(if $(pushdisabled),$(error $(pushdisabled)))
+
 	$(DOCKER_BUILD) -t $(call unescape_docker_tag,$(JUPYTER_IMAGE_VERSIONED)) .
 
 docker-run:
