@@ -66,10 +66,10 @@ class DefaultSourceSpec extends BaseSourceSpec("DefaultSource") {
 
   it should "traverse all commits if it's not chained" in {
     val row = engine.session.sql("SELECT COUNT(*) FROM commits").first()
-    row(0) should be(18107)
+    row(0) should be(4444)
 
     val row2 = engine.session.sql("SELECT COUNT(*) FROM commits WHERE index > 0").first()
-    row2(0) should be(18058)
+    row2(0) should be(4390)
   }
 
   override protected def afterAll(): Unit = {
