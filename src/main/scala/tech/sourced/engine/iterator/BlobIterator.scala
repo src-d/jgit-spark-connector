@@ -2,8 +2,10 @@ package tech.sourced.engine.iterator
 
 import org.apache.spark.internal.Logging
 import org.eclipse.jgit.diff.RawText
+import org.eclipse.jgit.errors.MissingObjectException
 import org.eclipse.jgit.lib.{ObjectId, ObjectReader, Repository}
 import tech.sourced.engine.util.{CompiledFilter, Filters}
+import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
 /**
   * Iterator that will return rows of blobs in a repository.
@@ -56,7 +58,7 @@ class BlobIterator(finalColumns: Array[String],
   override protected def mapColumns(blob: Blob): RawRow = {
     val content = BlobIterator.readFile(
       blob.id,
-      repo.newObjectReader()
+      repo
     )
 
     val isBinary = RawText.isBinary(content)
@@ -75,7 +77,7 @@ class BlobIterator(finalColumns: Array[String],
 
 case class Blob(id: ObjectId, commit: ObjectId, ref: String, repo: String)
 
-object BlobIterator {
+object BlobIterator extends Logging {
   /** Max bytes to read for the content of a file. */
   val readMaxBytes: Int = 20 * 1024 * 1024
 
@@ -83,22 +85,34 @@ object BlobIterator {
     * Read max N bytes of the given blob
     *
     * @param objId  ID of the object to read
-    * @param reader Object reader to use
+    * @param repo   repository to get the data from
     * @param max    maximum number of bytes to read in memory
     * @return Bytearray with the contents of the file
     */
-  def readFile(objId: ObjectId, reader: ObjectReader, max: Integer = readMaxBytes): Array[Byte] = {
-    val obj = reader.open(objId)
-    val data = if (obj.isLarge) {
-      val buf = Array.ofDim[Byte](max)
-      val is = obj.openStream()
-      is.read(buf)
-      is.close()
-      buf
-    } else {
-      obj.getBytes
+  def readFile(objId: ObjectId, repo: Repository, max: Integer = readMaxBytes): Array[Byte] = {
+    val reader = repo.newObjectReader()
+    val obj = try {
+      reader.open(objId)
+    } catch {
+      case e: MissingObjectException =>
+        log.warn(s"missing object for ${RepositoryException.repoInfo(repo)}", e)
+        null
     }
-    reader.close()
-    data
+
+    if (obj != null) {
+      val data = if (obj.isLarge) {
+        val buf = Array.ofDim[Byte](max)
+        val is = obj.openStream()
+        is.read(buf)
+        is.close()
+        buf
+      } else {
+        obj.getBytes
+      }
+      reader.close()
+      data
+    } else {
+      Array.emptyByteArray
+    }
   }
 }
