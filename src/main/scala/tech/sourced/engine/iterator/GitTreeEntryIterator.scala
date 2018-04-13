@@ -1,10 +1,13 @@
 package tech.sourced.engine.iterator
 
 import org.apache.spark.internal.Logging
-import org.eclipse.jgit.errors.{IncorrectObjectTypeException, MissingObjectException}
+import org.eclipse.jgit.errors.{
+  CorruptObjectException,
+  IncorrectObjectTypeException,
+  MissingObjectException
+}
 import org.eclipse.jgit.lib.{ObjectId, Repository}
 import org.eclipse.jgit.treewalk.TreeWalk
-import tech.sourced.engine.iterator.GitTreeEntryIterator.log
 import tech.sourced.engine.util.{CompiledFilter, Filters}
 
 abstract class TreeEntryIterator(finalColumns: Array[String],
@@ -121,7 +124,17 @@ object GitTreeEntryIterator extends Logging {
       )
     }
 
-    var iter: Iterator[TreeEntry] = commits.flatMap(c => getTreeEntries(repo, c))
+    var iter: Iterator[TreeEntry] = commits.flatMap(c =>
+      try {
+        getTreeEntries(repo, c)
+      } catch {
+        case e@(
+          _: MissingObjectException |
+          _: IncorrectObjectTypeException |
+          _: CorruptObjectException) =>
+          log.debug(s"incorrect tree entry found for ${RepositoryException.repoInfo(repo)}", e)
+          Nil
+      })
     if (filters.hasFilters("path")) {
       iter = iter.filter(te => filters.matches(Seq("path"), te.path))
     }
