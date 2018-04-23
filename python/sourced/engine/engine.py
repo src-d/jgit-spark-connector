@@ -1,6 +1,7 @@
 import functools
 from py4j.java_gateway import java_import
 from pyspark.sql import DataFrame
+from bblfsh.sdkversion import VERSION
 
 
 class Engine(object):
@@ -95,18 +96,6 @@ class Engine(object):
                               self.session,
                               self.__implicits)
 
-
-    def parse_uast_node(self, data):
-        """
-        Parses a byte array and turns it into an UAST node.
-
-        >>> engine.parse_uast_node(row["uast"])
-
-        :param data: binary-encoded uast as a byte array
-        :type data: byte array
-        :rtype: UAST node
-        """
-        return self.__implicits.parseUASTNode(data)
 
     def from_metadata(self, db_path, db_name='engine_metadata.db'):
         """

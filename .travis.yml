@@ -45,9 +45,22 @@ matrix:
     - jdk: openjdk8
 
     - language: python
-      python: 2.7
+      python: 3.4
 
       install:
+        - sudo apt install libxml2-dev curl build-essential
+        - make build
+        - cd python
+        - pip install -r requirements.txt
+
+      script:
+        - make test
+
+    - language: python
+      python: 3.5
+
+      install:
+        - sudo apt install libxml2-dev curl build-essential
         - make build
         - cd python
         - pip install -r requirements.txt
@@ -59,6 +72,7 @@ matrix:
       python: 3.6
 
       install:
+        - sudo apt install libxml2-dev curl build-essential
         - make build
         - cd python
         - pip install -r requirements.txt

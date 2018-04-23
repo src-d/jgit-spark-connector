@@ -58,6 +58,7 @@ Either in case the `LANG` variable wouldn't be set to a UTF-8 encoding or it wou
 # Pre-requisites
 
 * Scala 2.11.x
+* Python >= 3.4.x (engine is tested with Python 3.4, 3.5 and 3.6 and these are the supported versions, even if it might still work with previous ones)
 * [Apache Spark Installation](http://spark.apache.org/docs/2.2.1/) 2.2.x
 * [bblfsh](https://github.com/bblfsh/bblfshd): Used for UAST extraction
 

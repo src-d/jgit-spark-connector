@@ -1,7 +1,7 @@
 from os import path
 import shutil
 import tempfile
-from sourced.engine import Engine
+from sourced.engine import Engine, parse_uast_node
 from sourced.engine.engine import BlobsDataFrame
 from .base import BaseTestCase
 
@@ -184,8 +184,8 @@ class EngineTestCase(BaseTestCase):
         idents = []
         for row in rows:
             for node in row["result"]:
-                node = self.engine.parse_uast_node(node)
-                idents.append(node.token())
+                node = parse_uast_node(node)
+                idents.append(node.token)
 
         self.assertEqual(idents, ["contents", "read", "f", "open", "f"])
 
@@ -203,8 +203,8 @@ class EngineTestCase(BaseTestCase):
         idents = []
         for row in rows:
             for node in row["result2"]:
-                node = self.engine.parse_uast_node(node)
-                idents.append(node.token())
+                node = parse_uast_node(node)
+                idents.append(node.token)
 
         self.assertEqual(idents, ["contents", "read", "f", "open", "f"])
 
