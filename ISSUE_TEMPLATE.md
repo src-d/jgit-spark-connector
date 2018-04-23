@@ -26,7 +26,9 @@ Please search on the [issue track](../) before creating one.
 <!--- Providing context helps us come up with a solution that is most useful in the real world -->
 
 ## Your Environment (for bugs)
-<!--- Include as many relevant details about the environment you experienced the bug in -->
-* Version used:
+<!--- MANDATORY for bugs: Include as many relevant details about the environment you experienced the bug in -->
+* Spark version:
+* PySpark version (if using PySpark):
+* Engine version:
 * Operating System and version:
 * Some needed resources to reproduce the problem:
