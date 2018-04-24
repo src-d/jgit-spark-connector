@@ -30,7 +30,7 @@ RUN apt-get update && \
 ENV LANG en_US.UTF-8
 
 COPY ./python /opt/python-engine/
-COPY ./examples/notebooks/* /home/$NB_USER/
+COPY ./_examples/notebooks/* /home/$NB_USER/
 COPY --from=builder /engine/target/engine-uber.jar /opt/jars/
 
 
