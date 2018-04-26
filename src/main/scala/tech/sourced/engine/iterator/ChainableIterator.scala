@@ -1,7 +1,15 @@
 package tech.sourced.engine.iterator
 
+import org.apache.spark.internal.Logging
 import org.apache.spark.sql.Row
+import org.eclipse.jgit.api.errors.GitAPIException
+import org.eclipse.jgit.errors.{
+  IncorrectObjectTypeException,
+  MissingObjectException,
+  RevWalkException
+}
 import org.eclipse.jgit.lib.Repository
+import tech.sourced.engine.exception.RepositoryException
 import tech.sourced.engine.util.CompiledFilter
 
 import scala.annotation.tailrec
@@ -17,7 +25,7 @@ import scala.annotation.tailrec
 abstract class ChainableIterator[T](finalColumns: Array[String],
                                     prevIter: ChainableIterator[_],
                                     filters: Seq[CompiledFilter],
-                                    val repo:Repository) extends Iterator[Row] {
+                                    val repo: Repository) extends Iterator[Row] with Logging {
 
   /** Raw values of the row. */
   type RawRow = Map[String, Any]
@@ -55,50 +63,80 @@ abstract class ChainableIterator[T](finalColumns: Array[String],
     */
   protected def mapColumns(obj: T): RawRow
 
-  //final private def isEmpty: Boolean = !hasNext
-
-  /**
-    * @inheritdoc
-    */
   @tailrec
   final override def hasNext: Boolean = {
-    // If there is no previous iter just load the iterator the first pass
-    // and use hasNext of iter all the times. We return here to get rid of
-    // this logic and assume from this point on that prevIter is not null
-    if (prevIter == null) {
+    loadNext match {
+      case Some(v) => v
+      case None => hasNext
+    }
+  }
+
+  /**
+    * Load the next iterator and returns if there is a next item or not. If
+    * it returns some value it means we know for sure there is something or
+    * not. If it returns None, it means we don't know and another call to
+    * loadNext is required.
+    *
+    * @return whether there is a next item in the iterator or not, or if we
+    *         don't know
+    */
+  final def loadNext: Option[Boolean] = {
+    try {
+      // If there is no previous iter just load the iterator the first pass
+      // and use hasNext of iter all the times. We return here to get rid of
+      // this logic and assume from this point on that prevIter is not null
+      if (prevIter == null) {
+        if (iter == null) {
+          iter = loadIterator
+        }
+
+        return Some(iter.hasNext)
+      }
+
+      // If the iter is not loaded, do so, but only if there are actually more
+      // rows in the prev iter. If there are, just load the iter and preload
+      // the prevIterCurrentRow.
       if (iter == null) {
+        if (prevIter.isEmpty) {
+          return Some(false)
+        }
+
+        prevIterCurrentRow = prevIter.nextRaw
         iter = loadIterator
       }
 
-      return iter.hasNext
-    }
+      // if iter is empty, we need to check if there are more rows in the prev iter
+      // if not, just finish. If there are, preload the next raw row of the prev iter
+      // and load the iterator again for the prev iter current row
+      if (iter.hasNext) {
+        Some(true)
+      } else {
+        if (prevIter.isEmpty) {
+          return Some(false)
+        }
 
-    // If the iter is not loaded, do so, but only if there are actually more
-    // rows in the prev iter. If there are, just load the iter and preload
-    // the prevIterCurrentRow.
-    if (iter == null) {
-      if (prevIter.isEmpty) {
-        return false
+        prevIterCurrentRow = prevIter.nextRaw
+        iter = loadIterator
+
+        None
       }
-
-      prevIterCurrentRow = prevIter.nextRaw
-      iter = loadIterator
-    }
-
-    // if iter is empty, we need to check if there are more rows in the prev iter
-    // if not, just finish. If there are, preload the next raw row of the prev iter
-    // and load the iterator again for the prev iter current row
-    iter.hasNext || {
-      if (prevIter.isEmpty) {
-        return false
-      }
-
-      prevIterCurrentRow = prevIter.nextRaw
-      iter = loadIterator
-
-      // recursively check if it has more items, maybe there are no results for
-      // this prevIter row but there are for the next
-      hasNext
+    } catch {
+      case e: IncorrectObjectTypeException =>
+        log.debug("incorrect object type", RepositoryException(repo, e))
+        None
+      case e: MissingObjectException =>
+        log.warn("missing object", RepositoryException(repo, e))
+        None
+      case e: RevWalkException =>
+        log.warn("rev walk exception", RepositoryException(repo, e))
+        None
+      case e: GitAPIException =>
+        log.warn("git api exception", RepositoryException(repo, e))
+        None
+      case e: Exception =>
+        throw RepositoryException(repo, e)
+      case e: Throwable =>
+        throw e
     }
   }
 

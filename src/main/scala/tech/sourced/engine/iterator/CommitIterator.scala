@@ -138,7 +138,6 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
   private var consumed: Int = 0
 
   /** @inheritdoc */
-  @tailrec
   final override def hasNext: Boolean = {
     // do not advance the iterator until the next result has been consumed
     if (nextResult != null) {
@@ -149,41 +148,18 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
       actualRef = refs.next()
       index = 0
       consumed = 0
-      commits =
-        try {
-          Git.wrap(repo).log()
+      commits = Git.wrap(repo).log()
             .add(Option(actualRef.getPeeledObjectId).getOrElse(actualRef.getObjectId))
             .call().asScala.toIterator
-        } catch {
-          case e: IncorrectObjectTypeException =>
-            log.debug(s"incorrect object found for ${RepositoryException.repoInfo(repo)}", e)
-            null
-          case e: MissingObjectException =>
-            log.warn(s"missing object for ${RepositoryException.repoInfo(repo)}", e)
-            null
-          case e: RevWalkException =>
-            log.warn(s"rev walk error for ${RepositoryException.repoInfo(repo)}", e)
-            null
-        }
     }
 
 
     if (maxResults > 0 && consumed == maxResults) {
       false
     } else  if (refs.hasNext || (commits != null && commits.hasNext)) {
-      // Preload the result, so if there's an exception we can skip it and
-      // continue with the next. If we don't preload, the exception will
-      // happen in next, and that's an odd behaviour. This behaviour should
-      // be completely transparent to the iterator user.
-      try {
         nextResult = ReferenceWithCommit(actualRef, commits.next(), index)
         index += 1
         true
-      } catch {
-        case e: RevWalkException =>
-          log.warn(s"rev walk error for ${RepositoryException.repoInfo(repo)}", e)
-          this.hasNext
-      }
     } else {
       false
     }
