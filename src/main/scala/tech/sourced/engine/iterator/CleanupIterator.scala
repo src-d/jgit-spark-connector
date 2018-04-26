@@ -1,6 +1,7 @@
 package tech.sourced.engine.iterator
 
 import org.apache.spark.{InterruptibleIterator, TaskContext}
+import tech.sourced.engine.exception.RepositoryException
 
 /**
   * Iterator that calls a cleanup function after the given iterator has
@@ -27,21 +28,8 @@ class CleanupIterator[T](it: Iterator[T], cleanup: => Unit)
       hasNext
     } catch {
       case e: Throwable =>
-        val detailedException = (
-          e match {
-            case e: Exception =>
-              it match {
-                case it: ChainableIterator[_] =>
-                  new RepositoryException(it.repo, e)
-                case _ =>
-                  e
-              }
-            case _ =>
-              e
-          })
-
         val _ = cleanup
-        throw detailedException
+        throw e
     }
   }
 

@@ -1,6 +1,7 @@
-package tech.sourced.engine.iterator
+package tech.sourced.engine.exception
 
 import org.eclipse.jgit.lib.Repository
+
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
 /**
@@ -15,9 +16,14 @@ class RepositoryException(repo: Repository, cause: Throwable)
       s"Repository error with data: ${RepositoryException.repoInfo(repo)}",
       cause,
       true,
-      false) {}
+      false
+    ) {}
 
 object RepositoryException {
+
+  def apply(repo: Repository, cause: Throwable): RepositoryException = {
+    new RepositoryException(repo, cause)
+  }
 
   /**
     * Returns a string with a debug description of the repository
@@ -46,4 +52,5 @@ object RepositoryException {
         s"Exception in RepositoryException.repoInfo for $repoPath: ${e.getMessage}"
     }
   }
+
 }

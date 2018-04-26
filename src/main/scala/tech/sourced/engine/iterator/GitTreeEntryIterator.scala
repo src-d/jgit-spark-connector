@@ -8,6 +8,7 @@ import org.eclipse.jgit.errors.{
 }
 import org.eclipse.jgit.lib.{ObjectId, Repository}
 import org.eclipse.jgit.treewalk.TreeWalk
+import tech.sourced.engine.exception.RepositoryException
 import tech.sourced.engine.util.{CompiledFilter, Filters}
 
 abstract class TreeEntryIterator(finalColumns: Array[String],
@@ -124,17 +125,7 @@ object GitTreeEntryIterator extends Logging {
       )
     }
 
-    var iter: Iterator[TreeEntry] = commits.flatMap(c =>
-      try {
-        getTreeEntries(repo, c)
-      } catch {
-        case e@(
-          _: MissingObjectException |
-          _: IncorrectObjectTypeException |
-          _: CorruptObjectException) =>
-          log.debug(s"incorrect tree entry found for ${RepositoryException.repoInfo(repo)}", e)
-          Nil
-      })
+    var iter: Iterator[TreeEntry] = commits.flatMap(c => getTreeEntries(repo, c))
     if (filters.hasFilters("path")) {
       iter = iter.filter(te => filters.matches(Seq("path"), te.path))
     }
@@ -163,19 +154,24 @@ object GitTreeEntryIterator extends Logging {
 
     Stream.continually(treeWalk)
       .takeWhile(_.next())
-      .map(tree => {
+      .flatMap(tree => {
         try {
           if (tree.isSubtree) {
             tree.enterSubtree()
           }
+
+          tree :: Nil
         } catch {
           case e: IncorrectObjectTypeException =>
-            log.debug(s"incorrect object found for ${RepositoryException.repoInfo(repo)}", e)
+            log.debug(s"incorrect object found", RepositoryException(repo, e))
+            Nil
           case e: MissingObjectException =>
-            log.warn(s"missing object for ${RepositoryException.repoInfo(repo)}", e)
+            log.warn(s"missing object for", RepositoryException(repo, e))
+            Nil
+          case e: CorruptObjectException =>
+            log.warn(s"corrupt object", RepositoryException(repo, e))
+            Nil
         }
-
-        tree
       })
       .filter(!_.isSubtree)
       .map(tree => TreeEntry(

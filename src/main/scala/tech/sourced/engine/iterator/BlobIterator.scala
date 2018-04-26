@@ -4,7 +4,9 @@ import org.apache.spark.internal.Logging
 import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.errors.MissingObjectException
 import org.eclipse.jgit.lib.{ObjectId, ObjectReader, Repository}
+import tech.sourced.engine.exception.RepositoryException
 import tech.sourced.engine.util.{CompiledFilter, Filters}
+
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
 /**
@@ -95,7 +97,7 @@ object BlobIterator extends Logging {
       reader.open(objId)
     } catch {
       case e: MissingObjectException =>
-        log.warn(s"missing object for ${RepositoryException.repoInfo(repo)}", e)
+        log.warn(s"missing object", RepositoryException(repo, e))
         null
     }
 
