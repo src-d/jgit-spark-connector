@@ -38,6 +38,7 @@ logBuffered in Test := false
 // Shade everything but tech.sourced.engine so the user does not have conflicts
 assemblyShadeRules in assembly := Seq(
   ShadeRule.rename("com.google.common.**" -> "com.google.shadedcommon.@1").inAll,
+  ShadeRule.rename("com.google.protobuf.**" -> "shaded.com.google.protobuf.@1").inAll,
   ShadeRule.rename("io.netty.**" -> "io.shadednetty.@1").inAll
 )
 
