@@ -8,6 +8,7 @@ import org.apache.commons.pool2.impl.{DefaultPooledObject, GenericKeyedObjectPoo
 import org.apache.commons.pool2.{BaseKeyedPooledObjectFactory, PooledObject}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.spark.TaskContext
 import org.apache.spark.internal.Logging
 import org.eclipse.jgit.lib.{Repository, RepositoryBuilder}
 import tech.sourced.engine.Sources
@@ -101,24 +102,54 @@ class RepositoryObjectFactory(val localPath: String, val skipCleanup: Boolean)
   extends BaseKeyedPooledObjectFactory[RepositoryKey, Repository]
     with Logging {
 
-  override def create(key: RepositoryKey): Repository = key match {
-    case RepositoryKey(conf, path, false, true) =>
-      genSivaRepository(conf, path, localPath)
-    case RepositoryKey(conf, path, true, false) =>
-      genRepository(conf, path, localPath, isBare = true)
-    case RepositoryKey(conf, path, _, _) =>
-      genRepository(conf, path, localPath, isBare = false)
+  override def create(key: RepositoryKey): Repository = {
+    val repo = key match {
+      case RepositoryKey(conf, path, false, true) =>
+        genSivaRepository(conf, path, localPath)
+      case RepositoryKey(conf, path, true, false) =>
+        genRepository(conf, path, localPath, isBare = true)
+      case RepositoryKey(conf, path, _, _) =>
+        genRepository(conf, path, localPath, isBare = false)
+    }
+
+    if (!skipCleanup) {
+      val ctx = TaskContext.get()
+      if (ctx != null) {
+        // Make really sure that repositories are cleaned up if context is available.
+        ctx.addTaskCompletionListener((_) => {
+          cleanupRepo(key, repo)
+        }).addTaskFailureListener((_, _) => {
+          cleanupRepo(key, repo)
+        })
+      }
+    }
+
+    repo
   }
 
   override def wrap(value: Repository): PooledObject[Repository] =
     new DefaultPooledObject[Repository](value)
 
   override def destroyObject(key: RepositoryKey, p: PooledObject[Repository]): Unit = {
-    val r = p.getObject
-    r.close()
-    if (!skipCleanup && r.getDirectory.toString.startsWith(localPath)) {
-      logDebug(s"Deleting unpacked files for ${key.path} at ${r.getDirectory}")
-      FileUtils.deleteQuietly(r.getDirectory)
+    cleanupRepo(key, p.getObject)
+  }
+
+  def cleanupRepo(key: RepositoryKey, r: Repository): Unit = {
+    if (r.getDirectory.exists()) {
+      logDebug(s"Cleaning up repository at ${r.getDirectory}")
+      r.close()
+
+      if (!skipCleanup && r.getDirectory.toString.startsWith(localPath)) {
+        if (key.isSiva) {
+          logDebug(s"Deleting unpacked files for ${key.path} at ${r.getDirectory.getParentFile}")
+          FileUtils.deleteQuietly(r.getDirectory.getParentFile)
+        } else {
+          logDebug(s"Deleting unpacked files for ${key.path} at ${r.getDirectory}")
+          FileUtils.deleteQuietly(r.getDirectory)
+        }
+      }
+    } else {
+      logDebug(s"Repository at ${r.getDirectory} was already cleaned up. Skipping")
     }
   }
 
