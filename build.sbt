@@ -37,9 +37,12 @@ logBuffered in Test := false
 
 // Shade everything but tech.sourced.engine so the user does not have conflicts
 assemblyShadeRules in assembly := Seq(
-  ShadeRule.rename("com.google.common.**" -> "com.google.shadedcommon.@1").inAll,
-  ShadeRule.rename("com.google.protobuf.**" -> "shaded.com.google.protobuf.@1").inAll,
-  ShadeRule.rename("io.netty.**" -> "io.shadednetty.@1").inAll
+  ShadeRule.rename("com.google.common.**" ->
+    "tech.sourced.engine.shaded.com.google.common.@1").inAll,
+  ShadeRule.rename("com.google.protobuf.**" ->
+    "tech.sourced.engine.shaded.com.google.protobuf.@1").inAll,
+  ShadeRule.rename("io.netty.**" ->
+    "tech.sourced.engine.shaded.io.netty.@1").inAll
 )
 
 assemblyMergeStrategy in assembly := {
