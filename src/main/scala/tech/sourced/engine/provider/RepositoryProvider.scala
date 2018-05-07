@@ -87,7 +87,7 @@ class RepositoryProvider(val localPath: String,
     if (repositoryPool.getNumActive(key) != 0) {
       repositoryPool.returnObject(key, repo)
     } else {
-      logWarning(s"closing repository at ${repo.getDirectory};" +
+      logDebug(s"closing repository at ${repo.getDirectory};" +
         s" returning object to the pool failed because it was already returned")
     }
 
