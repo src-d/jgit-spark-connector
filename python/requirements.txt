@@ -1,2 +1,2 @@
-pyspark==2.2.0.post0
+pyspark>=2.2.0,<2.2.1
 bblfsh==2.9.10
