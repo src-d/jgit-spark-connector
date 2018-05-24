@@ -64,6 +64,8 @@ case class GitRelation(session: SparkSession,
   private val repositoriesFormat: String = session.conf.get(RepositoriesFormatKey)
   private val skipCleanup: Boolean = session.conf.
     get(SkipCleanupKey, default = "false").toBoolean
+  private val skipReadErrors: Boolean = session.conf.
+    get(SkipReadErrorsKey, default = "false").toBoolean
   private val parallelism: Int = session.sparkContext.defaultParallelism
 
   // this needs to be overridden to extend BaseRelataion,
@@ -100,7 +102,8 @@ case class GitRelation(session: SparkSession,
             source.root,
             requiredCols.value,
             repo,
-            filtersBySource.value.getOrElse(k, Seq())
+            filtersBySource.value.getOrElse(k, Seq()),
+            skipReadErrors
           ))
 
         case k@"references" =>
@@ -108,7 +111,8 @@ case class GitRelation(session: SparkSession,
             requiredCols.value,
             repo,
             iter.map(_.asInstanceOf[RepositoryIterator]).orNull,
-            filtersBySource.value.getOrElse(k, Seq())
+            filtersBySource.value.getOrElse(k, Seq()),
+            skipReadErrors
           ))
 
         case k@"commits" =>
@@ -116,7 +120,8 @@ case class GitRelation(session: SparkSession,
             requiredCols.value,
             repo,
             iter.map(_.asInstanceOf[ReferenceIterator]).orNull,
-            filtersBySource.value.getOrElse(k, Seq())
+            filtersBySource.value.getOrElse(k, Seq()),
+            skipReadErrors
           ))
 
         case k@"tree_entries" =>
@@ -124,7 +129,8 @@ case class GitRelation(session: SparkSession,
             requiredCols.value,
             repo,
             iter.map(_.asInstanceOf[CommitIterator]).orNull,
-            filtersBySource.value.getOrElse(k, Seq())
+            filtersBySource.value.getOrElse(k, Seq()),
+            skipReadErrors
           ))
 
         case k@"blobs" =>
@@ -132,7 +138,8 @@ case class GitRelation(session: SparkSession,
             requiredCols.value,
             repo,
             iter.map(_.asInstanceOf[GitTreeEntryIterator]).orNull,
-            filtersBySource.value.getOrElse(k, Seq())
+            filtersBySource.value.getOrElse(k, Seq()),
+            skipReadErrors
           ))
 
         case other => throw new SparkException(s"required cols for '$other' is not supported")

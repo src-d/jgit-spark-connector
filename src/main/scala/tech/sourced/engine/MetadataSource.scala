@@ -64,6 +64,8 @@ case class MetadataRelation(session: SparkSession,
   private val repositoriesFormat: String = session.conf.get(RepositoriesFormatKey)
   private val skipCleanup: Boolean = session.conf.
     get(SkipCleanupKey, default = "false").toBoolean
+  private val skipReadErrors: Boolean = session.conf.
+    get(SkipReadErrorsKey, default = "false").toBoolean
   private val parallelism: Int = session.sparkContext.defaultParallelism
 
   override def sqlContext: SQLContext = session.sqlContext
@@ -115,7 +117,8 @@ case class MetadataRelation(session: SparkSession,
               finalCols,
               repo,
               new MetadataTreeEntryIterator(finalCols, rows.toIterator),
-              filtersBySource.value.getOrElse("blobs", Seq())
+              filtersBySource.value.getOrElse("blobs", Seq()),
+              skipReadErrors
             )
 
             new CleanupIterator[Row](iter, provider.close(source, repo))

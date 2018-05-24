@@ -16,10 +16,17 @@ import scala.collection.JavaConverters._
 class ReferenceIterator(finalColumns: Array[String],
                         repo: Repository,
                         prevIter: RepositoryIterator,
-                        filters: Seq[CompiledFilter])
-  extends ChainableIterator[Ref](finalColumns, prevIter, filters, repo) {
+                        filters: Seq[CompiledFilter],
+                        skipReadErrors: Boolean)
+  extends ChainableIterator[Ref](
+    finalColumns,
+    prevIter,
+    filters,
+    repo,
+    skipReadErrors
+  ) {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[Ref] =
     ReferenceIterator.loadIterator(
       repo,
@@ -27,7 +34,7 @@ class ReferenceIterator(finalColumns: Array[String],
       Filters(filters)
     )
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def mapColumns(ref: Ref): RawRow = {
     val (repoId, refName) = RootedRepo.parseRef(repo, ref.getName)
     Map[String, Any](

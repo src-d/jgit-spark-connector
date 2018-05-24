@@ -19,33 +19,38 @@ class GitTreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
     "from all repositories into a siva file" in {
     testIterator(repo =>
       new GitTreeEntryIterator(
-        cols, repo, new CommitIterator(cols, repo, null, Seq(allCommitsFilter)), Seq()), {
-        case (0, row) =>
-          row.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
-          row.getString(1) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
-          row.getString(2) should be("refs/heads/HEAD")
-          row.getString(3) should be("LICENSE")
-          row.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")
-        case (1, row) =>
-          row.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
-          row.getString(1) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
-          row.getString(2) should be("refs/heads/HEAD")
-          row.getString(3) should be("README.md")
-          row.getString(4) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
-        case (2, row) =>
-          row.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
-          row.getString(1) should be("github.com/mawag/faq-xiyoulinux")
-          row.getString(2) should be("refs/heads/HEAD")
-          row.getString(3) should be("LICENSE")
-          row.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")
-        case (3, row) =>
-          row.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
-          row.getString(1) should be("github.com/mawag/faq-xiyoulinux")
-          row.getString(2) should be("refs/heads/HEAD")
-          row.getString(3) should be("README.md")
-          row.getString(4) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
-        case _ =>
-      }, total = 23189, columnsCount = cols.length
+        cols,
+        repo,
+        new CommitIterator(cols, repo, null, Seq(allCommitsFilter), false),
+        Seq(),
+        false
+      ), {
+      case (0, row) =>
+        row.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
+        row.getString(1) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
+        row.getString(2) should be("refs/heads/HEAD")
+        row.getString(3) should be("LICENSE")
+        row.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")
+      case (1, row) =>
+        row.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
+        row.getString(1) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
+        row.getString(2) should be("refs/heads/HEAD")
+        row.getString(3) should be("README.md")
+        row.getString(4) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
+      case (2, row) =>
+        row.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
+        row.getString(1) should be("github.com/mawag/faq-xiyoulinux")
+        row.getString(2) should be("refs/heads/HEAD")
+        row.getString(3) should be("LICENSE")
+        row.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")
+      case (3, row) =>
+        row.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
+        row.getString(1) should be("github.com/mawag/faq-xiyoulinux")
+        row.getString(2) should be("refs/heads/HEAD")
+        row.getString(3) should be("README.md")
+        row.getString(4) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
+      case _ =>
+    }, total = 23189, columnsCount = cols.length
     )
   }
 
@@ -57,10 +62,15 @@ class GitTreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
 
     testIterator(repo =>
       new GitTreeEntryIterator(
-        cols, repo, new CommitIterator(cols, repo, null, Seq(allCommitsFilter)), filters), {
-        case (_, r) =>
-          r.getString(3) should be("README.md")
-      }, total = 1062, columnsCount = cols.length
+        cols,
+        repo,
+        new CommitIterator(cols, repo, null, Seq(allCommitsFilter), false),
+        filters,
+        false
+      ), {
+      case (_, r) =>
+        r.getString(3) should be("README.md")
+    }, total = 1062, columnsCount = cols.length
     )
   }
 
@@ -72,10 +82,15 @@ class GitTreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
 
     testIterator(repo =>
       new GitTreeEntryIterator(
-        cols, repo, new CommitIterator(cols, repo, null, Seq(allCommitsFilter)), filters), {
-        case (_, r) =>
-          r.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")
-      }, total = 1062, columnsCount = cols.length
+        cols,
+        repo,
+        new CommitIterator(cols, repo, null, Seq(allCommitsFilter), false),
+        filters,
+        false
+      ), {
+      case (_, r) =>
+        r.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")
+    }, total = 1062, columnsCount = cols.length
     )
   }
 
@@ -90,8 +105,9 @@ class GitTreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
       new GitTreeEntryIterator(
         cols,
         repo,
-        new CommitIterator(Array("hash"), repo, null, filters),
-        Seq()
+        new CommitIterator(Array("hash"), repo, null, filters, false),
+        Seq(),
+        false
       ), {
       case (i, r) if i % 2 == 0 =>
         r.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")
@@ -114,17 +130,22 @@ class GitTreeEntryIteratorSpec extends FlatSpec with BaseChainableIterator {
 
     testIterator(repo =>
       new GitTreeEntryIterator(
-        cols, repo, new CommitIterator(cols, repo, null, Seq(allCommitsFilter)), filters), {
-        case (i, r) if i % 2 == 0 =>
-          r.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")
-          r.getString(3) should be("LICENSE")
-          r.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
+        cols,
+        repo,
+        new CommitIterator(cols, repo, null, Seq(allCommitsFilter), false),
+        filters,
+        false
+      ), {
+      case (i, r) if i % 2 == 0 =>
+        r.getString(4) should be("733c072369ca77331f392c40da7404c85c36542c")
+        r.getString(3) should be("LICENSE")
+        r.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
 
-        case (_, r) =>
-          r.getString(4) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
-          r.getString(3) should be("README.md")
-          r.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
-      }, total = 86, columnsCount = cols.length
+      case (_, r) =>
+        r.getString(4) should be("2d2ad68c14c51e62595125b86b464427f6bf2126")
+        r.getString(3) should be("README.md")
+        r.getString(0) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
+    }, total = 86, columnsCount = cols.length
     )
   }
 

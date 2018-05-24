@@ -25,7 +25,9 @@ import scala.annotation.tailrec
 abstract class ChainableIterator[T](finalColumns: Array[String],
                                     prevIter: ChainableIterator[_],
                                     filters: Seq[CompiledFilter],
-                                    val repo: Repository) extends Iterator[Row] with Logging {
+                                    val repo: Repository,
+                                    skipReadErrors: Boolean
+                                   ) extends Iterator[Row] with Logging {
 
   /** Raw values of the row. */
   type RawRow = Map[String, Any]
@@ -122,19 +124,24 @@ abstract class ChainableIterator[T](finalColumns: Array[String],
       }
     } catch {
       case e: IncorrectObjectTypeException =>
-        log.debug("incorrect object type", RepositoryException(repo, e))
+        log.debug("incorrect object type", new RepositoryException(repo, e))
         None
       case e: MissingObjectException =>
-        log.warn("missing object", RepositoryException(repo, e))
+        log.warn("missing object", new RepositoryException(repo, e))
         None
       case e: RevWalkException =>
-        log.warn("rev walk exception", RepositoryException(repo, e))
+        log.warn("rev walk exception", new RepositoryException(repo, e))
         None
       case e: GitAPIException =>
-        log.warn("git api exception", RepositoryException(repo, e))
+        log.warn("git api exception", new RepositoryException(repo, e))
         None
-      case e: Exception =>
-        throw RepositoryException(repo, e)
+      case e@(_: Exception | _: RuntimeException) =>
+        if (skipReadErrors) {
+          log.warn("read error skipped", new RepositoryException(repo, e))
+          None
+        } else {
+          throw new RepositoryException(repo, e)
+        }
       case e: Throwable =>
         throw e
     }

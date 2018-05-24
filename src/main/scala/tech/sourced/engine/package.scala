@@ -50,6 +50,12 @@ package object engine {
     */
   private[engine] val SkipCleanupKey = "spark.tech.sourced.engine.cleanup.skip"
 
+  /**
+    * Key used for the option to specify whether read errors should be skipped
+    * or not.
+    */
+  private[engine] val SkipReadErrorsKey = "spark.tech.sourced.engine.skip.read.errors"
+
   // DataSource names
   val DefaultSourceName: String = "tech.sourced.engine"
   val MetadataSourceName: String = "tech.sourced.engine.MetadataSource"

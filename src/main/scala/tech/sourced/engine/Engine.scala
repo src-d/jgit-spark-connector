@@ -233,6 +233,22 @@ class Engine(val session: SparkSession,
   }
 
   /**
+    * Configures the Engine so it will skip all read errors occurred while
+    * reading siva files or repositories.
+    *
+    * {{{
+    * engine.skipReadErrors(true)
+    * }}}
+    *
+    * @param skip whether to skip read errors or not
+    * @return instance of the engine
+    */
+  def skipReadErrors(skip: Boolean): Engine = {
+    session.conf.set(SkipReadErrorsKey, skip)
+    this
+  }
+
+  /**
     * Saves all the metadata in a SQLite database on the given path as "engine_metadata.db".
     * If the database already exists, it will be overwritten. The given path must exist and
     * must be a directory, otherwise it will throw a [[SparkException]].
