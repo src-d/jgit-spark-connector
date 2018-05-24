@@ -23,9 +23,11 @@ class Engine(object):
     :type repos_format: str
     :param skip_cleanup: don't delete unpacked siva files after using them
     :type skip_cleanup: bool
+    :param skip_read_errors: skip any error encountered during repository reads
+    :type skip_read_errors: bool
     """
 
-    def __init__(self, session, repos_path, repos_format, skip_cleanup=False):
+    def __init__(self, session, repos_path, repos_format, skip_cleanup=False, skip_read_errors=False):
         self.session = session
         self.__jsparkSession = session._jsparkSession
         self.session.conf.set('spark.tech.sourced.engine.repositories.path', repos_path)
@@ -44,6 +46,10 @@ class Engine(object):
 
         if skip_cleanup:
             self.__engine.skipCleanup(True)
+
+        if skip_read_errors:
+            self.__engine.skipReadErrors(True)
+
         self.__implicits = getattr(getattr(self.__jvm.tech.sourced.engine, 'package$'), 'MODULE$')
 
 
