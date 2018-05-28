@@ -14,8 +14,15 @@ import tech.sourced.engine.util.{CompiledFilter, Filters}
 abstract class TreeEntryIterator(finalColumns: Array[String],
                                  prevIter: CommitIterator,
                                  filters: Seq[CompiledFilter],
-                                 repo: Repository)
-  extends ChainableIterator[TreeEntry](finalColumns, prevIter, filters, repo) {
+                                 repo: Repository,
+                                 skipReadErrors: Boolean)
+  extends ChainableIterator[TreeEntry](
+    finalColumns,
+    prevIter,
+    filters,
+    repo,
+    skipReadErrors
+  ) {
 }
 
 /**
@@ -29,10 +36,11 @@ abstract class TreeEntryIterator(finalColumns: Array[String],
 class GitTreeEntryIterator(finalColumns: Array[String],
                            repo: Repository,
                            prevIter: CommitIterator,
-                           filters: Seq[CompiledFilter])
-  extends TreeEntryIterator(finalColumns, prevIter, filters, repo) {
+                           filters: Seq[CompiledFilter],
+                           skipReadErrors: Boolean)
+  extends TreeEntryIterator(finalColumns, prevIter, filters, repo, skipReadErrors) {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[TreeEntry] =
     GitTreeEntryIterator.loadIterator(
       repo,
@@ -40,7 +48,7 @@ class GitTreeEntryIterator(finalColumns: Array[String],
       Filters(filters)
     )
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override protected def mapColumns(obj: TreeEntry): RawRow = {
     Map[String, Any](
       "commit_hash" -> obj.commitHash.getName,
@@ -63,7 +71,7 @@ class GitTreeEntryIterator(finalColumns: Array[String],
   */
 class MetadataTreeEntryIterator(finalColumns: Array[String],
                                 iter: Iterator[Map[String, Any]])
-  extends TreeEntryIterator(finalColumns, null, Seq(), null) {
+  extends TreeEntryIterator(finalColumns, null, Seq(), null, false) {
 
   // iter is converted to Iterator[TreeEntry] and mapColumns must receive a TreeEntry
   // in order to not lose all other columns that come from previous tables.
@@ -72,7 +80,7 @@ class MetadataTreeEntryIterator(finalColumns: Array[String],
   // as a subclass of something of which GitTreeEntryIterator is also a subclass.
   private var lastRow: Map[String, Any] = _
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override def loadIterator(filters: Seq[CompiledFilter]): Iterator[TreeEntry] =
     iter.map(row => {
       lastRow = row
@@ -85,7 +93,7 @@ class MetadataTreeEntryIterator(finalColumns: Array[String],
       )
     })
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override protected def mapColumns(obj: TreeEntry): RawRow = lastRow
 
 }
@@ -163,13 +171,13 @@ object GitTreeEntryIterator extends Logging {
           tree :: Nil
         } catch {
           case e: IncorrectObjectTypeException =>
-            log.debug(s"incorrect object found", RepositoryException(repo, e))
+            log.debug(s"incorrect object found", new RepositoryException(repo, e))
             Nil
           case e: MissingObjectException =>
-            log.warn(s"missing object for", RepositoryException(repo, e))
+            log.warn(s"missing object for", new RepositoryException(repo, e))
             Nil
           case e: CorruptObjectException =>
-            log.warn(s"corrupt object", RepositoryException(repo, e))
+            log.warn(s"corrupt object", new RepositoryException(repo, e))
             Nil
         }
       })

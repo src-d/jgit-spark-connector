@@ -59,4 +59,24 @@ class EngineSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSpark
     }
   }
 
+  "skipReadErrors" should "skip all read errors" in {
+    val resourcePath = getClass.getResource("/bad-siva-files").toString
+    val engine = Engine(ss, resourcePath, "siva").skipReadErrors(true)
+    val tmpPath = Paths.get(System.getProperty("java.io.tmpdir"))
+      .resolve(UUID.randomUUID.toString)
+    tmpPath.toFile.mkdir()
+
+    val cnt = engine
+      .getRepositories
+      .getReferences
+      .getCommits
+      .getTreeEntries
+      .getBlobs
+      .count()
+
+    cnt should be(8663)
+
+    FileUtils.deleteQuietly(tmpPath.toFile)
+  }
+
 }

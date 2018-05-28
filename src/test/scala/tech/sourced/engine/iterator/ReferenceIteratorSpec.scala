@@ -7,7 +7,7 @@ class ReferenceIteratorSpec extends FlatSpec with BaseChainableIterator {
 
   "ReferenceIterator" should "return all references from all repositories into a siva file" in {
     testIterator(
-      new ReferenceIterator(Array("repository_id", "name", "hash"), _, null, Seq()), {
+      new ReferenceIterator(Array("repository_id", "name", "hash"), _, null, Seq(), false), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getString(1) should be("refs/heads/HEAD")
@@ -27,7 +27,7 @@ class ReferenceIteratorSpec extends FlatSpec with BaseChainableIterator {
 
   it should "return only specified columns" in {
     testIterator(
-      new ReferenceIterator(Array("repository_id", "name"), _, null, Seq()), {
+      new ReferenceIterator(Array("repository_id", "name"), _, null, Seq(), false), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getString(1) should be("refs/heads/HEAD")
@@ -48,7 +48,8 @@ class ReferenceIteratorSpec extends FlatSpec with BaseChainableIterator {
         Array("repository_id", "name"),
         _,
         null,
-        Seq(EqualFilter(Attr("name", "references"), "refs/heads/develop"))
+        Seq(EqualFilter(Attr("name", "references"), "refs/heads/develop")),
+        false
       ), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
@@ -69,9 +70,11 @@ class ReferenceIteratorSpec extends FlatSpec with BaseChainableIterator {
           "/foo/bar",
           Array("id"),
           repo,
-          Seq(EqualFilter(Attr("id", "repository"), "github.com/xiyou-linuxer/faq-xiyoulinux"))
+          Seq(EqualFilter(Attr("id", "repository"), "github.com/xiyou-linuxer/faq-xiyoulinux")),
+          false
         ),
-        Seq(EqualFilter(Attr("name", "references"), "refs/heads/develop"))
+        Seq(EqualFilter(Attr("name", "references"), "refs/heads/develop")),
+        false
       ), {
       case (0, row) =>
         row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")

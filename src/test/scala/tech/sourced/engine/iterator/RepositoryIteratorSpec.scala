@@ -29,7 +29,8 @@ class RepositoryIteratorSpec extends FlatSpec with BaseChainableIterator with Be
         "/foo/bar",
         Array("id", "urls", "is_fork", "repository_path"),
         _,
-        Seq()
+        Seq(),
+        false
       ), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
@@ -48,7 +49,7 @@ class RepositoryIteratorSpec extends FlatSpec with BaseChainableIterator with Be
 
   it should "return only specified columns" in {
     testIterator(
-      new RepositoryIterator("/foo/bar", Array("id", "is_fork"), _, Seq()), {
+      new RepositoryIterator("/foo/bar", Array("id", "is_fork"), _, Seq(), false), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getBoolean(1) should be(false)
@@ -66,7 +67,8 @@ class RepositoryIteratorSpec extends FlatSpec with BaseChainableIterator with Be
         "/foo/bar",
         Array("id", "is_fork"),
         _,
-        Seq(EqualFilter(Attr("id", "repository"), "github.com/mawag/faq-xiyoulinux"))
+        Seq(EqualFilter(Attr("id", "repository"), "github.com/mawag/faq-xiyoulinux")),
+        false
       ), {
         case (0, row) =>
           row.getString(0) should be("github.com/mawag/faq-xiyoulinux")
@@ -93,7 +95,7 @@ class RepositoryIteratorSpec extends FlatSpec with BaseChainableIterator with Be
     val provider = RepositoryProvider(tmpDir.toString)
     val repo = provider.get(source)
 
-    val iter = new RepositoryIterator("/foo/bar", Array("id"), repo, Seq())
+    val iter = new RepositoryIterator("/foo/bar", Array("id"), repo, Seq(), false)
     val repos = iter.toList
 
     repos.length should be(2)

@@ -27,10 +27,17 @@ import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 class CommitIterator(finalColumns: Array[String],
                      repo: Repository,
                      prevIter: ReferenceIterator,
-                     filters: Seq[CompiledFilter])
-  extends ChainableIterator[ReferenceWithCommit](finalColumns, prevIter, filters, repo) {
+                     filters: Seq[CompiledFilter],
+                     skipReadErrors: Boolean)
+  extends ChainableIterator[ReferenceWithCommit](
+    finalColumns,
+    prevIter,
+    filters,
+    repo,
+    skipReadErrors
+  ) {
 
-  /** @inheritdoc*/
+  /** @inheritdoc */
   override protected def loadIterator(filters: Seq[CompiledFilter]): Iterator[ReferenceWithCommit] =
     CommitIterator.loadIterator(
       repo,
@@ -38,7 +45,7 @@ class CommitIterator(finalColumns: Array[String],
       Filters(filters)
     )
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override protected def mapColumns(obj: ReferenceWithCommit): RawRow = {
     val (repoId, refName) = RootedRepo.parseRef(repo, obj.ref.getName)
 
@@ -127,9 +134,9 @@ object CommitIterator {
   * @param maxResults max results to return
   */
 private[iterator] class RefWithCommitIterator(repo: Repository,
-                            refs: Iterator[Ref],
-                            maxResults: Int = 0
-                           ) extends Iterator[ReferenceWithCommit] with Logging {
+                                              refs: Iterator[Ref],
+                                              maxResults: Int = 0
+                                             ) extends Iterator[ReferenceWithCommit] with Logging {
 
   private var actualRef: Ref = _
   private var commits: Iterator[RevCommit] = _
@@ -137,7 +144,7 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
   private var nextResult: ReferenceWithCommit = _
   private var consumed: Int = 0
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   final override def hasNext: Boolean = {
     // do not advance the iterator until the next result has been consumed
     if (nextResult != null) {
@@ -149,17 +156,17 @@ private[iterator] class RefWithCommitIterator(repo: Repository,
       index = 0
       consumed = 0
       commits = Git.wrap(repo).log()
-            .add(Option(actualRef.getPeeledObjectId).getOrElse(actualRef.getObjectId))
-            .call().asScala.toIterator
+        .add(Option(actualRef.getPeeledObjectId).getOrElse(actualRef.getObjectId))
+        .call().asScala.toIterator
     }
 
 
     if (maxResults > 0 && consumed == maxResults) {
       false
-    } else  if (refs.hasNext || (commits != null && commits.hasNext)) {
-        nextResult = ReferenceWithCommit(actualRef, commits.next(), index)
-        index += 1
-        true
+    } else if (refs.hasNext || (commits != null && commits.hasNext)) {
+      nextResult = ReferenceWithCommit(actualRef, commits.next(), index)
+      index += 1
+      true
     } else {
       false
     }

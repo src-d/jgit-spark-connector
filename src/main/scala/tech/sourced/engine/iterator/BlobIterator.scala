@@ -3,11 +3,9 @@ package tech.sourced.engine.iterator
 import org.apache.spark.internal.Logging
 import org.eclipse.jgit.diff.RawText
 import org.eclipse.jgit.errors.MissingObjectException
-import org.eclipse.jgit.lib.{ObjectId, ObjectReader, Repository}
+import org.eclipse.jgit.lib.{ObjectId, Repository}
 import tech.sourced.engine.exception.RepositoryException
 import tech.sourced.engine.util.{CompiledFilter, Filters}
-
-import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
 /**
   * Iterator that will return rows of blobs in a repository.
@@ -18,17 +16,19 @@ import scala.collection.JavaConverters.iterableAsScalaIterableConverter
   * @param filters      filters for the iterator
   */
 class BlobIterator(finalColumns: Array[String],
-                      repo: Repository,
-                      prevIter: TreeEntryIterator,
-                      filters: Seq[CompiledFilter])
+                   repo: Repository,
+                   prevIter: TreeEntryIterator,
+                   filters: Seq[CompiledFilter],
+                   skipReadErrors: Boolean)
   extends ChainableIterator[Blob](
     finalColumns,
     Option(prevIter).orNull,
     filters,
-    repo
+    repo,
+    skipReadErrors
   ) with Logging {
 
-  /** @inheritdoc */
+  /** @inheritdoc*/
   override protected def loadIterator(compiledFilters: Seq[CompiledFilter]): Iterator[Blob] = {
     val filters = Filters(compiledFilters)
     val treeEntryIter = Option(prevIter) match {
@@ -44,7 +44,17 @@ class BlobIterator(finalColumns: Array[String],
 
     val iter = treeEntryIter.flatMap(entry => {
       if (repo.hasObject(entry.blob)) {
-        Some(Blob(entry.blob, entry.commitHash, entry.ref, entry.repo))
+        Some(
+          Blob(
+            entry.blob,
+            entry.commitHash,
+            entry.ref,
+            entry.repo,
+            BlobIterator.readFile(
+              entry.blob,
+              repo
+            )
+          ))
       } else {
         None
       }
@@ -58,26 +68,25 @@ class BlobIterator(finalColumns: Array[String],
   }
 
   override protected def mapColumns(blob: Blob): RawRow = {
-    val content = BlobIterator.readFile(
-      blob.id,
-      repo
-    )
-
-    val isBinary = RawText.isBinary(content)
+    val isBinary = RawText.isBinary(blob.content)
 
     Map[String, Any](
       "commit_hash" -> blob.commit.getName,
       "repository_id" -> blob.repo,
       "reference_name" -> blob.ref,
       "blob_id" -> blob.id.getName,
-      "content" -> (if (isBinary) Array.emptyByteArray else content),
+      "content" -> (if (isBinary) Array.emptyByteArray else blob.content),
       "is_binary" -> isBinary
     )
   }
 
 }
 
-case class Blob(id: ObjectId, commit: ObjectId, ref: String, repo: String)
+case class Blob(id: ObjectId,
+                commit: ObjectId,
+                ref: String,
+                repo: String,
+                content: Array[Byte])
 
 object BlobIterator extends Logging {
   /** Max bytes to read for the content of a file. */
@@ -86,9 +95,9 @@ object BlobIterator extends Logging {
   /**
     * Read max N bytes of the given blob
     *
-    * @param objId  ID of the object to read
-    * @param repo   repository to get the data from
-    * @param max    maximum number of bytes to read in memory
+    * @param objId ID of the object to read
+    * @param repo  repository to get the data from
+    * @param max   maximum number of bytes to read in memory
     * @return Bytearray with the contents of the file
     */
   def readFile(objId: ObjectId, repo: Repository, max: Integer = readMaxBytes): Array[Byte] = {
@@ -97,7 +106,7 @@ object BlobIterator extends Logging {
       reader.open(objId)
     } catch {
       case e: MissingObjectException =>
-        log.warn(s"missing object", RepositoryException(repo, e))
+        log.warn(s"missing object", new RepositoryException(repo, e))
         null
     }
 

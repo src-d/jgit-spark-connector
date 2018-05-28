@@ -28,7 +28,7 @@ class CommitIteratorSpec extends FlatSpec with BaseChainableIterator {
   "CommitIterator" should "return all commits from all repositories into a siva file" in {
     testIterator(
       new CommitIterator(
-        cols, _, null, Seq(allCommitsFilter)), {
+        cols, _, null, Seq(allCommitsFilter), false), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getString(1) should be("refs/heads/HEAD")
@@ -87,7 +87,7 @@ class CommitIteratorSpec extends FlatSpec with BaseChainableIterator {
         Array(
           "repository_id",
           "parents"
-        ), _, null, Seq(allCommitsFilter)), {
+        ), _, null, Seq(allCommitsFilter), false), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
           row.getAs[Array[String]](1) should be(Array())
@@ -120,7 +120,8 @@ class CommitIteratorSpec extends FlatSpec with BaseChainableIterator {
         ),
         _,
         null,
-        Seq(InFilter(Attr("hash", "commits"), commits), allCommitsFilter)
+        Seq(InFilter(Attr("hash", "commits"), commits), allCommitsFilter),
+        false
       ), {
         case (0, row) =>
           row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")
@@ -136,11 +137,6 @@ class CommitIteratorSpec extends FlatSpec with BaseChainableIterator {
   }
 
   it should "apply use prev iterator" in {
-    val commits = Array(
-      "fff7062de8474d10a67d417ccea87ba6f58ca81d",
-      "531f574cf8c457cbeb4f6a5bae2d81db22c5dc1a"
-    )
-
     testIterator(repo =>
       new CommitIterator(
         Array(
@@ -156,13 +152,16 @@ class CommitIteratorSpec extends FlatSpec with BaseChainableIterator {
             "/foo/bar",
             Array("id"),
             repo,
-            Seq()
+            Seq(),
+            false
           ),
           Seq(InFilter(Attr("name", "references"), Array(
             "refs/heads/master", "refs/heads/develop"
-          )))
+          ))),
+          false
         ),
-        Seq(allCommitsFilter)
+        Seq(allCommitsFilter),
+        false
       ), {
       case (0, row) =>
         row.getString(0) should be("github.com/xiyou-linuxer/faq-xiyoulinux")

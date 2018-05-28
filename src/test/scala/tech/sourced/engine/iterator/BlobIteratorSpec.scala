@@ -21,7 +21,7 @@ class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
   "BlobIterator" should "return all blobs for files at every commit of all refs in repository" in {
     testIterator(repo =>
       new BlobIterator(
-        columns, repo, null, Seq(allCommitsFilter)), {
+        columns, repo, null, Seq(allCommitsFilter), false), {
       case (0, row) =>
         row.getString(0) should be("733c072369ca77331f392c40da7404c85c36542c")
         row.getString(1) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
@@ -64,7 +64,7 @@ class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
 
     testIterator(repo =>
       new BlobIterator(
-        columns, repo, null, filters), {
+        columns, repo, null, filters, false), {
       case (0, row) =>
         row.getString(0) should be("733c072369ca77331f392c40da7404c85c36542c")
         row.getString(1) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
@@ -107,7 +107,7 @@ class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
 
     testIterator(repo =>
       new BlobIterator(
-        columns, repo, null, filters), {
+        columns, repo, null, filters, false), {
       case (0, row) =>
         row.getString(0) should be("733c072369ca77331f392c40da7404c85c36542c")
         row.getString(1) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
@@ -138,7 +138,7 @@ class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
 
     testIterator(repo =>
       new BlobIterator(
-        columns, repo, null, filters), {
+        columns, repo, null, filters, false), {
       case (_, row) =>
         row.getString(1) should be("fff7062de8474d10a67d417ccea87ba6f58ca81d")
     }, total = 86, columnsCount = columns.length
@@ -166,11 +166,14 @@ class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
             Array("commit_hash"),
             repo,
             null,
-            filters
+            filters,
+            false
           ),
-          Seq()
+          Seq(),
+          false
         ),
-        Seq()
+        Seq(),
+        false
       ), {
       case (_, row) =>
         commits should contain(row.getString(1))
@@ -205,15 +208,20 @@ class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
                 Seq(EqualFilter(
                   Attr("id", "repositories"),
                   "github.com/xiyou-linuxer/faq-xiyoulinux"
-                ))
+                )),
+                false
               ),
-              Seq()
+              Seq(),
+              false
             ),
-            Seq(InFilter(Attr("hash", "commits"), commits), allCommitsFilter)
+            Seq(InFilter(Attr("hash", "commits"), commits), allCommitsFilter),
+            false
           ),
-          Seq()
+          Seq(),
+          false
         ),
-        Seq()
+        Seq(),
+        false
       ), {
       case (_, row) =>
         commits should contain(row.getString(1))
@@ -230,7 +238,7 @@ class BlobIteratorSpec extends FlatSpec with BaseChainableIterator {
     )
 
     testIterator(repo =>
-      new BlobIterator(columns, repo, null, filters)
+      new BlobIterator(columns, repo, null, filters, false)
       , (_, _) => (),
       total = 22187,
       columnsCount = columns.length
