@@ -187,7 +187,7 @@ class EngineTestCase(BaseTestCase):
                 node = parse_uast_node(node)
                 idents.append(node.token)
 
-        self.assertEqual(idents, ["contents", "read", "f", "open", "f"])
+        self.assertCountEqual(idents, ["contents", "read", "f", "open", "f"])
 
 
     def test_uast_query_cols(self):
@@ -206,7 +206,7 @@ class EngineTestCase(BaseTestCase):
                 node = parse_uast_node(node)
                 idents.append(node.token)
 
-        self.assertEqual(idents, ["contents", "read", "f", "open", "f"])
+        self.assertCountEqual(idents, ["contents", "read", "f", "open", "f"])
 
 
     def test_extract_tokens(self):
@@ -216,7 +216,7 @@ class EngineTestCase(BaseTestCase):
         row = df.extract_uasts().query_uast('//*[@roleIdentifier and not(@roleIncomplete)]')\
             .extract_tokens().first()
 
-        self.assertEqual(row["tokens"], ["contents", "read", "f", "open", "f"])
+        self.assertCountEqual(row["tokens"], ["contents", "read", "f", "open", "f"])
 
     def test_metadata(self):
         tmpdir = tempfile.mkdtemp()

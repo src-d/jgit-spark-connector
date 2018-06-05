@@ -120,13 +120,12 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
       .filter(!_.roles.contains(Role.INCOMPLETE))
 
     nodes.length should be(5)
-    nodes.map(_.token) should equal(Seq(
+    nodes.map(_.token) should contain allOf(
       "contents",
       "read",
-      "f",
       "open",
       "f"
-    ))
+    )
   }
 
   it should "query using queryUAST method of dataframe" in {
@@ -144,13 +143,12 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
       .map(_.token)
 
     identifiers.length should be(5)
-    identifiers should equal(Seq(
+    identifiers should contain allOf(
       "contents",
       "read",
-      "f",
       "open",
       "f"
-    ))
+    )
   }
 
   it should "query using queryUAST method of dataframe with custom cols" in {
@@ -169,13 +167,12 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
       .map(_.token)
 
     identifiers.length should be(5)
-    identifiers should equal(Seq(
+    identifiers should contain allOf(
       "contents",
       "read",
-      "f",
       "open",
       "f"
-    ))
+    )
   }
 
   "ExtractTokensUDF" should "extract the tokens in a column" in {
@@ -192,13 +189,12 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
       .flatMap(_.asInstanceOf[Seq[String]])
 
     identifiers.length should be(5)
-    identifiers should equal(Seq(
+    identifiers should contain allOf(
       "contents",
       "read",
-      "f",
       "open",
       "f"
-    ))
+    )
   }
 
 }
