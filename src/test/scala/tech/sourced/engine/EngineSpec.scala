@@ -4,6 +4,7 @@ import java.nio.file.{Path, Paths}
 import java.util.{Properties, UUID}
 
 import org.apache.commons.io.FileUtils
+import org.apache.spark.SparkException
 import org.scalatest.{FlatSpec, Matchers}
 
 class EngineSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSparkSpec {
@@ -75,6 +76,28 @@ class EngineSpec extends FlatSpec with Matchers with BaseSivaSpec with BaseSpark
       .count()
 
     cnt should be(8663)
+
+    FileUtils.deleteQuietly(tmpPath.toFile)
+  }
+
+  "engine" should "throw an error when a siva file contains a zip-slip vulnerability" in {
+    val resourcePath = getClass.getResource("/zip-slip-siva-files").toString
+    val engine = Engine(ss, resourcePath, "siva")
+    val tmpPath = Paths.get(System.getProperty("java.io.tmpdir"))
+      .resolve(UUID.randomUUID.toString)
+    tmpPath.toFile.mkdir()
+
+    val ex = intercept[SparkException] {
+      engine
+        .getRepositories
+        .getReferences
+        .getCommits
+        .getTreeEntries
+        .getBlobs
+        .count()
+    }
+
+    ex.getCause.getMessage should be("Entry is outside of the target dir: objects/../../imoutside")
 
     FileUtils.deleteQuietly(tmpPath.toFile)
   }

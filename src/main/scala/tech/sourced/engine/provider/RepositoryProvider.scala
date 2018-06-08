@@ -253,7 +253,21 @@ class RepositoryObjectFactory(val localPath: String, val skipCleanup: Boolean)
         val e = sr.getEntry(ie)
         val outPath = Paths.get(localUnpackedPath.toString, ie.getName)
 
-        FileUtils.copyInputStreamToFile(e, new File(outPath.toString))
+        // Name is an arbitrary UTF-8 string identifying a file in the archive. Note
+        // that this might or might not be a POSIX-compliant path.
+        //
+        // Security note: Users should be careful when using name as a file path
+        // (e.g. to extract an archive) since it can contain relative paths and be
+        // vulnerable to Zip Slip (https://snyk.io/research/zip-slip-vulnerability)
+        // or other potentially dangerous values such as absolute paths, network
+        // drive addresses, etc.
+        val outFile = new File(outPath.toString)
+        val localFile = new File(localUnpackedPath.toString)
+        if (!outFile.getCanonicalPath.startsWith(localFile.getCanonicalPath + File.separator)) {
+          throw new RuntimeException(s"Entry is outside of the target dir: ${ie.getName}")
+        }
+
+        FileUtils.copyInputStreamToFile(e, outFile)
       })
 
       sr.close()
