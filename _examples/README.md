@@ -1,8 +1,8 @@
-# source{d} Engine
+# Examples
 
-Here you can find a list of annotated *source{d} Engine* examples:
+Here you can find a list of annotated *source{d} engine* examples:
 
-### pyspark
+### Python (pyspark)
 
 - [pyspark's shell  basic example](pyspark/pyspark-shell-basic.md)
 
@@ -18,7 +18,7 @@ Here you can find a list of annotated *source{d} Engine* examples:
 
 - [pyspark's shell raw repositories](pyspark/pyspark-shell-raw-repositories.md)
 
-### scala
+### Scala (spark-shell)
 
 - [spark-shell basic example](scala/spark-shell-basic.md)
 
@@ -33,7 +33,3 @@ Here you can find a list of annotated *source{d} Engine* examples:
 - [spark-shell querying UASTs with XPath](scala/spark-shell-xpath-query.md)
 
 - [spark-shell raw repositories](scala/spark-shell-raw-repositories.md)
-
-### jupyter notebooks
-
-- [Basic example](notebooks/Example.ipynb)
