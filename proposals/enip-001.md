@@ -1,7 +1,5 @@
 # ENIP-001
 
-## Pre-compute repository metadata and save it to another DataSource
-
 | Field | Value |
 | --- | --- |
 | ENIP | 1 |
