@@ -350,7 +350,7 @@ There is no windows support in enry-java or bblfsh's client-scala right now, so 
 
 ## Code of Conduct
 
-See [CODE\_OF\_CONDUCT.md](code_of_conduct.md)
+See [CODE\_OF\_CONDUCT.md]()
 
 ## License
 

@@ -1,4 +1,6 @@
-# Use Borges DB as metadata on Engine instead of config files inside siva files.
+# ENIP-002
+
+## Use Borges DB as metadata on Engine instead of config files inside siva files
 
 | Field | Value |
 | --- | --- |
