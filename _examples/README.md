@@ -20,5 +20,5 @@ Here you can find a list of annotated _source{d} engine_ examples:
 * [spark-shell data schemas](scala/spark-shell-schemas.md)
 * [spark-shell classifying languages and extracting UASTs](scala/spark-shell-lang-and-uast.md)
 * [spark-shell querying UASTs with XPath](scala/spark-shell-xpath-query.md)
-* [spark-shell raw repositories](spark-shell-raw-repositories.md)
+* [spark-shell raw repositories](scala/spark-shell-raw-repositories.md)
 

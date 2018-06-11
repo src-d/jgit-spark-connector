@@ -17,7 +17,7 @@
     * [Querying UASTs with XPath example](_examples/scala/spark-shell-xpath-query.md)
     * [Printing schema example](_examples/scala/spark-shell-schemas.md)
     * [Extracting UASTs example](_examples/scala/spark-shell-uast-extraction.md)
-  * [Raw repositories usage](_examples/spark-shell-raw-repositories.md)
+    * [Raw repositories usage](_examples/scala/spark-shell-raw-repositories.md)
 * [Engine Improvement Proposals](proposals/README.md)
   * [ENIP-TEMPLATE](proposals/enip-000.md)
   * [ENIP-001](proposals/enip-001.md)
