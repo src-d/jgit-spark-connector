@@ -19,7 +19,7 @@
     * [Raw repositories usage](_examples/scala/spark-shell-raw-repositories.md)
     * [Extracting UASTs example](_examples/scala/spark-shell-uast-extraction.md)
 * [Engine Improvement Proposals](proposals/README.md)
-  * [ENIP-000](proposals/enip-000.md)
+  * [ENIP-TEMPLATE](proposals/enip-000.md)
   * [ENIP-001](proposals/enip-001.md)
   * [ENIP-002](proposals/enip-002.md)
   * [ENIP-003](proposals/enip-003.md)

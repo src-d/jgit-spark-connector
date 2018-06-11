@@ -1,4 +1,4 @@
-# ENIP-000
+# ENIP-TEMPLATE
 
 ENIP Template
 
