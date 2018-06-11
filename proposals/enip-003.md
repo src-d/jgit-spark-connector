@@ -1,7 +1,5 @@
 # ENIP-003
 
-ENIP Template
-
 | Field | Value |
 | --- | --- |
 | ENIP | 3 |
