@@ -2,7 +2,7 @@
 
 * [source{d} engine](README.md)
 * [Examples](_examples/README.md)
-  * [pyspark](_examples/pyspark/README.md)
+  * [Python \(pyspark\)](_examples/pyspark/README.md)
     * [Raw repositories usage](_examples/pyspark/pyspark-shell-raw-repositories.md)
     * [Querying UASTs with XPath example](_examples/pyspark/pyspark-shell-xpath-query.md)
     * [Printing schema example](_examples/pyspark/pyspark-shell-schemas.md)
@@ -10,7 +10,7 @@
     * [Classifying languages example](_examples/pyspark/pyspark-shell-classifying-languages.md)
     * [Extracting UASTs example](_examples/pyspark/pyspark-shell-uast-extraction.md)
     * [Classifying languages and extracting UASTs example](_examples/pyspark/pyspark-shell-lang-and-uast.md)
-  * [scala](_examples/scala/README.md)
+  * [Scala \(spark-shell\)](_examples/scala/README.md)
     * [Classifying languages and extracting UASTs example](_examples/scala/spark-shell-lang-and-uast.md)
     * [Querying UASTs with XPath example](_examples/scala/spark-shell-xpath-query.md)
     * [Printing schema example](_examples/scala/spark-shell-schemas.md)

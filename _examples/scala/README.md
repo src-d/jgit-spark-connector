@@ -1,2 +1,2 @@
-# scala
+# Scala \(spark-shell\)
 
