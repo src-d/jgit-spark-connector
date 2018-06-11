@@ -1,19 +1,21 @@
-## Querying UASTs with XPath example
+# Querying UASTs with XPath example
 
 You can see in this example how to make queries using [XPath syntax](https://www.w3.org/TR/xpath/) to retrieve valuable information from the UASTs.
 
 First we must use `extractUASTs` method to request to a [bblfsh daemon](https://github.com/bblfsh/bblfshd) the UASTs.
 
-Then we can use the method `queryUAST` to get a result for the query we are formulating requesting tokens.  This method takes in three parameters, the query, the column which contains the UASTs and the column that will be generated with the result.
+Then we can use the method `queryUAST` to get a result for the query we are formulating requesting tokens. This method takes in three parameters, the query, the column which contains the UASTs and the column that will be generated with the result.
 
 Finally, `extractTokens` method will generate a column `tokens` based on the previous generated column `result`.
 
-Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
-```sh
+Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search|ga|1|tech.sourced):
+
+```bash
 $ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
 Code:
+
 ```scala
 import tech.sourced.engine._
 
@@ -48,3 +50,4 @@ engine.getRepositories.getHEAD.getCommits.getTreeEntries.getBlobs.classifyLangua
 only showing top 20 rows
 */
 ```
+

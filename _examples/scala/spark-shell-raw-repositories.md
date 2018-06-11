@@ -13,8 +13,9 @@ What are the main differences between using the engine with siva files and raw g
 
 ## Getting repository references
 
-Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
-```sh
+Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search|ga|1|tech.sourced):
+
+```bash
 $ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
@@ -60,3 +61,4 @@ print(engine.getRepositories.getRemoteReferences.count())
 ### Caveats
 
 Note that even if in your repository there's a reference named `refs/remotes/origin/master` it will be converted to a reference named `refs/heads/master` that belongs to the repository identified by your origin remote URL.
+

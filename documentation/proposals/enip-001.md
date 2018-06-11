@@ -12,20 +12,16 @@
 
 ## Abstract
 
-With this change we want to improve the performance of reading repositories metadata,
-saving that metadata in other DataSource than GitDataSource.
-It can be any of the already implemented ones (json,parquet,jdbc and so on).
+With this change we want to improve the performance of reading repositories metadata, saving that metadata in other DataSource than GitDataSource. It can be any of the already implemented ones \(json,parquet,jdbc and so on\).
 
 ## Rationale
 
-Reading the content of siva files over and over again is not really performant.
-With this ENIP we want a way to improve speed reading metadata (repositories, references, commits, and tree entries).
+Reading the content of siva files over and over again is not really performant. With this ENIP we want a way to improve speed reading metadata \(repositories, references, commits, and tree entries\).
 
-To do that,
-we are going to add new methods on the api using the already existing methods on DataFrame API,
-[reader][1] and [writer][2].
+To do that, we are going to add new methods on the api using the already existing methods on DataFrame API, [reader](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.DataFrameReader) and [writer](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.DataFrameWriter).
 
 ## Specification
+
 To be able to register other datasource than GitDataSource, we should change a bit the way that we are geting the datasources to process commits, references, or blobs.
 
 Actually we are registering datasources using `getDatasource` method:
@@ -60,55 +56,49 @@ Instead of this, we can create a view using the SparkSession from several dataso
  }
 ```
 
-`createOrReplaceTempView` method will allow us to register tables at the engine instantiation with several datasources.
-Then, from implicit DataFrame methods, we can do:
+`createOrReplaceTempView` method will allow us to register tables at the engine instantiation with several datasources. Then, from implicit DataFrame methods, we can do:
 
 ```scala
 val commitsDf = df.sparkSession.table("commits")
 ```
 
 Instead of:
+
 ```scala
 val commitsDf = getDataSource("commits", df.sparkSession)
 ```
 
 Then, the list of needed changes on the Engine API are:
-- Initialize GitDataSource views at Engine initialization
-- Add method `backMetadataToSource(options)` (name to decide) into the Engine API.
-- Add method `fromMetadataSource(options)` (name to decide) into the Engine API.
-That method will change all the default registered views to the specified DataSource.
+
+* Initialize GitDataSource views at Engine initialization
+* Add method `backMetadataToSource(options)` \(name to decide\) into the Engine API.
+* Add method `fromMetadataSource(options)` \(name to decide\) into the Engine API.
+
+  That method will change all the default registered views to the specified DataSource.
 
 We should check speed improvement with a substantial amount of repositories and several DataSources.
 
 ## Alternatives
-Using the already existing Spark Dataframe API,
-we can save that metadata.
+
+Using the already existing Spark Dataframe API, we can save that metadata.
 
 Example:
+
 ```scala
 repositoriesDf.write.bucketBy(100,"repository_url").parquet("repositories.parquet")
 // or
 repositoriesDf.write.jdbc(url, tableName, properties)
-
 ```
 
 And then read it using `SparkSession.read` method.
 
 ## Impact
 
-The actual Join Rule optimization for Git Datasources will not be applied.
-That means,
-if we do a Join between two jdbc datasources table,
-the Join will be executed at Spark level,
-doing a full scan on both jdbc tables.
-That can works really well with small amount of repositories and siva files,
-but if we want an Engine as scalable as Spark, we should avoid this kind of operations.
+The actual Join Rule optimization for Git Datasources will not be applied. That means, if we do a Join between two jdbc datasources table, the Join will be executed at Spark level, doing a full scan on both jdbc tables. That can works really well with small amount of repositories and siva files, but if we want an Engine as scalable as Spark, we should avoid this kind of operations.
 
 ## References
 
-[DataFrameReader API][1]
+[DataFrameReader API](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.DataFrameReader)
 
-[DataFrameWriter API][2]
+[DataFrameWriter API](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.DataFrameWriter)
 
-[1]: https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.DataFrameReader
-[2]: https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.sql.DataFrameWriter

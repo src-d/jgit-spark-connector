@@ -1,15 +1,17 @@
-## Classifying languages and extracting UASTs example
+# Classifying languages and extracting UASTs example
 
 The combined usage of both, `classifyLanguages` and `extractUASTs` methods, has the advantage that doesn't rely the language detection task on the [bblfsh server](https://github.com/bblfsh/server) , so you can save some time.
 
-To do that, you just have to call  `extractUASTs` on a Dataframe where previously, `classifyLanguages` was used.
+To do that, you just have to call `extractUASTs` on a Dataframe where previously, `classifyLanguages` was used.
 
-Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
-```sh
+Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search|ga|1|tech.sourced):
+
+```bash
 $ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
 Code:
+
 ```scala
 import tech.sourced.engine._
 
@@ -44,3 +46,4 @@ engine.getRepositories.getHEAD.getCommits.getTreeEntries.getBlobs.classifyLangua
 only showing top 20 rows
 */
 ```
+

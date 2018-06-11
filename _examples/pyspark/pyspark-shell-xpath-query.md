@@ -1,19 +1,21 @@
-## Querying UASTs with XPath example
+# Querying UASTs with XPath example
 
 You can see in this example how to make queries using [XPath syntax](https://www.w3.org/TR/xpath/) to retrieve valuable information from the UASTs.
 
 First we must use `extract_uasts()` method to request to a [bblfsh daemon](https://github.com/bblfsh/bblfshd) the UASTs.
 
-Then we can use the method `query_uast()` to get a result for the query we are formulating requesting tokens.  This method takes in three parameters, the query, the column which contains the UASTs and the column that will be generated with the result.
+Then we can use the method `query_uast()` to get a result for the query we are formulating requesting tokens. This method takes in three parameters, the query, the column which contains the UASTs and the column that will be generated with the result.
 
 Finally, `extract_tokens()` method will generate a column `tokens` based on the previous generated column `result`.
 
-Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
-```sh
+Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search|ga|1|tech.sourced):
+
+```bash
 $ pyspark --packages "tech.sourced:engine:[version]"
 ```
 
 Code:
+
 ```python
 from sourced.engine import Engine
 engine = Engine(spark, '/path/to/siva-files', 'siva')
@@ -48,3 +50,4 @@ engine.repositories.references.head_ref.commits.tree_entries.blobs.classify_lang
 only showing top 20 rows
 '''
 ```
+

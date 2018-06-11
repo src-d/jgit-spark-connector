@@ -1,15 +1,17 @@
-## Classifying languages and extracting UASTs example
+# Classifying languages and extracting UASTs example
 
 The combined usage of both, `classify_languages()` and `extract_uasts()` methods, has the advantage that doesn't rely the language detection task on the [bblfsh server](https://github.com/bblfsh/server) , so you can save some time.
 
-To do that, you just have to call  `extract_uasts()` on a Dataframe where previously, `classify_languages()` was used.
+To do that, you just have to call `extract_uasts()` on a Dataframe where previously, `classify_languages()` was used.
 
-Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
-```sh
+Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search|ga|1|tech.sourced):
+
+```bash
 $ pyspark --packages "tech.sourced:engine:[version]"
 ```
 
 Code:
+
 ```python
 from sourced.engine import Engine
 engine = Engine(spark, '/path/to/siva-files', 'siva')
@@ -43,3 +45,4 @@ engine.repositories.references.head_ref.commits.tree_entries.blobs.classify_lang
 only showing top 20 rows
 '''
 ```
+
