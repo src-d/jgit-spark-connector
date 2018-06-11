@@ -1,15 +1,17 @@
-## Printing schema example
+# Printing schema example
 
-The next example showed,  just try to show the simple usage of the useful method `printSchema()`.
+The next example showed, just try to show the simple usage of the useful method `printSchema()`.
 
 It can help you to follow the aggregated or pruned information that your transformations make on the data you are handling.
 
-Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
-```sh
+Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search|ga|1|tech.sourced):
+
+```bash
 $ pyspark --packages "tech.sourced:engine:[version]"
 ```
 
 Code:
+
 ```python
 from sourced.engine import Engine
 engine = Engine(spark, '/path/to/siva-files', 'siva')
@@ -104,3 +106,4 @@ root
  |    |-- element: binary (containsNull = true)
 '''
 ```
+

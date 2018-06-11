@@ -1,4 +1,4 @@
-## Extracting UASTs example
+# Extracting UASTs example
 
 In the example code below, you can take a look to how the `extract_uasts()` method works.
 
@@ -6,12 +6,14 @@ From the `engine` object instantiated in the spark-shell, a bunch of blobs are r
 
 Finally, the `blob_id` , `path` and `uast` is showed on the table.
 
-Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
-```sh
+Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search|ga|1|tech.sourced):
+
+```bash
 $ pyspark --packages "tech.sourced:engine:[version]"
 ```
 
 Code:
+
 ```python
 from sourced.engine import Engine
 engine = Engine(spark, '/path/to/siva-files', 'siva')
@@ -45,3 +47,4 @@ engine.repositories.references.head_ref.commits.tree_entries.blobs.classify_lang
 only showing top 20 rows
 '''
 ```
+

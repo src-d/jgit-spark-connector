@@ -1,4 +1,4 @@
-## Basic example
+# Basic example
 
 In this example, the pyspark-shell is used to show a simple usage of the `source{d} Engine`.
 
@@ -6,12 +6,14 @@ First, you can see how to import the package and instantiate and object that pro
 
 The `engine` object is used to get all the repositories, get the `HEAD` references from the repositories and eventually, get all the blobs from these references. Then a table is showed selecting the columns `blob_id`, `path` and `content`.
 
-Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
-```sh
+Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search|ga|1|tech.sourced):
+
+```bash
 $ pyspark --packages "tech.sourced:engine:[version]"
 ```
 
 Code
+
 ```python
 from sourced.engine import Engine
 engine = Engine(spark, '/path/to/siva-files', 'siva')
@@ -45,3 +47,4 @@ engine.repositories.references.head_ref.commits.tree_entries.blobs.select('blob_
 only showing top 20 rows
 '''
 ```
+

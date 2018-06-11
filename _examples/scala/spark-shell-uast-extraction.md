@@ -1,4 +1,4 @@
-## Extracting UASTs example
+# Extracting UASTs example
 
 In the example code below, you can take a look to how the `extractUASTs` method works.
 
@@ -6,8 +6,9 @@ From the `engine` object instantiated in the spark-shell, a bunch of blobs has b
 
 Finally, the `blob_id`, file `path` and `uast` is showed on the table.
 
-Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
-```sh
+Launch spark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search|ga|1|tech.sourced):
+
+```bash
 $ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
@@ -47,3 +48,4 @@ exampleDf.show
 only showing top 20 rows
 */
 ```
+

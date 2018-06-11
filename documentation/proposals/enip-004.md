@@ -1,3 +1,5 @@
+# ENIP-004
+
 | Field | Value |
 | --- | --- |
 | ENIP | 4 |
@@ -10,7 +12,7 @@
 
 ## Abstract
 
-The purpose of this proposal is to make the default behavior of the engine to only get the first reference commit (aka the current state of that reference) and only get all reference commits when explicitly asked using a method `getAllReferenceCommits`.
+The purpose of this proposal is to make the default behavior of the engine to only get the first reference commit \(aka the current state of that reference\) and only get all reference commits when explicitly asked using a method `getAllReferenceCommits`.
 
 ## Rationale
 
@@ -26,10 +28,9 @@ So, this as a default that makes more sense for the following reasons:
 
 While this may seem like a very simple and easy issue, it is not as simple once one takes a deep look at how the engine queries are built. Right now, `getFirstReferenceCommit` adds a simple `index = 0` filter, but that's the opt-in behavior. If we want to make it the default, we need to make this change at the iterator level and not adding filters on the query, because then `getAllReferenceCommits` would not be able to remove the filter node.
 
-- `CommitIterator` needs to be changed to just get the first commit if no `index` filter is provided or and get N commits if it is.
-- `getAllReferenceCommits` can't provide a single number to match, like `index = 0`, it would need to do the following: `index >= 0`, which would require the `EqualThanOrEqual` filter.
-- Implement `EqualThanOrEqual` filter, which requires a complete refactor of the filters, which now work only for equality, providing a list of values that match the given filter instead of returning a function that can be evaluated inside the iterators.
-
+* `CommitIterator` needs to be changed to just get the first commit if no `index` filter is provided or and get N commits if it is.
+* `getAllReferenceCommits` can't provide a single number to match, like `index = 0`, it would need to do the following: `index >= 0`, which would require the `EqualThanOrEqual` filter.
+* Implement `EqualThanOrEqual` filter, which requires a complete refactor of the filters, which now work only for equality, providing a list of values that match the given filter instead of returning a function that can be evaluated inside the iterators.
 
 ## Alternatives
 
@@ -44,3 +45,4 @@ This change breaks compatibility with all prior versions because it changes the 
 ## References
 
 n/a
+
