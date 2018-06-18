@@ -1,6 +1,5 @@
 package tech.sourced.engine.rule
 
-import org.apache.spark.SparkException
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions._
@@ -8,6 +7,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import tech.sourced.engine.GitRelation
+import tech.sourced.engine.compat
 
 /**
   * Logical plan rule to transform joins of [[GitRelation]]s into a single [[GitRelation]]
@@ -28,7 +28,7 @@ object SquashGitRelationsJoin extends Rule[LogicalPlan] {
 
       jd match {
         case JoinData(filters, joinConditions, projectExprs, attributes, Some(session), _) =>
-          val relation = LogicalRelation(
+          val relation = compat.LogicalRelation(
             GitRelation(
               session,
               RelationOptimizer.attributesToSchema(attributes),
@@ -127,7 +127,7 @@ private[rule] object GitOptimizer extends Logging {
         JoinData(Some(cond), valid = true)
       case Project(namedExpressions, _) =>
         JoinData(None, projectExpressions = namedExpressions, valid = true)
-      case LogicalRelation(GitRelation(session, _, joinCondition, _), out, _) =>
+      case compat.LogicalRelation(GitRelation(session, _, joinCondition, _), out, _) =>
         JoinData(
           None,
           valid = true,
@@ -190,7 +190,7 @@ private[rule] object GitOptimizer extends Logging {
     */
   def getGitRelation(lp: LogicalPlan): Option[LogicalRelation] =
     lp.find {
-      case LogicalRelation(GitRelation(_, _, _, _), _, _) => true
+      case compat.LogicalRelation(GitRelation(_, _, _, _), _, _) => true
       case _ => false
     } map (_.asInstanceOf[LogicalRelation])
 

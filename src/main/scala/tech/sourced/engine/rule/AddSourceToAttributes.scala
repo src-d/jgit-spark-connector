@@ -8,6 +8,7 @@ import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.sources.BaseRelation
 import org.apache.spark.sql.types.MetadataBuilder
 import tech.sourced.engine.{GitRelation, MetadataRelation, Sources}
+import tech.sourced.engine.compat
 
 /**
   * Rule to assign to an [[AttributeReference]] metadata to identify the table it belongs to.
@@ -21,10 +22,15 @@ object AddSourceToAttributes extends Rule[LogicalPlan] {
 
   /** @inheritdoc */
   def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
-    case LogicalRelation(rel@GitRelation(_, _, _, schemaSource), out, catalogTable) =>
+    case compat.LogicalRelation(rel @ GitRelation(_, _, _, schemaSource),
+                                out,
+                                catalogTable) =>
       withMetadata(rel, schemaSource, out, catalogTable)
 
-    case LogicalRelation(rel@MetadataRelation(_, _, _, _, schemaSource), out, catalogTable) =>
+    case compat.LogicalRelation(
+        rel @ MetadataRelation(_, _, _, _, schemaSource),
+        out,
+        catalogTable) =>
       withMetadata(rel, schemaSource, out, catalogTable)
   }
 
@@ -40,7 +46,7 @@ object AddSourceToAttributes extends Rule[LogicalPlan] {
       case None => out
     }
 
-    LogicalRelation(relation, processedOut, catalogTable)
+    compat.LogicalRelation(relation, processedOut, catalogTable)
   }
 
 }

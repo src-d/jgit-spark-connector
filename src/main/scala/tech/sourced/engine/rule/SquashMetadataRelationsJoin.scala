@@ -8,6 +8,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import tech.sourced.engine.{GitRelation, MetadataRelation}
+import tech.sourced.engine.compat
 
 object SquashMetadataRelationsJoin extends Rule[LogicalPlan] {
   /** @inheritdoc */
@@ -28,7 +29,7 @@ object SquashMetadataRelationsJoin extends Rule[LogicalPlan] {
         Some(dbPath),
         _
         ) =>
-          val relation = LogicalRelation(
+          val relation = compat.LogicalRelation(
             MetadataRelation(
               session,
               RelationOptimizer.attributesToSchema(attributes),
@@ -122,7 +123,7 @@ private[rule] object MetadataOptimizer extends Logging {
         MetadataJoinData(Some(cond), valid = true)
       case Project(namedExpressions, _) =>
         MetadataJoinData(None, projectExpressions = namedExpressions, valid = true)
-      case LogicalRelation(MetadataRelation(session, _, dbPath, joinCondition, _), out, _) =>
+      case compat.LogicalRelation(MetadataRelation(session, _, dbPath, joinCondition, _), out, _) =>
         MetadataJoinData(
           None,
           valid = true,
@@ -131,7 +132,7 @@ private[rule] object MetadataOptimizer extends Logging {
           session = Some(session),
           dbPath = Some(dbPath)
         )
-      case LogicalRelation(GitRelation(session, _, joinCondition, _), out, _) =>
+      case compat.LogicalRelation(GitRelation(session, _, joinCondition, _), out, _) =>
         MetadataJoinData(
           None,
           valid = true,
@@ -182,8 +183,8 @@ private[rule] object MetadataOptimizer extends Logging {
 
   def getRelation(lp: LogicalPlan): Option[LogicalRelation] =
     lp.find {
-      case LogicalRelation(_: MetadataRelation, _, _) => true
-      case LogicalRelation(GitRelation(_, _, _, Some("blobs")), _, _) => true
+      case compat.LogicalRelation(_: MetadataRelation, _, _) => true
+      case compat.LogicalRelation(GitRelation(_, _, _, Some("blobs")), _, _) => true
       case _ => false
     } map (_.asInstanceOf[LogicalRelation])
 
