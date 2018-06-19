@@ -61,8 +61,8 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     uastDf.columns should contain("uast")
 
     uastDf.take(2).zipWithIndex.map {
-      case (row, 0) => assert(row(3).asInstanceOf[Array[Byte]].nonEmpty)
-      case (row, 1) => assert(row(3).asInstanceOf[Array[Byte]].nonEmpty)
+      case (row, 0) => assert(row(4).asInstanceOf[Seq[Byte]].nonEmpty)
+      case (row, 1) => assert(row(4).asInstanceOf[Seq[Byte]].nonEmpty)
     }
   }
 
@@ -76,8 +76,21 @@ class CustomUDFSpec extends FlatSpec with Matchers with BaseSparkSpec {
     uastDf.columns should contain("uast")
 
     uastDf.take(2).zipWithIndex.map {
-      case (row, 0) => assert(row(3).asInstanceOf[Array[Byte]].nonEmpty)
-      case (row, 1) => assert(row(3).asInstanceOf[Array[Byte]].nonEmpty)
+      case (row, 0) => assert(row(5).asInstanceOf[Seq[Byte]].nonEmpty)
+      case (row, 1) => assert(row(5).asInstanceOf[Seq[Byte]].nonEmpty)
+    }
+  }
+
+  "UAST on unsupported language" should "not query bblfsh" in {
+    val spark = ss
+    import spark.implicits._
+
+    val uastDf = Seq(
+      ("hash1", false, "foo.md", "yada yada".getBytes)
+    ).toDF(fileColumns: _*).classifyLanguages.extractUASTs()
+
+    uastDf.collect().zipWithIndex.map {
+      case (row, 0) => row(5).asInstanceOf[Seq[_]].length should be(0)
     }
   }
 

@@ -7,13 +7,11 @@ import gopkg.in.bblfsh.sdk.v1.uast.generated.Node
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 import org.bblfsh.client.BblfshClient
+import tech.sourced.engine.util.Bblfsh.client
 
 object Bblfsh extends Logging {
 
   case class Config(host: String, port: Int)
-
-  /** Languages whose UAST will not be retrieved. */
-  val excludedLangs = Set("markdown", "text")
 
   /** Key used for the option to specify the host of the bblfsh grpc service. */
   val hostKey = "spark.tech.sourced.bblfsh.grpc.host"
@@ -26,6 +24,8 @@ object Bblfsh extends Logging {
 
   /** Default bblfsh port. */
   val defaultPort = 9432
+
+  var supportedLanguages: Set[String] = Set()
 
   private var config: Config = _
   private var client: BblfshClient = _
@@ -54,6 +54,22 @@ object Bblfsh extends Logging {
     client
   }
 
+  private def getSupportedLanguages(config: Config): Set[String] = synchronized {
+    if (supportedLanguages.isEmpty) {
+      val client = getClient(config)
+      supportedLanguages = client.supportedLanguages()
+        .languages.map(m => m.language)
+        .toSet
+    }
+
+    supportedLanguages
+  }
+
+  private def shouldExtractLanguage(config: Config, lang: String): Boolean = {
+    val supportedLanguages = getSupportedLanguages(config)
+    supportedLanguages.contains(lang.toLowerCase())
+  }
+
   /**
     * Extracts the UAST using bblfsh.
     *
@@ -67,12 +83,10 @@ object Bblfsh extends Logging {
                   content: Array[Byte],
                   lang: String,
                   config: Config): Seq[Array[Byte]] = {
-
     //FIXME(bzz): not everything is UTF-8 encoded :/
-
     // if lang == null, it hasn't been classified yet
     // so rely on bblfsh to guess this file's language
-    if (lang != null && excludedLangs.contains(lang.toLowerCase())) {
+    if (lang != null && !shouldExtractLanguage(config, lang)) {
       Seq()
     } else {
       val client = getClient(config)

@@ -134,13 +134,13 @@ class EngineTestCase(BaseTestCase):
         self.assertEqual(row.blob_id, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
         self.assertEqual(row.path, 'spec/database_spec.rb')
         self.assertEqual(row.lang, "Ruby")
-        self.assertEqual(row.uast, [])
+        self.assertTrue(len(row.uast) > 0)
 
         df = self.engine.repositories.references.all_reference_commits.tree_entries.blobs
         row = df.sort(df.blob_id).limit(1).extract_uasts().first()
         self.assertEqual(row.blob_id, "0020a823b6e5b06c9adb7def76ccd7ed098a06b8")
         self.assertEqual(row.path, 'spec/database_spec.rb')
-        self.assertEqual(row.uast, [])
+        self.assertTrue(len(row.uast) > 0)
 
 
     def test_engine_blobs(self):
