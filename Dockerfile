@@ -23,7 +23,7 @@ ENV BBLFSH_PORT 9432
 USER root
 
 RUN apt-get update && \
-    apt-get install -y --no-install-suggests --no-install-recommends locales && \
+    apt-get install -y --no-install-suggests --no-install-recommends locales curl g++ libxml2-dev && \
     apt-get clean && \
     locale-gen en_US.UTF-8
 
@@ -40,7 +40,8 @@ RUN echo "local" > /opt/python-engine/version.txt \
     && jupyter serverextension enable --py jupyter_spark \
     && jupyter nbextension install --py jupyter_spark \
     && jupyter nbextension enable --py jupyter_spark \
-    && jupyter nbextension enable --py widgetsnbextension
+    && jupyter nbextension enable --py widgetsnbextension \
+    && pip install bblfsh
 
 # Separate the config file in a different RUN creation as this may change more often
 RUN echo "$SPARK_DRIVER_EXTRA_CLASSPATH $SRCD_JAR\n$SPARK_EXECUTOR_EXTRA_CLASSPATH $SRCD_JAR" >> /usr/local/spark/conf/spark-defaults.conf \
