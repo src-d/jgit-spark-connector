@@ -23,7 +23,7 @@ ENV BBLFSH_PORT 9432
 USER root
 
 RUN apt-get update && \
-    apt-get install -y --no-install-suggests --no-install-recommends locales && \
+    apt-get install -y --no-install-suggests --no-install-recommends locales curl g++ libxml2-dev && \
     apt-get clean && \
     locale-gen en_US.UTF-8
 
