@@ -37,10 +37,6 @@ BBLFSH_EXEC_FLAGS = -it
 BBLFSH_CTL = bblfshctl
 BBLFSH_CTL_DRIVER := $(BBLFSH_CTL) driver
 
-BBLFSH_CTL_INSTALL_DRIVERS := $(BBLFSH_CTL_DRIVER) install --all
-BBLFSH_EXEC_INSTALL_COMMAND := $(BBLFSH_CONTAINER_NAME) $(BBLFSH_CTL_INSTALL_DRIVERS)
-BBLFSH_INSTALL_DRIVERS := $(BBLFSH_EXEC_FLAGS) $(BBLFSH_EXEC_INSTALL_COMMAND)
-
 BBLFSH_CTL_LIST_DRIVERS := $(BBLFSH_CTL_DRIVER) list
 BBLFSH_EXEC_LIST_COMMAND := $(BBLFSH_CONTAINER_NAME) bblfshctl driver list
 BBLFSH_LIST_DRIVERS := $(BBLFSH_EXEC_FLAGS) $(BBLFSH_EXEC_LIST_COMMAND)
@@ -125,7 +121,10 @@ docker-bblfsh:
 	$(DOCKER_RUN) $(BBLFSH_RUN_FLAGS)
 
 docker-bblfsh-install-drivers:
-	$(DOCKER_EXEC) $(BBLFSH_INSTALL_DRIVERS)
+	$(DOCKER_EXEC) $(BBLFSH_CONTAINER_NAME) bblfshctl driver install go bblfsh/go-driver:v0.4.0
+	$(DOCKER_EXEC) $(BBLFSH_CONTAINER_NAME) bblfshctl driver install python bblfsh/python-driver:v2.0.0
+	$(DOCKER_EXEC) $(BBLFSH_CONTAINER_NAME) bblfshctl driver install java bblfsh/java-driver:v1.2.6
+	$(DOCKER_EXEC) $(BBLFSH_CONTAINER_NAME) bblfshctl driver install ruby bblfsh/ruby-driver:v2.0.0
 
 docker-bblfsh-list-drivers:
 	$(DOCKER_EXEC) $(BBLFSH_LIST_DRIVERS)
