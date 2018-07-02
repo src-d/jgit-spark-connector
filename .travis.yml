@@ -2,9 +2,7 @@ dist: trusty
 sudo: required
 
 language: scala
-
-scala:
-   - 2.11.11
+scala: 2.11.11
 
 cache:
   directories:
@@ -14,13 +12,46 @@ cache:
 services:
   - docker
 
-matrix:
-  fast_finish: true
-  include:
-    - jdk: jdk8
+install:
+  - |
+    set -e
+    if [[ ${LANGUAGE} = python ]]; then
+      sudo apt install libxml2-dev curl build-essential
+      make build
+      cd python
+      pip install -e .
+    fi
 
-      after_success:
-        - bash <(curl -s https://codecov.io/bash)
+before_script:
+  - make -f "$TRAVIS_BUILD_DIR/Makefile" docker-bblfsh
+  - make -f "$TRAVIS_BUILD_DIR/Makefile" docker-bblfsh-install-drivers
+
+script:
+  - if [[ ${LANGUAGE} = python ]]; then make test ;fi
+  - |
+    set -e
+    if [[ ${LANGUAGE} = java ]]; then
+      make travis-test
+      bash <(curl -s https://codecov.io/bash)
+    fi
+
+jobs:
+  include:
+    - {env: 'LANGUAGE=java   SPARK_VERSION=2.2.1', jdk: openjdk8}
+    - {env: 'LANGUAGE=java   SPARK_VERSION=2.3.1', jdk: openjdk8}
+    - {env: 'LANGUAGE=python SPARK_VERSION=2.3.1', python: 3.4, language: python}
+    - {env: 'LANGUAGE=python SPARK_VERSION=2.3.1', python: 3.5, language: python}
+    - {env: 'LANGUAGE=python SPARK_VERSION=2.2.1', python: 3.6, language: python}
+    - {env: 'LANGUAGE=python SPARK_VERSION=2.3.1', python: 3.6, language: python}
+
+    - stage: deploy
+      if: tag IS present OR (branch = master AND env(TRAVIS_PULL_REQUEST) IS present)
+      jdk: openjdk8
+
+      install: skip
+      before_script: skip
+
+      script:
         - openssl aes-256-cbc -K $encrypted_8a9ac81f2640_key -iv $encrypted_8a9ac81f2640_iv -in key.asc.enc -out key.asc -d
         - gpg --no-default-keyring --primary-keyring ./project/.gnupg/pubring.gpg --secret-keyring ./project/.gnupg/secring.gpg --keyring ./project/.gnupg/pubring.gpg --fingerprint --import key.asc
         - make build
@@ -42,45 +73,15 @@ matrix:
           on:
             tags: true
 
-    - jdk: openjdk8
-
-    - language: python
-      python: 3.4
-
-      install:
-        - sudo apt install libxml2-dev curl build-essential
-        - make build
-        - cd python
-        - pip install -e .
-
-      script:
-        - make test
-
-    - language: python
-      python: 3.5
-
-      install:
-        - sudo apt install libxml2-dev curl build-essential
-        - make build
-        - cd python
-        - pip install -e .
-
-      script:
-        - make test
-
-    - language: python
+    - if: tag IS present
+      language: python
       python: 3.6
 
-      install:
+      script:
         - sudo apt install libxml2-dev curl build-essential
         - make build
         - cd python
         - pip install -e .
-
-      script:
-        - make test
-
-      before_deploy:
         - echo "$TRAVIS_TAG" | cut -c 2- > version.txt
 
       deploy:
@@ -90,10 +91,3 @@ matrix:
           skip_cleanup: true
           on:
             tags: true
-
-before_script:
-  - make -f "$TRAVIS_BUILD_DIR/Makefile" docker-bblfsh
-  - make -f "$TRAVIS_BUILD_DIR/Makefile" docker-bblfsh-install-drivers
-
-script:
-  - make travis-test

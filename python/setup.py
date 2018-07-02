@@ -1,5 +1,6 @@
 from __future__ import with_statement
 from setuptools import setup
+import os
 from os.path import exists, join, dirname, realpath
 
 CURR_DIR = dirname(realpath(__file__))
@@ -26,7 +27,10 @@ setup(
     url="https://github.com/src-d/engine/tree/master/python",
     packages=['sourced.engine'],
     namespace_packages=['sourced'],
-    install_requires=["pyspark==2.2.1","bblfsh==2.9.13"],
+    install_requires=[
+        "pyspark==" + os.environ.get('SPARK_VERSION', "2.2.1"),
+        "bblfsh==2.9.13"
+    ],
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
