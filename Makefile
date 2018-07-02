@@ -74,8 +74,9 @@ JUPYTER_RUN_FLAGS := --name $(JUPYTER_CONTAINER_NAME) --rm -it \
 	--link $(BBLFSH_CONTAINER_NAME):$(BBLFSH_CONTAINER_NAME) \
 	$(call unescape_docker_tag,$(JUPYTER_IMAGE_VERSIONED))
 
-# Scala version
+# Versions
 SCALA_VERSION ?= 2.11.11
+SPARK_VERSION ?= 2.2.1
 
 # if TRAVIS_SCALA_VERSION defined SCALA_VERSION is overrided
 ifneq ($(TRAVIS_SCALA_VERSION), )
@@ -100,7 +101,7 @@ ifneq ($(TRAVIS_PULL_REQUEST), false)
 endif
 
 #SBT
-SBT = ./sbt ++$(SCALA_VERSION)
+SBT = ./sbt ++$(SCALA_VERSION) -Dspark.version=$(SPARK_VERSION)
 
 # Rules
 all: clean build
