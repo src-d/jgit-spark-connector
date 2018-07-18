@@ -29,7 +29,7 @@ sealed class SparkTimerUDFWrapper(name: String) extends Logging {
       UserMetricsSystem.timer(name)
     } catch {
       case _: NotInitializedException => {
-        logWarning("SparMetric not initialized on UDF")
+        logWarning("SparkMetric not initialized on UDF")
         null
       }
     }
