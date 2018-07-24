@@ -54,7 +54,10 @@ endef
 
 # Docker jupyter image tag
 GIT_COMMIT=$(shell git rev-parse HEAD | cut -c1-7)
-GIT_DIRTY=$(shell test -n "`git status --porcelain`" && echo "-dirty" || true)
+GIT_DIRTY=
+ifneq ($(shell git status --porcelain), )
+	GIT_DIRTY := -dirty
+endif
 DEV_PREFIX := dev
 VERSION ?= $(DEV_PREFIX)-$(GIT_COMMIT)$(GIT_DIRTY)
 
