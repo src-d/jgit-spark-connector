@@ -37,6 +37,7 @@ COPY --from=builder /engine/target/engine-uber.jar /opt/jars/
 RUN echo "local" > /opt/python-engine/version.txt \
     && pip install -e /opt/python-engine/ \
     && pip install jupyter-spark \
+    && pip install bblfsh \
     && jupyter serverextension enable --py jupyter_spark \
     && jupyter nbextension install --py jupyter_spark \
     && jupyter nbextension enable --py jupyter_spark \
