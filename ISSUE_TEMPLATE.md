@@ -29,6 +29,6 @@ Please search on the [issue track](../) before creating one.
 <!--- MANDATORY for bugs: Include as many relevant details about the environment you experienced the bug in -->
 * Spark version:
 * PySpark version (if using PySpark):
-* Engine version:
+* jgit-spark-connector version:
 * Operating System and version:
 * Some needed resources to reproduce the problem:

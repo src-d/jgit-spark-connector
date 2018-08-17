@@ -1,6 +1,6 @@
-# engine [![Build Status](https://travis-ci.org/src-d/engine.svg?branch=master)](https://travis-ci.org/src-d/engine) [![codecov](https://codecov.io/gh/src-d/engine/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/engine) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine/badge.svg)](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine) 
+# jgit-spark-connector [![Build Status](https://travis-ci.org/src-d/jgit-spark-connector.svg?branch=master)](https://travis-ci.org/src-d/jgit-spark-connector) [![codecov](https://codecov.io/gh/src-d/jgit-spark-connector/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/jgit-spark-connector) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine/badge.svg)](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine) 
 
-**engine** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
+**jgit-spark-connector** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
 
 It is written in Scala and built on top of Apache Spark to enable rapid construction of custom analysis pipelines and processing large number of Git repositories stored in HDFS in [Siva file format](https://github.com/src-d/go-siva). It is accessible both via Scala and Python Spark APIs, and capable of running on large-scale distributed clusters.
 
@@ -34,7 +34,7 @@ $ export SPARK_HOME=$HOME/spark-2.2.1-bin-hadoop2.7
 $ export PATH=$PATH:$SPARK_HOME/bin
 ```
 
-Look for the latest [**engine** version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced), and then replace in the command where `[version]` is showed:
+Look for the latest [**jgit-spark-connector** version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced), and then replace in the command where `[version]` is showed:
 
 ```bash
 $ spark-shell --packages "tech.sourced:engine:[version]"
@@ -46,14 +46,14 @@ $ pyspark --packages "tech.sourced:engine:[version]"
 
 Run [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can start it easily in a container following its [quick start guide](https://github.com/bblfsh/bblfshd#quick-start).
 
-If you run **engine** in an UNIX like environment, you should set the `LANG` variable properly:
+If you run **jgit-spark-connector** in an UNIX like environment, you should set the `LANG` variable properly:
 
     export LANG="en_US.UTF-8"
 
 The rationale behind this is that UNIX file systems don't keep the encoding for each file name, they are just plain bytes,
 so the `Java API for FS` looks for the `LANG` environment variable to apply certain encoding.
 
-Either in case the `LANG` variable wouldn't be set to a UTF-8 encoding or it wouldn't be set at all (which results in handle encoding in C locale) you could get an exception during the ***engine*** execution similar to `java.nio.file.InvalidPathException: Malformed input or input contains unmappable characters`.
+Either in case the `LANG` variable wouldn't be set to a UTF-8 encoding or it wouldn't be set at all (which results in handle encoding in C locale) you could get an exception during the ***jgit-spark-connector*** execution similar to `java.nio.file.InvalidPathException: Malformed input or input contains unmappable characters`.
 
 # Pre-requisites
 
@@ -63,14 +63,14 @@ Either in case the `LANG` variable wouldn't be set to a UTF-8 encoding or it wou
 
 ## Python pre-requisites:
 
-* Python >= 3.4.x (engine is tested with Python 3.4, 3.5 and 3.6 and these are the supported versions, even if it might still work with previous ones)
+* Python >= 3.4.x (jgit-spark-connector is tested with Python 3.4, 3.5 and 3.6 and these are the supported versions, even if it might still work with previous ones)
 * `libxml2-dev` installed
 * `python3-dev` installed
 * `g++` installed
 
-# Examples of engine usage
+# Examples of jgit-spark-connector usage
 
-**engine** is available on [maven central](https://search.maven.org/#search%7Cga%7C1%7Ctech.sourced.engine). To add it to your project as a dependency,
+**jgit-spark-connector** is available on [maven central](https://search.maven.org/#search%7Cga%7C1%7Ctech.sourced.engine). To add it to your project as a dependency,
 
 For projects managed by [maven](https://maven.apache.org/) add the following to your `pom.xml`:
 
@@ -86,11 +86,11 @@ For [sbt](http://www.scala-sbt.org/) managed projects add the dependency:
 
     libraryDependencies += "tech.sourced" % "engine" % "[version]"
 
-In both cases, replace `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced)
+In both cases, replace `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced)
 
 ### Usage in applications as a dependency
 
-The default jar published is a fatjar containing all the dependencies required by the engine. It's meant to be used directly as a jar or through `--packages` for Spark usage.
+The default jar published is a fatjar containing all the dependencies required by the jgit-spark-connector. It's meant to be used directly as a jar or through `--packages` for Spark usage.
 
 If you want to use it in an application and built a fatjar with that you need to follow these steps to use what we call the "slim" jar:
 
@@ -134,7 +134,7 @@ Install python-wrappers is necessary to use **engine** from pyspark:
 $ pip install sourced-engine
 ```
 
-Then you should provide the **engine's** maven coordinates to the pyspark's shell:
+Then you should provide the **jgit-spark-connector's** maven coordinates to the pyspark's shell:
 ```bash
 $ $SPARK_HOME/bin/pyspark --packages "tech.sourced:engine:[version]"
 ```
@@ -142,7 +142,7 @@ Replace `[version]` with the [latest engine version](http://search.maven.org/#se
 
 ### Cluster mode
 
-Install **engine** wrappers as in local mode:
+Install **jgit-spark-connector** wrappers as in local mode:
 ```bash
 $ pip install -e sourced-engine
 ```
@@ -156,7 +156,7 @@ $ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./sourced-engine.
 
 ### pyspark API usage
 
-Run pyspark as explained before to start using the engine, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
+Run pyspark as explained before to start using the jgit-spark-connector, replacing `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 
 ```bash
 $ $SPARK_HOME/bin/pyspark --packages "tech.sourced:engine:[version]"
@@ -179,13 +179,13 @@ SparkSession available as 'spark'.
 
 ## Scala API usage
 
-You must provide **engine** as a dependency in the following way, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
+You must provide **jgit-spark-connector** as a dependency in the following way, replacing `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 
 ```bash
 $ spark-shell --packages "tech.sourced:engine:[version]"
 ```
 
-To start using **engine** from the shell you must import everything inside the `tech.sourced.engine` package (or, if you prefer, just import `Engine` and `EngineDataFrame` classes):
+To start using **jgit-spark-connector** from the shell you must import everything inside the `tech.sourced.engine` package (or, if you prefer, just import `Engine` and `EngineDataFrame` classes):
 
 ```bash
 scala> import tech.sourced.engine._
@@ -225,28 +225,28 @@ These are all the supported formats at the moment:
 - `standard`: regular git repositories with a `.git` folder. Each in a folder of their own under the given repository path.
 - `bare`: git bare repositories. Each in a folder of their own under the given repository path.
 
-### Processing local repositories with the engine
+### Processing local repositories with the jgit-spark-connector
 
 There are some design decisions that may surprise the user when processing local repositories, instead of siva files. This is the list of things you should take into account when doing so:
 
 - All local branches will belong to a repository whose id is `file://$REPOSITORY_PATH`. So, if you clone `https://github.com/foo/bar.git` at `/home/foo/bar`, you will see two repositories `file:///home/foo/bar` and `github.com/foo/bar`, even if you only have one.
 - Remote branches are transformed from `refs/remote/$REMOTE_NAME/$BRANCH_NAME` to `refs/heads/$BRANCH_NAME` as they will only belong to the repository id of their corresponding remote. So `refs/remote/origin/HEAD` becomes `refs/heads/HEAD`.
 
-# Playing around with **engine** on Jupyter
+# Playing around with **jgit-spark-connector** on Jupyter
 
 You can launch our docker container which contains some Notebooks examples just running:
 
     docker run --name engine-jupyter --rm -it -p 8080:8080 -v $(pwd)/path/to/siva-files:/repositories --link bblfshd:bblfshd srcd/engine-jupyter
 
-You must have some siva files in local to mount them on the container replacing the path `$(pwd)/path/to/siva-files`. You can get some siva-files from the project [here](https://github.com/src-d/engine/tree/master/_examples/siva-files).
+You must have some siva files in local to mount them on the container replacing the path `$(pwd)/path/to/siva-files`. You can get some siva-files from the project [here](https://github.com/src-d/jgit-spark-connector/tree/master/_examples/siva-files).
 
 You should have a [bblfsh daemon](https://github.com/bblfsh/bblfshd) container running to link the jupyter container (see Pre-requisites).
 
 When the `engine-jupyter` container starts it will show you an URL that you can open in your browser.
 
-# Using engine directly from Python
+# Using jgit-spark-connector directly from Python
 
-If you are using engine directly from Python and are unable to modify the `PYTHON_SUBMIT_ARGS` you can copy the engine jar to the pyspark jars to make it available there.
+If you are using the jgit-spark-connector directly from Python and are unable to modify the `PYTHON_SUBMIT_ARGS` you can copy the jgit-spark-connector jar to the pyspark jars to make it available there.
 
 ```
 cp engine.jar "$(python -c 'import pyspark; print(pyspark.__path__[0])')/jars"
@@ -322,7 +322,7 @@ $ make docker-clean
 
 ## Run tests
 
-**engine** uses [bblfsh](https://github.com/bblfsh) so you need an instance of a bblfsh server running:
+**jgit-spark-connector** uses [bblfsh](https://github.com/bblfsh) so you need an instance of a bblfsh server running:
 
 ```bash
 $ make docker-bblfsh

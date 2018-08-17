@@ -1,4 +1,4 @@
-source{d} Engine
+jgit-spark-connector
 ----------------------------
 
-Python wrapper of the source{d} Engine to perform analysis on top of source code.
+Python wrapper of the jgit-spark-connector to perform analysis on top of source code.

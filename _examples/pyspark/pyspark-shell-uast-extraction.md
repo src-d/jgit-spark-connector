@@ -6,7 +6,7 @@ From the `engine` object instantiated in the spark-shell, a bunch of blobs are r
 
 Finally, the `blob_id` , `path` and `uast` is showed on the table.
 
-Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
+Launch pyspark-shell, replacing `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
 $ pyspark --packages "tech.sourced:engine:[version]"
 ```
