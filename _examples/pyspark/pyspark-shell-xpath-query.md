@@ -8,7 +8,7 @@ Then we can use the method `query_uast()` to get a result for the query we are f
 
 Finally, `extract_tokens()` method will generate a column `tokens` based on the previous generated column `result`.
 
-Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
+Launch pyspark-shell, replacing `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
 $ pyspark --packages "tech.sourced:engine:[version]"
 ```

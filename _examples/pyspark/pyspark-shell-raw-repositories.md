@@ -1,24 +1,24 @@
 # Raw repositories usage
 
-In this example, the pyspark-shell is used to show the usage of source{d} engine with raw git repositories.
+In this example, the pyspark-shell is used to show the usage of source{d} jgit-spark-connector with raw git repositories.
 
 ## Differences with siva usage
 
-What are the main differences between using the engine with siva files and raw git repositories?
+What are the main differences between using the jgit-spark-connector with siva files and raw git repositories?
 
 * Raw repositories can have non-remote references, siva files do not.
-* Even if you have only one repository, you may have N repositories in the output returned by the engine. That's because different origins are treated as different repositories. In short, you'll have as many repositories as remotes in your repository plus one repository that corresponds to the local repository, which is identified by `file://$PATH_TO_REPOSITORY`. This one will always contain non-remote references and the rest of the repositories will always contain remote references.
+* Even if you have only one repository, you may have N repositories in the output returned by the jgit-spark-connector. That's because different origins are treated as different repositories. In short, you'll have as many repositories as remotes in your repository plus one repository that corresponds to the local repository, which is identified by `file://$PATH_TO_REPOSITORY`. This one will always contain non-remote references and the rest of the repositories will always contain remote references.
 
 **Note:** raw repositories refer to `standard` and `bare` repositories.
 
 ## Getting repository references
 
-Launch pyspark-shell, replacing `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
+Launch pyspark-shell, replacing `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
 $ pyspark --packages "tech.sourced:engine:[version]"
 ```
 
-So we can get the repositories like this and we can see that even if we only have one repository, engine says we have two:
+So we can get the repositories like this and we can see that even if we only have one repository, jgit-spark-connector says we have two:
 
 ```python
 from sourced.engine import Engine

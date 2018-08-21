@@ -1,6 +1,6 @@
-# source{d} Engine
+# jgit-spark-connector
 
-Here you can find a list of annotated *source{d} Engine* examples:
+Here you can find a list of annotated *jgit-spark-connector* examples:
 
 ### pyspark
 
