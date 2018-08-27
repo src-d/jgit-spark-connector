@@ -124,6 +124,19 @@ assemblyMergeStrategy in assembly := {
 }
 ```
 
+If you get this kind of exception when run engine's code which is making use of bblfsh,
+
+    java.lang.NoSuchMethodError: com.google.common.util.concurrent.MoreExecutors.directExecutor()Ljava/util/concurrent/Executor;
+
+ you must add these lines to your `build.sbt`
+
+ ```scala
+ assemblyShadeRules in assembly := Seq(
+  ShadeRule.rename("com.google.common.**" -> "com.google.shadedcommon.@1").inAll,
+  ShadeRule.rename("io.netty.**" -> "io.shadednetty.@1").inAll
+)
+ ```
+
 ## pyspark
 
 ### Local mode
