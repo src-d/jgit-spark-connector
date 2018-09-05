@@ -11,6 +11,10 @@ Current implementation combines:
  - [apache/spark](https://github.com/apache/spark) to extend DataFrame API
  - [eclipse/jgit](https://github.com/eclipse/jgit) for working with Git .pack files
 
+ # Deprecated
+
+ jgit-spark-connector has been deprecated in favor of gitbase-spark-connector and there will be no further development of this tool.
+
 
 # Quick-start
 
