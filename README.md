@@ -1,4 +1,4 @@
-# jgit-spark-connector [![Build Status](https://travis-ci.org/src-d/jgit-spark-connector.svg?branch=master)](https://travis-ci.org/src-d/jgit-spark-connector) [![codecov](https://codecov.io/gh/src-d/jgit-spark-connector/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/jgit-spark-connector) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine/badge.svg)](https://maven-badges.herokuapp.com/maven-central/tech.sourced/engine) 
+# jgit-spark-connector [![Build Status](https://travis-ci.org/src-d/jgit-spark-connector.svg?branch=master)](https://travis-ci.org/src-d/jgit-spark-connector) [![codecov](https://codecov.io/gh/src-d/jgit-spark-connector/branch/master/graph/badge.svg)](https://codecov.io/gh/src-d/jgit-spark-connector) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/tech.sourced/jgit-spark-connector/badge.svg)](https://maven-badges.herokuapp.com/maven-central/tech.sourced/jgit-spark-connector)
 
 **jgit-spark-connector** is a library for running scalable data retrieval pipelines that process any number of Git repositories for source code analysis.
 
@@ -41,11 +41,11 @@ $ export PATH=$PATH:$SPARK_HOME/bin
 Look for the latest [**jgit-spark-connector** version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced), and then replace in the command where `[version]` is showed:
 
 ```bash
-$ spark-shell --packages "tech.sourced:engine:[version]"
+$ spark-shell --packages "tech.sourced:jgit-spark-connector:[version]"
 
 # or
 
-$ pyspark --packages "tech.sourced:engine:[version]"
+$ pyspark --packages "tech.sourced:jgit-spark-connector:[version]"
 ```
 
 Run [bblfsh daemon](https://github.com/bblfsh/bblfshd). You can start it easily in a container following its [quick start guide](https://github.com/bblfsh/bblfshd#quick-start).
@@ -74,21 +74,21 @@ Either in case the `LANG` variable wouldn't be set to a UTF-8 encoding or it wou
 
 # Examples of jgit-spark-connector usage
 
-**jgit-spark-connector** is available on [maven central](https://search.maven.org/#search%7Cga%7C1%7Ctech.sourced.engine). To add it to your project as a dependency,
+**jgit-spark-connector** is available on [maven central](https://search.maven.org/#search%7Cga%7C1%7Ctech.sourced.jgit-spark-connector). To add it to your project as a dependency,
 
 For projects managed by [maven](https://maven.apache.org/) add the following to your `pom.xml`:
 
 ```xml
 <dependency>
     <groupId>tech.sourced</groupId>
-    <artifactId>engine</artifactId>
+    <artifactId>jgit-spark-connector</artifactId>
     <version>[version]</version>
 </dependency>
 ```
 
 For [sbt](http://www.scala-sbt.org/) managed projects add the dependency:
 
-    libraryDependencies += "tech.sourced" % "engine" % "[version]"
+    libraryDependencies += "tech.sourced" % "jgit-spark-connector" % "[version]"
 
 In both cases, replace `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced)
 
@@ -103,7 +103,7 @@ With maven:
 ```xml
 <dependency>
     <groupId>tech.sourced</groupId>
-    <artifactId>engine</artifactId>
+    <artifactId>jgit-spark-connector</artifactId>
     <version>[version]</version>
     <classifier>slim</classifier>
 </dependency>
@@ -112,7 +112,7 @@ With maven:
 Or (for sbt):
 
 ```scala
-libraryDependencies += "tech.sourced" % "engine" % "[version]" % Compile classifier "slim"
+libraryDependencies += "tech.sourced" % "jgit-spark-connector" % "[version]" % Compile classifier "slim"
 ```
 
 If you run into problems with `io.netty.versions.properties` on sbt, you can add the following snippet to solve it:
@@ -132,30 +132,30 @@ assemblyMergeStrategy in assembly := {
 
 ### Local mode
 
-Install python-wrappers is necessary to use **engine** from pyspark:
+Install python-wrappers is necessary to use **jgit-spark-connector** from pyspark:
 
 ``` bash
-$ pip install sourced-engine
+$ pip install sourced-jgit-spark-connector
 ```
 
 Then you should provide the **jgit-spark-connector's** maven coordinates to the pyspark's shell:
 ```bash
-$ $SPARK_HOME/bin/pyspark --packages "tech.sourced:engine:[version]"
+$ $SPARK_HOME/bin/pyspark --packages "tech.sourced:jgit-spark-connector:[version]"
 ```
-Replace `[version]` with the [latest engine version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced)
+Replace `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced)
 
 ### Cluster mode
 
 Install **jgit-spark-connector** wrappers as in local mode:
 ```bash
-$ pip install -e sourced-engine
+$ pip install -e sourced-jgit-spark-connector
 ```
 
 Then you should package and compress with `zip`  the python wrappers to provide pyspark with it. It's required to distribute the code among the nodes of the cluster.
 
 ```bash
-$ zip <path-to-installed-package> ./sourced-engine.zip
-$ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./sourced-engine.zip
+$ zip <path-to-installed-package> ./sourced-jgit-spark-connector.zip
+$ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./sourced-jgit-spark-connector.zip
 ```
 
 ### pyspark API usage
@@ -163,7 +163,7 @@ $ $SPARK_HOME/bin/pyspark <same-args-as-local-plus> --py-files ./sourced-engine.
 Run pyspark as explained before to start using the jgit-spark-connector, replacing `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 
 ```bash
-$ $SPARK_HOME/bin/pyspark --packages "tech.sourced:engine:[version]"
+$ $SPARK_HOME/bin/pyspark --packages "tech.sourced:jgit-spark-connector:[version]"
 Welcome to
 
    spark version 2.2.1
@@ -186,7 +186,7 @@ SparkSession available as 'spark'.
 You must provide **jgit-spark-connector** as a dependency in the following way, replacing `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 
 ```bash
-$ spark-shell --packages "tech.sourced:engine:[version]"
+$ spark-shell --packages "tech.sourced:jgit-spark-connector:[version]"
 ```
 
 To start using **jgit-spark-connector** from the shell you must import everything inside the `tech.sourced.engine` package (or, if you prefer, just import `Engine` and `EngineDataFrame` classes):
@@ -240,20 +240,20 @@ There are some design decisions that may surprise the user when processing local
 
 You can launch our docker container which contains some Notebooks examples just running:
 
-    docker run --name engine-jupyter --rm -it -p 8080:8080 -v $(pwd)/path/to/siva-files:/repositories --link bblfshd:bblfshd srcd/engine-jupyter
+    docker run --name jgit-spark-connector-jupyter --rm -it -p 8080:8080 -v $(pwd)/path/to/siva-files:/repositories --link bblfshd:bblfshd srcd/jgit-spark-connector-jupyter
 
 You must have some siva files in local to mount them on the container replacing the path `$(pwd)/path/to/siva-files`. You can get some siva-files from the project [here](https://github.com/src-d/jgit-spark-connector/tree/master/_examples/siva-files).
 
 You should have a [bblfsh daemon](https://github.com/bblfsh/bblfshd) container running to link the jupyter container (see Pre-requisites).
 
-When the `engine-jupyter` container starts it will show you an URL that you can open in your browser.
+When the `jgit-spark-connector-jupyter` container starts it will show you an URL that you can open in your browser.
 
 # Using jgit-spark-connector directly from Python
 
 If you are using the jgit-spark-connector directly from Python and are unable to modify the `PYTHON_SUBMIT_ARGS` you can copy the jgit-spark-connector jar to the pyspark jars to make it available there.
 
 ```
-cp engine.jar "$(python -c 'import pyspark; print(pyspark.__path__[0])')/jars"
+cp jgit-spark-connector.jar "$(python -c 'import pyspark; print(pyspark.__path__[0])')/jars"
 ```
 
 This way, you can use it in the following way:
@@ -282,7 +282,7 @@ Build the fatjar is needed to build the docker image that contains the jupyter s
 $ make build
 ```
 
-It leaves the fatjar in `target/scala-2.11/engine-uber.jar`
+It leaves the fatjar in `target/scala-2.11/jgit-spark-connector-uber.jar`
 
 ## Build and run docker to get a Jupyter server
 

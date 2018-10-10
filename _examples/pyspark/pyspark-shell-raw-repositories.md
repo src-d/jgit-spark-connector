@@ -15,7 +15,7 @@ What are the main differences between using the jgit-spark-connector with siva f
 
 Launch pyspark-shell, replacing `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ pyspark --packages "tech.sourced:engine:[version]"
+$ pyspark --packages "tech.sourced:jgit-spark-connector:[version]"
 ```
 
 So we can get the repositories like this and we can see that even if we only have one repository, jgit-spark-connector says we have two:

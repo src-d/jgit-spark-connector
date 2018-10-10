@@ -28,7 +28,7 @@ How the issue is currently solved or can be solved if this change is not accepte
 
 ## Impact
 
-How this change would impact engine functionality: backward compatibility broken, performance improvements or issues, corner cases and so on.
+How this change would impact jgit-spark-connector functionality: backward compatibility broken, performance improvements or issues, corner cases and so on.
 
 ## References
 

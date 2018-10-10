@@ -17,14 +17,14 @@ with open(README_FILE, 'r') as f:
     README = f.read()
 
 setup(
-    name="sourced-engine",
+    name="sourced-jgit-spark-connector",
     description="Engine to use Spark on top of source code repositories.",
     long_description=README,
     version=__version__,
     license="Apache-2.0",
     author="source{d}",
     author_email="hello@sourced.tech",
-    url="https://github.com/src-d/engine/tree/master/python",
+    url="https://github.com/src-d/jgit-spark-connector/tree/master/python",
     packages=['sourced.engine'],
     namespace_packages=['sourced'],
     install_requires=[

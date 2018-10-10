@@ -1,18 +1,18 @@
 FROM openjdk:8-jdk as builder
 RUN apt-get update && apt-get install -y --no-install-recommends git
-RUN mkdir /engine
-WORKDIR /engine
-COPY . /engine
+RUN mkdir /jgit-spark-connector
+WORKDIR /jgit-spark-connector
+COPY . /jgit-spark-connector
 RUN ./sbt assembly
 
 FROM srcd/jupyter-spark:5.2.1
 
 RUN mkdir -p /opt/
 
-# engine jar location
+# jgit-spark-connector jar location
 ENV SPARK_DRIVER_EXTRA_CLASSPATH spark.driver.extraClassPath
 ENV SPARK_EXECUTOR_EXTRA_CLASSPATH spark.executor.extraClassPath
-ENV SRCD_JAR /opt/jars/engine-uber.jar
+ENV SRCD_JAR /opt/jars/jgit-spark-connector-uber.jar
 
 # bblfsh endpoint variables
 ENV SPARK_BBLFSH_HOST spark.tech.sourced.bblfsh.grpc.host
@@ -29,13 +29,13 @@ RUN apt-get update && \
 
 ENV LANG en_US.UTF-8
 
-COPY ./python /opt/python-engine/
+COPY ./python /opt/python-jgit-spark-connector/
 COPY ./_examples/notebooks/* /home/$NB_USER/
-COPY --from=builder /engine/target/engine-uber.jar /opt/jars/
+COPY --from=builder /jgit-spark-connector/target/jgit-spark-connector-uber.jar /opt/jars/
 
 
-RUN echo "local" > /opt/python-engine/version.txt \
-    && pip install -e /opt/python-engine/ \
+RUN echo "local" > /opt/python-jgit-spark-connector/version.txt \
+    && pip install -e /opt/python-jgit-spark-connector/ \
     && pip install jupyter-spark \
     && jupyter serverextension enable --py jupyter_spark \
     && jupyter nbextension install --py jupyter_spark \

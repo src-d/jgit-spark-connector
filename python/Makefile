@@ -1,4 +1,4 @@
-ENGINE_UBER_JAR = engine-uber.jar
+ENGINE_UBER_JAR = jgit-spark-connector-uber.jar
 ENGINE_UBER_JAR_LOCATION = ../target/$(ENGINE_UBER_JAR)
 JARS_DIR = jars
 

@@ -6,7 +6,7 @@ To do that, you just have to call  `extract_uasts()` on a Dataframe where previo
 
 Launch pyspark-shell, replacing `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ pyspark --packages "tech.sourced:engine:[version]"
+$ pyspark --packages "tech.sourced:jgit-spark-connector:[version]"
 ```
 
 Code:

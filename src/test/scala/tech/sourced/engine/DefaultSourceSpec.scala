@@ -33,7 +33,7 @@ class DefaultSourceSpec extends BaseSourceSpec("DefaultSource") {
     val repoDir = tmpPath.resolve("repo")
 
     Git.cloneRepository()
-      .setURI("https://github.com/src-d/engine.git")
+      .setURI("https://github.com/src-d/jgit-spark-connector.git")
       .setDirectory(repoDir.toFile)
       .call()
 
