@@ -6,7 +6,7 @@ To do that, you just have to call  `extractUASTs` on a Dataframe where previousl
 
 Launch spark-shell, replacing `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ spark-shell --packages "tech.sourced:engine:[version]"
+$ spark-shell --packages "tech.sourced:jgit-spark-connector:[version]"
 ```
 
 Code:

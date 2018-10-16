@@ -5,7 +5,7 @@ import sbt.Keys.libraryDependencies
 
 organization := "tech.sourced"
 scalaVersion := "2.11.11"
-name := "engine"
+name := "jgit-spark-connector"
 
 git.useGitDescribe := true
 enablePlugins(GitVersioning)
@@ -55,9 +55,9 @@ assemblyMergeStrategy in assembly := {
 sonatypeProfileName := "tech.sourced"
 
 // pom settings for sonatype
-homepage := Some(url("https://github.com/src-d/engine"))
-scmInfo := Some(ScmInfo(url("https://github.com/src-d/engine"),
-  "git@github.com:src-d/engine.git"))
+homepage := Some(url("https://github.com/src-d/jgit-spark-connector"))
+scmInfo := Some(ScmInfo(url("https://github.com/src-d/jgit-spark-connector"),
+  "git@github.com:src-d/jgit-spark-connector.git"))
 developers += Developer("ajnavarro",
   "Antonio Navarro",
   "antonio@sourced.tech",
@@ -113,7 +113,7 @@ val packageSlim = taskKey[File]("package-slim")
 
 packageSlim := (packageBin in Compile).value
 
-addArtifact(Artifact("engine", "jar", "jar", "slim"), packageSlim)
+addArtifact(Artifact("jgit-spark-connector", "jar", "jar", "slim"), packageSlim)
 
 assembly := {
   val file = assembly.value

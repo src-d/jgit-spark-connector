@@ -6,7 +6,7 @@ Making use of the `engine` object, it filters repositories by `id` to get all bl
 
 Launch spark-shell, replacing `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ spark-shell --packages "tech.sourced:engine:[version]"
+$ spark-shell --packages "tech.sourced:jgit-spark-connector:[version]"
 ```
 
 Code:

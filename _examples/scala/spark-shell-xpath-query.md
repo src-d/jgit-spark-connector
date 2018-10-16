@@ -10,7 +10,7 @@ Finally, `extractTokens` method will generate a column `tokens` based on the pre
 
 Launch spark-shell, replacing `[version]` with the [latest jgit-spark-connector version](http://search.maven.org/#search%7Cga%7C1%7Ctech.sourced):
 ```sh
-$ spark-shell --packages "tech.sourced:engine:[version]"
+$ spark-shell --packages "tech.sourced:jgit-spark-connector:[version]"
 ```
 
 Code:

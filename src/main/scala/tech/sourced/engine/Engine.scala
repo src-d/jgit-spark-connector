@@ -14,7 +14,7 @@ import tech.sourced.engine.udf.ConcatArrayUDF
 import scala.collection.JavaConversions.asScalaBuffer
 
 /**
-  * Engine is the main entry point to all usage of the source{d} spark-engine.
+  * Engine is the main entry point to all usage of the source{d} jgit-spark-connector.
   * It has methods to configure all possible configurable options as well as
   * the available methods to start analysing repositories of code.
   *
