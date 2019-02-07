@@ -177,9 +177,16 @@ class RepositoryObjectFactory(val localPath: String, val skipCleanup: Boolean)
           new Path(MD5Gen.str(path), remotePath.getName)
         )
       )
-      if (!fs.exists(localRepoPath)) {
+
+      val (remoteCopyPath, localCopyPath) = if (isBare) {
+        (new Path(path), localRepoPath)
+      } else {
+        (new Path(path, ".git"), new Path(localRepoPath, ".git"))
+      }
+
+      if (!fs.exists(localCopyPath)) {
         import RepositoryProvider.HadoopFsRecursiveCopier
-        fs.copyToLocalDir(new Path(path), localRepoPath)
+        fs.copyToLocalDir(remoteCopyPath, localCopyPath)
       }
 
       (localRepoPath, false)
@@ -192,11 +199,6 @@ class RepositoryObjectFactory(val localPath: String, val skipCleanup: Boolean)
     } else {
       new File(localRepoPath.toString, ".git")
     }).build()
-
-    if (!skipCleanup && !isLocalPath) {
-      log.debug(s"Delete $localRepoPath")
-      FileUtils.deleteQuietly(Paths.get(localRepoPath.toString).toFile)
-    }
 
     repo
   }
@@ -357,10 +359,14 @@ object RepositoryProvider {
       val iter = fs.listFiles(src, true)
       while (iter.hasNext) {
         val f = iter.next
-        val dstPath = new Path(dst.toString, f.getPath.toString.substring(src.toString.length))
+        // handle the case when file path starts with / correctly
+        var fPath = f.getPath.toString.substring(src.toString.length)
+        if (fPath.startsWith("/")) {
+          fPath = fPath.substring(1)
+        }
+        val dstPath = new Path(dst.toString, fPath)
         fs.copyToLocalFile(f.getPath, dstPath)
       }
-
     }
 
   }
