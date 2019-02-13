@@ -27,6 +27,11 @@ object Bblfsh extends Logging {
 
   var supportedLanguages: Set[String] = Set()
 
+  /** Map human languages names returned by enry to understandable by bblfsh */
+  private var languagesMapping = Map[String, String](
+    "C#" -> "csharp"
+  )
+
   private var config: Config = _
   private var client: BblfshClient = _
 
@@ -83,15 +88,17 @@ object Bblfsh extends Logging {
                   content: Array[Byte],
                   lang: String,
                   config: Config): Seq[Array[Byte]] = {
+    val bblfshLang = languagesMapping.getOrElse(lang, lang)
+
     //FIXME(bzz): not everything is UTF-8 encoded :/
     // if lang == null, it hasn't been classified yet
     // so rely on bblfsh to guess this file's language
-    if (lang != null && !shouldExtractLanguage(config, lang)) {
+    if (bblfshLang != null && !shouldExtractLanguage(config, bblfshLang)) {
       Seq()
     } else {
       val client = getClient(config)
       val contentStr = new String(content, StandardCharsets.UTF_8)
-      val parsed = client.parse(path, content = contentStr, lang = lang)
+      val parsed = client.parse(path, content = contentStr, lang = bblfshLang)
       if (parsed.status == Status.OK) {
         Seq(parsed.uast.get.toByteArray)
       } else {
